@@ -2,12 +2,15 @@
 
 import {
   AlertCircle,
+  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   Info,
+  MapPin,
   RotateCcw,
   Search,
   SlidersHorizontal,
+  Sparkles,
   X,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -231,6 +234,12 @@ export function MenuBrowseClient() {
               placeholder="Search pizzas, toppings, or sides..."
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  setSearchInput("");
+                  updateUrlParams({ search: "", page: 1 });
+                }
+              }}
               className="h-10 rounded-xl bg-background pr-10 pl-10"
             />
             {searchInput ? (
@@ -261,9 +270,15 @@ export function MenuBrowseClient() {
               aria-label="Filter by location"
               className="h-10 w-full rounded-xl bg-background px-3"
             >
-              <SelectValue placeholder="All locations">
-                {urlLocation ? urlLocation : "All locations"}
-              </SelectValue>
+              <div className="flex items-center gap-2 truncate">
+                <MapPin
+                  className="size-3.5 text-primary shrink-0"
+                  aria-hidden="true"
+                />
+                <SelectValue placeholder="All locations">
+                  {urlLocation ? urlLocation : "All locations"}
+                </SelectValue>
+              </div>
             </SelectTrigger>
             <SelectContent align="start">
               <SelectItem value="all">All locations</SelectItem>
@@ -288,9 +303,15 @@ export function MenuBrowseClient() {
               aria-label="Sort menu items"
               className="h-10 w-full rounded-xl bg-background px-3"
             >
-              <SelectValue placeholder="Sort items">
-                {SORT_LABELS[urlSort]}
-              </SelectValue>
+              <div className="flex items-center gap-2 truncate">
+                <ArrowUpDown
+                  className="size-3.5 text-muted-foreground shrink-0"
+                  aria-hidden="true"
+                />
+                <SelectValue placeholder="Sort items">
+                  {SORT_LABELS[urlSort]}
+                </SelectValue>
+              </div>
             </SelectTrigger>
             <SelectContent align="end">
               <SelectItem value="featured">Featured first</SelectItem>
@@ -301,14 +322,14 @@ export function MenuBrowseClient() {
           </Select>
         </div>
 
-        <fieldset className="flex flex-wrap items-center gap-2 border-0 border-t border-border/70 p-0 pt-3.5">
+        <fieldset className="flex items-center gap-2 overflow-x-auto border-0 border-t border-border/70 p-0 pt-3.5 no-scrollbar flex-nowrap sm:flex-wrap">
           <legend className="sr-only">Filter by pizza category</legend>
           <button
             type="button"
             aria-pressed={!urlCategory}
             onClick={() => updateUrlParams({ category: "", page: 1 })}
             className={cn(
-              "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               !urlCategory
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-background text-muted-foreground hover:border-foreground/25 hover:text-foreground",
@@ -331,7 +352,7 @@ export function MenuBrowseClient() {
                   })
                 }
                 className={cn(
-                  "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-background text-muted-foreground hover:border-foreground/25 hover:text-foreground",
@@ -477,21 +498,85 @@ export function MenuBrowseClient() {
         </div>
       ) : result && result.items.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card px-6 py-16 text-center">
-          <h2 className="font-heading text-xl font-semibold text-foreground">
-            No matching menu items
-          </h2>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            No approved items matched your current search or filter selection.
-            Clear your filters to see everything available.
-          </p>
-          <Button
-            type="button"
-            variant="default"
-            onClick={handleResetFilters}
-            className="mt-5 h-10 rounded-xl px-5 font-semibold"
-          >
-            Reset all filters
-          </Button>
+          <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-muted/60 text-muted-foreground">
+            <Search className="size-6" aria-hidden="true" />
+          </div>
+          {urlSearch.trim() ? (
+            <>
+              <h2 className="font-heading text-xl font-semibold text-foreground">
+                No pizzas matching &ldquo;{urlSearch}&rdquo;
+              </h2>
+              <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                We couldn&apos;t find any pizzas matching your search query. Try
+                checking for typos, clearing your keywords, or exploring these
+                popular categories:
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {MENU_CATEGORIES.slice(0, 4).map((cat) => (
+                  <Button
+                    key={cat}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchInput("");
+                      updateUrlParams({ category: cat, search: "", page: 1 });
+                    }}
+                    className="h-8 rounded-full text-xs"
+                  >
+                    <Sparkles
+                      className="mr-1 size-3 text-primary"
+                      aria-hidden="true"
+                    />
+                    {cat}
+                  </Button>
+                ))}
+              </div>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={() => {
+                    setSearchInput("");
+                    updateUrlParams({ search: "", page: 1 });
+                  }}
+                  className="h-10 rounded-xl px-5 font-semibold"
+                >
+                  Clear search
+                </Button>
+                {hasActiveFilters ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleResetFilters}
+                    className="h-10 rounded-xl px-5"
+                  >
+                    Reset all filters
+                  </Button>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="font-heading text-xl font-semibold text-foreground">
+                No matching menu items
+              </h2>
+              <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                No approved items matched your current filter criteria
+                {urlCategory ? ` for category "${urlCategory}"` : ""}
+                {urlLocation ? ` in ${urlLocation}` : ""}. Clear your filters to
+                see everything available.
+              </p>
+              <Button
+                type="button"
+                variant="default"
+                onClick={handleResetFilters}
+                className="mt-5 h-10 rounded-xl px-5 font-semibold"
+              >
+                Reset all filters
+              </Button>
+            </>
+          )}
         </div>
       ) : (
         <>

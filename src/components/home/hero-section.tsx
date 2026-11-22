@@ -1,6 +1,7 @@
 import { ArrowRight, Clock, ShieldCheck, Store } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { HeroSearch } from "@/components/home/hero-search";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,8 @@ export function HeroSection() {
               doorstep.
             </p>
           </div>
+
+          <HeroSearch />
 
           <div className="flex flex-wrap items-center gap-3.5">
             <Link

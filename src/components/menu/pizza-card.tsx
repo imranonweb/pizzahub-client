@@ -39,16 +39,29 @@ export function PizzaCard({ item }: PizzaCardProps) {
       <div className="flex flex-1 flex-col justify-between gap-4 p-5">
         <div className="space-y-2.5">
           <div className="flex items-center justify-between gap-2">
-            <Badge variant="secondary" className="rounded-full font-medium">
-              {item.category}
-            </Badge>
+            <Link
+              href={`/menu?category=${encodeURIComponent(item.category)}`}
+              className="rounded-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <Badge
+                variant="secondary"
+                className="cursor-pointer rounded-full font-medium transition-colors hover:bg-secondary/80"
+              >
+                {item.category}
+              </Badge>
+            </Link>
             <span className="font-heading text-base font-bold tabular-nums text-foreground">
               ${item.price.toFixed(2)}
             </span>
           </div>
 
           <h2 className="font-heading text-lg font-semibold leading-snug text-foreground">
-            {item.itemName}
+            <Link
+              href={`/menu/${encodeURIComponent(item.id)}`}
+              className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              {item.itemName}
+            </Link>
           </h2>
 
           <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
@@ -61,10 +74,13 @@ export function PizzaCard({ item }: PizzaCardProps) {
             <span className="truncate font-medium text-foreground">
               {item.vendor.businessName}
             </span>
-            <span className="inline-flex shrink-0 items-center gap-1">
+            <Link
+              href={`/menu?location=${encodeURIComponent(item.location)}`}
+              className="inline-flex shrink-0 items-center gap-1 rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
               <MapPin className="size-3.5 text-primary" aria-hidden="true" />
-              {item.location}
-            </span>
+              <span>{item.location}</span>
+            </Link>
           </div>
 
           <div className="flex items-center justify-between gap-2">
