@@ -1,17 +1,21 @@
+import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { betterAuth } from "better-auth";
-import { MongoClient } from "mongodb";
-const client = new MongoClient("mongodb://localhost:27017/database");
-const db = client.db();
+import { getDB, getMongoClient } from "./mongodb";
+
+const client = getMongoClient();
+const db = getDB();
 
 export const auth = betterAuth({
-  //...other options
-  emailAndPassword: { 
-    enabled: true, 
-  }, 
-  socialProviders: { 
-    github: { 
-      clientId: process.env.GITHUB_CLIENT_ID as string, 
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string, 
-    }, 
-  }, 
+  database: mongodbAdapter(db, {
+    client,
+  }),
+  emailAndPassword: {
+    enabled: true,
+  },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    },
+  },
 });
