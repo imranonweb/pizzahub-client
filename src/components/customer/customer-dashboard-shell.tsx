@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  Bell,
   CreditCard,
   LayoutDashboard,
   LogOut,
@@ -23,6 +24,7 @@ import {
   useState,
 } from "react";
 import { PizzaHubBrandMark } from "@/components/brand/pizzahub-logo";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useCart } from "@/components/providers/cart-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -71,6 +73,12 @@ const CUSTOMER_NAV_ITEMS = [
     href: "/checkout",
     label: "Checkout",
     icon: CreditCard,
+    exact: false,
+  },
+  {
+    href: "/notifications",
+    label: "Notifications",
+    icon: Bell,
     exact: false,
   },
   {
@@ -338,21 +346,27 @@ export function CustomerDashboardShell({
               </span>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={openDrawer}
-              className="h-9 gap-1.5 rounded-xl bg-card px-3 font-medium"
-            >
-              <ShoppingBag className="size-4 text-primary" aria-hidden="true" />
-              <span>Cart</span>
-              {cartCount > 0 ? (
-                <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums">
-                  {cartCount}
-                </Badge>
-              ) : null}
-            </Button>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={openDrawer}
+                className="h-9 gap-1.5 rounded-xl bg-card px-3 font-medium"
+              >
+                <ShoppingBag
+                  className="size-4 text-primary"
+                  aria-hidden="true"
+                />
+                <span>Cart</span>
+                {cartCount > 0 ? (
+                  <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums">
+                    {cartCount}
+                  </Badge>
+                ) : null}
+              </Button>
+            </div>
           </header>
 
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">

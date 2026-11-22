@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bell,
   ChevronDown,
   Crown,
   LayoutDashboard,
@@ -13,6 +14,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { PizzaHubBrandMark } from "@/components/brand/pizzahub-logo";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useCart } from "@/components/providers/cart-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -167,90 +169,104 @@ export function Navbar() {
               <Skeleton className="h-9 w-24 rounded-xl" />
             </div>
           ) : isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className="inline-flex h-10 items-center gap-2.5 rounded-full border border-border bg-card py-1 pr-3 pl-1.5 text-sm font-medium text-foreground shadow-2xs transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Account menu"
-              >
-                <Avatar size="sm" className="size-7">
-                  {user.image ? (
-                    <AvatarImage src={user.image} alt={user.name} />
-                  ) : null}
-                  <AvatarFallback className="bg-primary/12 text-xs font-semibold text-primary">
-                    {getInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="max-w-32 truncate">{user.name}</span>
-                <ChevronDown
-                  className="size-3.5 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent
-                align="end"
-                sideOffset={8}
-                className="w-60 rounded-xl p-1.5"
-              >
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="px-2.5 py-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-foreground">
-                        {user.name}
-                      </span>
-                      {role ? (
-                        <Badge variant="secondary" className="text-[11px]">
-                          {formatRoleLabel(role)}
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <p className="mt-0.5 truncate text-xs font-normal text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </DropdownMenuLabel>
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  render={<Link href={dashboardHref} />}
-                  className="cursor-pointer rounded-lg px-2.5 py-2"
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className="inline-flex h-10 items-center gap-2.5 rounded-full border border-border bg-card py-1 pr-3 pl-1.5 text-sm font-medium text-foreground shadow-2xs transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Account menu"
                 >
-                  <LayoutDashboard className="size-4" aria-hidden="true" />
-                  <span>Dashboard</span>
-                </DropdownMenuItem>
+                  <Avatar size="sm" className="size-7">
+                    {user.image ? (
+                      <AvatarImage src={user.image} alt={user.name} />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/12 text-xs font-semibold text-primary">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="max-w-32 truncate">{user.name}</span>
+                  <ChevronDown
+                    className="size-3.5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </DropdownMenuTrigger>
 
-                {role === "vendor" ? (
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={8}
+                  className="w-60 rounded-xl p-1.5"
+                >
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="px-2.5 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-semibold text-foreground">
+                          {user.name}
+                        </span>
+                        {role ? (
+                          <Badge variant="secondary" className="text-[11px]">
+                            {formatRoleLabel(role)}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 truncate text-xs font-normal text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
+
+                  <DropdownMenuSeparator />
+
                   <DropdownMenuItem
-                    render={<Link href="/dashboard/vendor/subscription" />}
+                    render={<Link href={dashboardHref} />}
                     className="cursor-pointer rounded-lg px-2.5 py-2"
                   >
-                    <Crown className="size-4 text-primary" aria-hidden="true" />
-                    <span>Subscription Plan</span>
+                    <LayoutDashboard className="size-4" aria-hidden="true" />
+                    <span>Dashboard</span>
                   </DropdownMenuItem>
-                ) : null}
 
-                <DropdownMenuItem
-                  render={<Link href="/profile" />}
-                  className="cursor-pointer rounded-lg px-2.5 py-2"
-                >
-                  <UserCog className="size-4" aria-hidden="true" />
-                  <span>Profile Settings</span>
-                </DropdownMenuItem>
+                  {role === "vendor" ? (
+                    <DropdownMenuItem
+                      render={<Link href="/dashboard/vendor/subscription" />}
+                      className="cursor-pointer rounded-lg px-2.5 py-2"
+                    >
+                      <Crown
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      <span>Subscription Plan</span>
+                    </DropdownMenuItem>
+                  ) : null}
 
-                <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    render={<Link href="/profile" />}
+                    className="cursor-pointer rounded-lg px-2.5 py-2"
+                  >
+                    <UserCog className="size-4" aria-hidden="true" />
+                    <span>Profile Settings</span>
+                  </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  variant="destructive"
-                  disabled={isSigningOut}
-                  onClick={handleSignOut}
-                  className="cursor-pointer rounded-lg px-2.5 py-2"
-                >
-                  <LogOut className="size-4" aria-hidden="true" />
-                  <span>{isSigningOut ? "Signing out…" : "Sign Out"}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem
+                    render={<Link href="/notifications" />}
+                    className="cursor-pointer rounded-lg px-2.5 py-2"
+                  >
+                    <Bell className="size-4" aria-hidden="true" />
+                    <span>Notifications</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={isSigningOut}
+                    onClick={handleSignOut}
+                    className="cursor-pointer rounded-lg px-2.5 py-2"
+                  >
+                    <LogOut className="size-4" aria-hidden="true" />
+                    <span>{isSigningOut ? "Signing out…" : "Sign Out"}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <>
               <Link
@@ -293,6 +309,7 @@ export function Navbar() {
               ) : null}
             </Button>
           ) : null}
+          {isAuthenticated ? <NotificationBell /> : null}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger
               render={
@@ -344,24 +361,49 @@ export function Navbar() {
                   })}
 
                   {isAuthenticated ? (
-                    <SheetClose
-                      render={
-                        <Link
-                          href="/profile"
-                          aria-current={
-                            isActiveLink("/profile", false) ? "page" : undefined
-                          }
-                        />
-                      }
-                      className={cn(
-                        "flex items-center rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
-                        isActiveLink("/profile", false)
-                          ? "bg-accent font-semibold text-foreground"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                      )}
-                    >
-                      Profile Settings
-                    </SheetClose>
+                    <>
+                      <SheetClose
+                        render={
+                          <Link
+                            href="/profile"
+                            aria-current={
+                              isActiveLink("/profile", false)
+                                ? "page"
+                                : undefined
+                            }
+                          />
+                        }
+                        className={cn(
+                          "flex items-center rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                          isActiveLink("/profile", false)
+                            ? "bg-accent font-semibold text-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        Profile Settings
+                      </SheetClose>
+                      <SheetClose
+                        render={
+                          <Link
+                            href="/notifications"
+                            aria-current={
+                              isActiveLink("/notifications", false)
+                                ? "page"
+                                : undefined
+                            }
+                          />
+                        }
+                        className={cn(
+                          "flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                          isActiveLink("/notifications", false)
+                            ? "bg-accent font-semibold text-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <Bell className="size-4 shrink-0" aria-hidden="true" />
+                        <span>Notifications</span>
+                      </SheetClose>
+                    </>
                   ) : null}
                 </nav>
 

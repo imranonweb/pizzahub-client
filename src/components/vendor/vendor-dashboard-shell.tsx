@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  Bell,
   Crown,
   LayoutDashboard,
   LogOut,
@@ -22,6 +23,7 @@ import {
   useState,
 } from "react";
 import { PizzaHubBrandMark } from "@/components/brand/pizzahub-logo";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +75,12 @@ const VENDOR_NAV_ITEMS = [
     href: "/dashboard/vendor/subscription",
     label: "Subscription",
     icon: Crown,
+    exact: false,
+  },
+  {
+    href: "/notifications",
+    label: "Notifications",
+    icon: Bell,
     exact: false,
   },
 ] as const;
@@ -317,14 +325,17 @@ export function VendorDashboardShell({
               </span>
             </div>
 
-            <Button
-              render={<Link href="/dashboard/vendor/add" />}
-              size="sm"
-              className="h-9 rounded-xl px-3 font-medium"
-            >
-              <PlusCircle className="size-4" aria-hidden="true" />
-              Add Pizza
-            </Button>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <Button
+                render={<Link href="/dashboard/vendor/add" />}
+                size="sm"
+                className="h-9 rounded-xl px-3 font-medium"
+              >
+                <PlusCircle className="size-4" aria-hidden="true" />
+                Add Pizza
+              </Button>
+            </div>
           </header>
 
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">

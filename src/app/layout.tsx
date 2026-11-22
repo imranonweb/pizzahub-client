@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Figtree, Geist_Mono } from "next/font/google";
 import { CartProvider } from "@/components/providers/cart-provider";
+import { NotificationProvider } from "@/components/providers/notification-provider";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
@@ -41,7 +42,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <SessionProvider>
           <Toaster>
-            <CartProvider>{children}</CartProvider>
+            <CartProvider>
+              <NotificationProvider>{children}</NotificationProvider>
+            </CartProvider>
           </Toaster>
         </SessionProvider>
       </body>
