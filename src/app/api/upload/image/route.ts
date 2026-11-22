@@ -168,9 +168,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const apiKey =
-    process.env.IMGBB_API_KEY?.trim() ||
-    process.env.NEXT_PUBLIC_IMGBB_API_KEY?.trim();
+  const apiKey = process.env.IMGBB_API_KEY?.trim();
 
   if (!apiKey) {
     return NextResponse.json(
