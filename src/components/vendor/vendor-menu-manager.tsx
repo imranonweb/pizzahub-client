@@ -348,6 +348,48 @@ export function VendorMenuManager() {
         </Alert>
       ) : null}
 
+      {!isPremium &&
+      isBackendLive &&
+      stats.active >= FREE_PLAN_ACTIVE_ITEM_LIMIT ? (
+        <Alert className="rounded-2xl border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-200">
+          <AlertCircle
+            className="size-4 text-amber-600 dark:text-amber-400"
+            aria-hidden="true"
+          />
+          <AlertTitle className="font-semibold text-foreground">
+            Free Plan Active Item Limit Reached ({stats.active}/
+            {FREE_PLAN_ACTIVE_ITEM_LIMIT})
+          </AlertTitle>
+          <AlertDescription className="mt-1 flex flex-col gap-3 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
+            <span>
+              Your Free plan allows up to {FREE_PLAN_ACTIVE_ITEM_LIMIT} active
+              approved menu items simultaneously. To activate an inactive or
+              newly approved dish, deactivate one of your currently active
+              pizzas below, or upgrade to Premium for unlimited active listings.
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setUpgradeOpen(true)}
+                className="h-8 rounded-lg px-3 text-xs font-semibold"
+              >
+                <Crown className="size-3.5" aria-hidden="true" />
+                Upgrade to Premium
+              </Button>
+              <Button
+                render={<Link href="/dashboard/vendor/subscription" />}
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-lg bg-card text-xs font-medium"
+              >
+                Plan Details
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <div className="relative">

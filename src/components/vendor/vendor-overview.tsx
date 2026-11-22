@@ -366,16 +366,28 @@ export function VendorOverview() {
               View Public Menu
             </Button>
 
-            <Button
-              type="button"
-              variant={isPremium ? "outline" : "default"}
-              size="sm"
-              onClick={() => setUpgradeOpen(true)}
-              className="h-9 rounded-xl px-4 font-medium"
-            >
-              <Crown className="size-4" aria-hidden="true" />
-              {isPremium ? "View Plan Details" : "Upgrade to Premium"}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                render={<Link href="/dashboard/vendor/subscription" />}
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-xl bg-card px-3.5 text-xs font-medium"
+              >
+                Plan Details
+              </Button>
+              {!isPremium ? (
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={() => setUpgradeOpen(true)}
+                  className="h-9 rounded-xl px-4 font-semibold text-xs shadow-xs"
+                >
+                  <Crown className="size-3.5" aria-hidden="true" />
+                  Upgrade to Premium
+                </Button>
+              ) : null}
+            </div>
           </div>
         </section>
 

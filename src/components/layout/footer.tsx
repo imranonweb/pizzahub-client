@@ -127,6 +127,14 @@ export function Footer() {
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               <li>
                 <Link
+                  href="/pricing"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Vendor Pricing & Plans
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/sign-up?role=vendor"
                   className="hover:text-foreground transition-colors"
                 >

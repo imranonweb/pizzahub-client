@@ -1,0 +1,663 @@
+"use client";
+
+import {
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Crown,
+  HelpCircle,
+  Info,
+  Sparkles,
+  Store,
+  UtensilsCrossed,
+  X,
+} from "lucide-react";
+import { motion } from "motion/react";
+import Link from "next/link";
+import { useState } from "react";
+import { useAuthSession } from "@/components/providers/session-provider";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { UpgradePlanDialog } from "@/components/vendor/upgrade-plan-dialog";
+import {
+  FREE_PLAN_ACTIVE_ITEM_LIMIT,
+  FREE_PLAN_MONTHLY_PRICE,
+  getPremiumMonthlyPrice,
+  PLAN_COMPARISON_CATEGORIES,
+  VENDOR_FAQS,
+} from "@/lib/subscription-plans";
+import { cn } from "@/lib/utils";
+
+export function PricingPageClient() {
+  const { user, role, isAuthenticated } = useAuthSession();
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const premiumPrice = getPremiumMonthlyPrice();
+  const isVendor = role === "vendor";
+  const userPlan = user?.subscriptionPlan ?? "free";
+  const isPremiumVendor = isVendor && userPlan === "premium";
+  const isFreeVendor = isVendor && userPlan === "free";
+
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex((prev) => (prev === index ? null : index));
+  };
+
+  return (
+    <div className="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      {/* Background radial accent */}
+      <div
+        className="pointer-events-none absolute top-12 left-1/2 -z-10 h-96 w-full -translate-x-1/2 rounded-full bg-primary/5 blur-3xl"
+        aria-hidden="true"
+      />
+
+      {/* Hero Section */}
+      <div className="mx-auto max-w-3xl text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-semibold text-primary"
+        >
+          <Sparkles className="size-3.5" aria-hidden="true" />
+          <span>Vendor Kitchen Partner Plans</span>
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.05 }}
+          className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.03em] text-foreground sm:text-4xl lg:text-5xl"
+        >
+          Simple, honest pricing for independent pizzerias
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
+          className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg"
+        >
+          Start completely free with up to {FREE_PLAN_ACTIVE_ITEM_LIMIT} active
+          menu listings. Upgrade to PizzaHub Premium whenever you are ready for
+          unlimited dishes, priority search visibility, and our Verified
+          storefront badge.
+        </motion.p>
+
+        {/* Honest demo / backend status banner */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
+          className="mt-6"
+        >
+          <Alert className="rounded-2xl border-primary/25 bg-accent/60 text-left sm:text-center">
+            <Info className="size-4 text-primary" aria-hidden="true" />
+            <AlertTitle className="font-semibold text-foreground">
+              Billing Integration Status · Demo Period
+            </AlertTitle>
+            <AlertDescription className="text-xs text-muted-foreground sm:text-sm">
+              Live Stripe payment processing and self-service billing will be
+              introduced in Client Task 15. Premium pricing is configurable ($
+              {premiumPrice}/mo) and Free plan accounts can activate up to{" "}
+              {FREE_PLAN_ACTIVE_ITEM_LIMIT} items immediately.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      </div>
+
+      {/* Pricing Cards */}
+      <section
+        aria-label="Vendor Subscription Plans"
+        className="mt-12 grid gap-8 lg:grid-cols-2 lg:gap-8"
+      >
+        {/* FREE PLAN CARD */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className={cn(
+            "relative flex flex-col justify-between rounded-3xl border border-border bg-card p-6 shadow-2xs transition-all duration-200 sm:p-8",
+            isFreeVendor && "ring-2 ring-primary/40",
+          )}
+        >
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-semibold text-foreground">
+                <Store className="size-3.5 text-primary" aria-hidden="true" />
+                Free Kitchen Tier
+              </span>
+              {isFreeVendor ? (
+                <Badge
+                  variant="secondary"
+                  className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+                >
+                  Your Current Plan
+                </Badge>
+              ) : null}
+            </div>
+
+            <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-foreground">
+              Free Plan
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+              Ideal for new kitchens testing neighborhood demand or operating
+              with a focused pizza roster.
+            </p>
+
+            <div className="mt-6 flex items-baseline gap-1.5 border-b border-border/70 pb-6">
+              <span className="font-heading text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+                ${FREE_PLAN_MONTHLY_PRICE}
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">
+                / month
+              </span>
+              <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                · Free forever
+              </span>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <p className="text-xs font-bold tracking-wider text-foreground uppercase">
+                What&apos;s included:
+              </p>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    Up to{" "}
+                    <strong className="font-semibold text-foreground">
+                      {FREE_PLAN_ACTIVE_ITEM_LIMIT} active approved menu items
+                    </strong>{" "}
+                    live simultaneously
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    Unlimited draft, pending, and paused menu catalog items
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>Standard placement on the public /menu directory</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    Basic vendor overview dashboard & status moderation
+                    indicators
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>Up to 5 dish photos per listing</span>
+                </li>
+                <li className="flex items-start gap-3 text-muted-foreground/60">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <X className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span className="line-through">
+                    Verified Premium Kitchen badge
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-8 border-t border-border/70 pt-6">
+            {!isAuthenticated ? (
+              <Button
+                render={<Link href="/sign-up?role=vendor" />}
+                variant="outline"
+                className="h-11 w-full rounded-xl bg-card font-semibold"
+              >
+                Start Free as a Vendor
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Button>
+            ) : isFreeVendor ? (
+              <Button
+                render={<Link href="/dashboard/vendor/menu" />}
+                variant="outline"
+                className="h-11 w-full rounded-xl bg-card font-semibold"
+              >
+                <CheckCircle2
+                  className="size-4 text-primary"
+                  aria-hidden="true"
+                />
+                Manage Free Menu ({FREE_PLAN_ACTIVE_ITEM_LIMIT} active limit)
+              </Button>
+            ) : isPremiumVendor ? (
+              <Button
+                variant="outline"
+                disabled
+                className="h-11 w-full rounded-xl bg-muted text-muted-foreground"
+              >
+                Included in Your Account
+              </Button>
+            ) : (
+              <Button
+                render={<Link href="/sign-up?role=vendor" />}
+                variant="outline"
+                className="h-11 w-full rounded-xl bg-card font-semibold"
+              >
+                Register as a Vendor
+              </Button>
+            )}
+          </div>
+        </motion.div>
+
+        {/* PREMIUM PLAN CARD */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className={cn(
+            "relative flex flex-col justify-between rounded-3xl border-2 border-primary/40 bg-card p-6 shadow-md sm:p-8",
+            "ring-1 ring-primary/20",
+          )}
+        >
+          {/* Most popular badge */}
+          <div className="absolute -top-3.5 right-8">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-sm">
+              <Crown className="size-3" aria-hidden="true" />
+              Most Popular
+            </span>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                <Crown className="size-3.5" aria-hidden="true" />
+                PizzaHub Premium
+              </span>
+              {isPremiumVendor ? (
+                <Badge className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                  Your Current Plan
+                </Badge>
+              ) : null}
+            </div>
+
+            <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-foreground">
+              Premium Plan
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+              Designed for high-volume pizzerias, multiple styles, and kitchens
+              ready to maximize delivery reach.
+            </p>
+
+            <div className="mt-6 flex flex-col border-b border-border/70 pb-6">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-heading text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+                  ${premiumPrice}
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  / month
+                </span>
+                <span className="ml-2 text-xs font-medium text-muted-foreground">
+                  · Billed monthly
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                (Configurable · Stripe billing scheduled for Task 15)
+              </p>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <p className="text-xs font-bold tracking-wider text-foreground uppercase">
+                Everything in Free, plus:
+              </p>
+              <ul className="space-y-3 text-sm text-foreground">
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    <strong className="font-semibold text-foreground">
+                      Unlimited active approved menu listings
+                    </strong>{" "}
+                    live on /menu
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    <strong className="font-semibold text-foreground">
+                      Verified Premium Kitchen badge
+                    </strong>{" "}
+                    displayed on your pizza cards
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    Priority catalog visibility & featured search ranking
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    Priority moderation queue for rapid dish approvals
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    Full dish rotation flexibility with zero capacity
+                    restrictions
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                  <span>Priority vendor customer support & onboarding</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-8 border-t border-border/70 pt-6">
+            {!isAuthenticated ? (
+              <Button
+                render={<Link href="/sign-up?role=vendor" />}
+                className="h-11 w-full rounded-xl font-semibold shadow-xs"
+              >
+                <Crown className="size-4" aria-hidden="true" />
+                Join as Premium Vendor
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Button>
+            ) : isPremiumVendor ? (
+              <Button
+                render={<Link href="/dashboard/vendor/subscription" />}
+                className="h-11 w-full rounded-xl font-semibold"
+              >
+                <Crown className="size-4" aria-hidden="true" />
+                View Subscription Details
+              </Button>
+            ) : isFreeVendor ? (
+              <Button
+                type="button"
+                onClick={() => setUpgradeDialogOpen(true)}
+                className="h-11 w-full rounded-xl font-semibold shadow-xs"
+              >
+                <Crown className="size-4" aria-hidden="true" />
+                Upgrade to Premium
+              </Button>
+            ) : (
+              <Button
+                render={<Link href="/sign-up?role=vendor" />}
+                className="h-11 w-full rounded-xl font-semibold"
+              >
+                <Crown className="size-4" aria-hidden="true" />
+                Register as a Vendor
+              </Button>
+            )}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Feature Comparison Matrix */}
+      <section aria-labelledby="comparison-heading" className="mt-20 space-y-6">
+        <div className="text-center">
+          <h2
+            id="comparison-heading"
+            className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+          >
+            Detailed Feature Comparison
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+            Compare every capability across Free and Premium vendor plans.
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-2xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-muted/40">
+                <tr>
+                  <th
+                    scope="col"
+                    className="w-1/2 px-6 py-4 font-semibold text-foreground"
+                  >
+                    Feature & Benefit
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-1/4 px-6 py-4 text-center font-semibold text-foreground"
+                  >
+                    Free Plan
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-1/4 px-6 py-4 text-center font-bold text-primary"
+                  >
+                    Premium Plan
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/70">
+                {PLAN_COMPARISON_CATEGORIES.map((category) => (
+                  <tr key={category.category} className="contents">
+                    <tr className="bg-muted/20">
+                      <th
+                        colSpan={3}
+                        scope="colgroup"
+                        className="px-6 py-2.5 text-xs font-bold tracking-wider text-muted-foreground uppercase"
+                      >
+                        {category.category}
+                      </th>
+                    </tr>
+                    {category.features.map((feature) => (
+                      <tr
+                        key={feature.name}
+                        className={cn(
+                          "transition-colors hover:bg-muted/15",
+                          feature.highlight && "bg-accent/20",
+                        )}
+                      >
+                        <td className="px-6 py-4 align-top">
+                          <p className="font-medium text-foreground">
+                            {feature.name}
+                          </p>
+                          {feature.description ? (
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {feature.description}
+                            </p>
+                          ) : null}
+                        </td>
+                        <td className="px-6 py-4 text-center align-top">
+                          {typeof feature.free === "boolean" ? (
+                            feature.free ? (
+                              <Check
+                                className="mx-auto size-4 text-primary"
+                                aria-label="Included"
+                              />
+                            ) : (
+                              <X
+                                className="mx-auto size-4 text-muted-foreground/60"
+                                aria-label="Not included"
+                              />
+                            )
+                          ) : (
+                            <span className="text-xs font-medium text-foreground">
+                              {feature.free}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-center align-top font-semibold text-primary">
+                          {typeof feature.premium === "boolean" ? (
+                            feature.premium ? (
+                              <Check
+                                className="mx-auto size-4 text-primary"
+                                aria-label="Included"
+                              />
+                            ) : (
+                              <X
+                                className="mx-auto size-4 text-muted-foreground/60"
+                                aria-label="Not included"
+                              />
+                            )
+                          ) : (
+                            <span className="text-xs font-semibold text-foreground">
+                              {feature.premium}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Vendor FAQ Section */}
+      <section aria-labelledby="faq-heading" className="mt-20 space-y-8">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+            <HelpCircle className="size-3.5 text-primary" aria-hidden="true" />
+            <span>Got Questions?</span>
+          </div>
+          <h2
+            id="faq-heading"
+            className="mt-3 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+          >
+            Frequently Asked Questions for Kitchens
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+            Everything you need to know about listing limits, approvals, and
+            billing.
+          </p>
+        </div>
+
+        <div className="mx-auto max-w-3xl space-y-3">
+          {VENDOR_FAQS.map((faq, index) => {
+            const isOpen = openFaqIndex === index;
+            return (
+              <div
+                key={faq.question}
+                className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xs transition-colors"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleFaq(index)}
+                  aria-expanded={isOpen}
+                  className="flex w-full items-center justify-between gap-4 p-5 text-left font-medium text-foreground hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="text-base font-semibold">
+                    {faq.question}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                      isOpen && "rotate-180 text-foreground",
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
+                {isOpen ? (
+                  <div className="border-t border-border/70 px-5 pt-3 pb-5 text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Bottom CTA Banner */}
+      <section
+        aria-label="Get started"
+        className="mt-20 rounded-3xl border border-primary/20 bg-accent/40 p-8 text-center sm:p-12"
+      >
+        <div className="mx-auto max-w-2xl space-y-4">
+          <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Ready to bring your pizza creations to the neighborhood?
+          </h2>
+          <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Join PizzaHub today. Submit your first 3 pizzas on our Free plan
+            with zero financial commitment, or upgrade to Premium for unlimited
+            listings.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {!isAuthenticated ? (
+              <>
+                <Button
+                  render={<Link href="/sign-up?role=vendor" />}
+                  className="h-11 rounded-xl px-6 font-semibold"
+                >
+                  <Store className="size-4" aria-hidden="true" />
+                  Become a Vendor Free
+                </Button>
+                <Button
+                  render={<Link href="/menu" />}
+                  variant="outline"
+                  className="h-11 rounded-xl bg-card px-6"
+                >
+                  Browse Customer Menu
+                </Button>
+              </>
+            ) : isVendor ? (
+              <>
+                <Button
+                  render={<Link href="/dashboard/vendor/menu" />}
+                  className="h-11 rounded-xl px-6 font-semibold"
+                >
+                  <UtensilsCrossed className="size-4" aria-hidden="true" />
+                  Go to Kitchen Dashboard
+                </Button>
+                <Button
+                  render={<Link href="/dashboard/vendor/subscription" />}
+                  variant="outline"
+                  className="h-11 rounded-xl bg-card px-6"
+                >
+                  <Crown className="size-4 text-primary" aria-hidden="true" />
+                  Subscription Settings
+                </Button>
+              </>
+            ) : (
+              <Button
+                render={<Link href="/menu" />}
+                className="h-11 rounded-xl px-6 font-semibold"
+              >
+                Browse Public Menu
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Upgrade Plan Dialog */}
+      <UpgradePlanDialog
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        currentPlan={userPlan}
+      />
+    </div>
+  );
+}

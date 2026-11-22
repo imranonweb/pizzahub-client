@@ -69,9 +69,20 @@ const VENDOR_NAV_ITEMS = [
     icon: PlusCircle,
     exact: false,
   },
+  {
+    href: "/dashboard/vendor/subscription",
+    label: "Subscription",
+    icon: Crown,
+    exact: false,
+  },
 ] as const;
 
 const STOREFRONT_LINKS = [
+  {
+    href: "/pricing",
+    label: "Vendor Pricing",
+    icon: Sparkles,
+  },
   {
     href: "/menu",
     label: "Public Menu",

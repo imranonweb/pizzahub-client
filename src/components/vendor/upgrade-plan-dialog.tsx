@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Crown, Info } from "lucide-react";
+import { Check, Crown, Info, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FREE_PLAN_ACTIVE_ITEM_LIMIT } from "@/lib/vendor-menu-api";
+import {
+  FREE_PLAN_ACTIVE_ITEM_LIMIT,
+  FREE_PLAN_MONTHLY_PRICE,
+  getPremiumMonthlyPrice,
+} from "@/lib/subscription-plans";
 
 export function UpgradePlanDialog({
   open,
@@ -22,6 +27,8 @@ export function UpgradePlanDialog({
   onOpenChange: (open: boolean) => void;
   currentPlan: "free" | "premium";
 }) {
+  const premiumPrice = getPremiumMonthlyPrice();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-2xl p-6 sm:max-w-lg">
@@ -40,8 +47,14 @@ export function UpgradePlanDialog({
         </DialogHeader>
 
         <div className="grid gap-3 sm:grid-cols-2">
+          {/* Free Plan */}
           <div className="rounded-xl border border-border bg-muted/40 p-4">
-            <p className="text-sm font-semibold text-foreground">Free Plan</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Free Plan</p>
+              <span className="font-heading text-sm font-bold text-foreground tabular-nums">
+                ${FREE_PLAN_MONTHLY_PRICE}/mo
+              </span>
+            </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Best for testing your kitchen
             </p>
@@ -65,10 +78,16 @@ export function UpgradePlanDialog({
             </ul>
           </div>
 
+          {/* Premium Plan */}
           <div className="rounded-xl border border-primary/35 bg-accent/50 p-4">
-            <p className="text-sm font-semibold text-foreground">
-              Premium Plan
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">
+                Premium Plan
+              </p>
+              <span className="font-heading text-sm font-bold text-primary tabular-nums">
+                ${premiumPrice}/mo
+              </span>
+            </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Built for busy pizzerias
             </p>
@@ -97,13 +116,25 @@ export function UpgradePlanDialog({
           <Info className="size-4 text-primary" aria-hidden="true" />
           <AlertTitle>Subscription checkout pending</AlertTitle>
           <AlertDescription>
-            Stripe subscription checkout will be connected in a dedicated
-            billing update. Until then, Free plan vendors can deactivate an
-            existing active item to free up capacity.
+            Stripe subscription checkout will be connected in Client Task 15.
+            Monthly price is configurable (${premiumPrice}/mo). Free plan
+            vendors can rotate their menu by deactivating an active item.
           </AlertDescription>
         </Alert>
 
-        <DialogFooter className="-mx-6 -mb-6 mt-1 rounded-b-2xl px-6 py-4">
+        <DialogFooter className="-mx-6 -mb-6 mt-1 flex-col gap-2 rounded-b-2xl px-6 py-4 sm:flex-row sm:justify-between">
+          <Button
+            render={
+              <Link href="/pricing" onClick={() => onOpenChange(false)} />
+            }
+            variant="ghost"
+            size="sm"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Sparkles className="size-3.5 text-primary" aria-hidden="true" />
+            Full Plan Comparison
+          </Button>
+
           <Button
             type="button"
             variant="outline"

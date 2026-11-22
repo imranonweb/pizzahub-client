@@ -2,6 +2,7 @@
 
 import {
   ChevronDown,
+  Crown,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -68,6 +69,7 @@ export function Navbar() {
   const navItems = [
     { label: "Home", href: "/", matchExact: true },
     { label: "Browse Menu", href: "/menu", matchExact: false },
+    { label: "Pricing", href: "/pricing", matchExact: false },
     ...(isAuthenticated
       ? [{ label: "Dashboard", href: dashboardHref, matchExact: false }]
       : []),
@@ -217,6 +219,16 @@ export function Navbar() {
                   <LayoutDashboard className="size-4" aria-hidden="true" />
                   <span>Dashboard</span>
                 </DropdownMenuItem>
+
+                {role === "vendor" ? (
+                  <DropdownMenuItem
+                    render={<Link href="/dashboard/vendor/subscription" />}
+                    className="cursor-pointer rounded-lg px-2.5 py-2"
+                  >
+                    <Crown className="size-4 text-primary" aria-hidden="true" />
+                    <span>Subscription Plan</span>
+                  </DropdownMenuItem>
+                ) : null}
 
                 <DropdownMenuItem
                   render={<Link href="/profile" />}
