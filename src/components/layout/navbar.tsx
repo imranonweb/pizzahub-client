@@ -5,12 +5,14 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  ShoppingBag,
   UserCog,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { PizzaHubBrandMark } from "@/components/brand/pizzahub-logo";
+import { useCart } from "@/components/providers/cart-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -55,9 +57,11 @@ function formatRoleLabel(role: string): string {
 export function Navbar() {
   const pathname = usePathname();
   const { user, role, isLoading, isAuthenticated, signOut } = useAuthSession();
+  const { summary, isHydrated, openDrawer } = useCart();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const showCartButton = !isAuthenticated || role === "customer";
 
   const dashboardHref = getDashboardPathForRole(role);
 
@@ -137,6 +141,24 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-2.5">
+          {showCartButton ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label={`Open shopping cart${isHydrated && summary.itemCount > 0 ? ` (${summary.itemCount} items)` : ""}`}
+              onClick={openDrawer}
+              className="h-9 gap-2 rounded-xl bg-card px-3 font-medium"
+            >
+              <ShoppingBag className="size-4 text-primary" aria-hidden="true" />
+              <span>Cart</span>
+              {isHydrated && summary.itemCount > 0 ? (
+                <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums">
+                  {summary.itemCount}
+                </Badge>
+              ) : null}
+            </Button>
+          ) : null}
           {isLoading ? (
             <div className="flex items-center gap-2" aria-hidden="true">
               <Skeleton className="h-9 w-20 rounded-xl" />
@@ -241,7 +263,24 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="flex md:hidden items-center">
+        <div className="flex md:hidden items-center gap-2">
+          {showCartButton ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label={`Open shopping cart${isHydrated && summary.itemCount > 0 ? ` (${summary.itemCount} items)` : ""}`}
+              onClick={openDrawer}
+              className="h-9 gap-1.5 rounded-xl bg-card px-2.5 font-medium"
+            >
+              <ShoppingBag className="size-4 text-primary" aria-hidden="true" />
+              {isHydrated && summary.itemCount > 0 ? (
+                <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums">
+                  {summary.itemCount}
+                </Badge>
+              ) : null}
+            </Button>
+          ) : null}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger
               render={

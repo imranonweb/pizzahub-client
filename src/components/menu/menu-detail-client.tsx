@@ -5,6 +5,8 @@ import {
   ArrowLeft,
   Info,
   MapPin,
+  Minus,
+  Plus,
   RotateCcw,
   ShoppingBag,
   Sparkles,
@@ -13,6 +15,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { useCart } from "@/components/providers/cart-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +31,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildSignInRedirectUrl } from "@/lib/auth-routes";
+import { MAX_CART_ITEM_QUANTITY } from "@/lib/cart-rules";
 import {
   fetchPublicMenuItemById,
   type MenuItemDetailResult,
@@ -45,11 +50,13 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
     isLoading: sessionLoading,
     isAuthenticated,
   } = useAuthSession();
+  const { openDrawer, summary } = useCart();
 
   const [detail, setDetail] = useState<MenuItemDetailResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [reloadNonce, setReloadNonce] = useState(0);
 
   useEffect(() => {
@@ -57,6 +64,7 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
     setIsLoading(true);
     setErrorMessage(null);
     setSelectedImageIndex(0);
+    setSelectedQuantity(1);
 
     void reloadNonce;
 
@@ -338,42 +346,90 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
                 <Skeleton className="h-5 w-44 rounded-md" />
                 <Skeleton className="h-11 w-full rounded-xl" />
               </div>
-            ) : !isAuthenticated || !user ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Sign in with a Customer account to place an order for{" "}
-                  <span className="font-medium text-foreground">
-                    {item.itemName}
-                  </span>
-                  .
-                </p>
-                <Link
-                  href={signInRedirect}
-                  className={cn(
-                    buttonVariants({ variant: "default", size: "lg" }),
-                    "h-11 w-full rounded-xl font-semibold",
-                  )}
-                >
-                  Sign in to order
-                </Link>
-              </div>
-            ) : role === "customer" ? (
-              <div className="space-y-3">
-                <Button
-                  type="button"
-                  disabled
-                  className="h-11 w-full rounded-xl font-semibold"
-                >
-                  <ShoppingBag className="size-4" aria-hidden="true" />
-                  Order Placement Coming Soon
-                </Button>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Customer order submission connects once the Express{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
-                    /api/orders
-                  </code>{" "}
-                  endpoint is active.
-                </p>
+            ) : !isAuthenticated || !user || role === "customer" ? (
+              <div className="space-y-4">
+                {isAuthenticated && user?.id === item.vendorId ? (
+                  <p className="text-sm font-medium text-foreground">
+                    You cannot order items from your own vendor kitchen.
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-sm font-medium text-foreground">
+                        Quantity
+                      </span>
+                      <div className="inline-flex items-center gap-1 rounded-xl border border-border bg-background p-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={selectedQuantity <= 1}
+                          aria-label="Decrease quantity"
+                          onClick={() =>
+                            setSelectedQuantity((q) => Math.max(1, q - 1))
+                          }
+                          className="size-8 rounded-lg"
+                        >
+                          <Minus className="size-3.5" aria-hidden="true" />
+                        </Button>
+                        <span className="min-w-8 text-center text-sm font-semibold text-foreground tabular-nums">
+                          {selectedQuantity}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={selectedQuantity >= MAX_CART_ITEM_QUANTITY}
+                          aria-label="Increase quantity"
+                          onClick={() =>
+                            setSelectedQuantity((q) =>
+                              Math.min(MAX_CART_ITEM_QUANTITY, q + 1),
+                            )
+                          }
+                          className="size-8 rounded-lg"
+                        >
+                          <Plus className="size-3.5" aria-hidden="true" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2.5">
+                      <AddToCartButton
+                        item={item}
+                        quantity={selectedQuantity}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        onClick={openDrawer}
+                        className="h-11 rounded-xl bg-background px-4 font-medium"
+                      >
+                        <ShoppingBag className="size-4" aria-hidden="true" />
+                        <span>
+                          Cart{" "}
+                          {summary.itemCount > 0
+                            ? `(${summary.itemCount})`
+                            : ""}
+                        </span>
+                      </Button>
+                    </div>
+
+                    {!isAuthenticated ? (
+                      <p className="text-xs text-muted-foreground">
+                        Ready to complete your order?{" "}
+                        <Link
+                          href={signInRedirect}
+                          className="font-semibold text-primary underline underline-offset-4"
+                        >
+                          Sign in as a Customer
+                        </Link>{" "}
+                        to check out.
+                      </p>
+                    ) : null}
+                  </>
+                )}
               </div>
             ) : role === "vendor" ? (
               <div className="space-y-2.5">

@@ -1,6 +1,7 @@
 import { MapPin, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import type { PublicMenuItem } from "@/lib/menu-api";
@@ -86,15 +87,18 @@ export function PizzaCard({ item }: PizzaCardProps) {
             )}
           </div>
 
-          <Link
-            href={`/menu/${encodeURIComponent(item.id)}`}
-            className={cn(
-              buttonVariants({ variant: "outline", size: "default" }),
-              "h-10 w-full rounded-xl font-medium group-hover:border-primary/40 group-hover:bg-accent/60",
-            )}
-          >
-            View Details
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/menu/${encodeURIComponent(item.id)}`}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "default" }),
+                "h-10 flex-1 rounded-xl font-medium group-hover:border-primary/40 group-hover:bg-accent/60",
+              )}
+            >
+              View Details
+            </Link>
+            {isAvailable ? <AddToCartButton item={item} compact /> : null}
+          </div>
         </div>
       </div>
     </article>
