@@ -10,7 +10,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -63,9 +63,14 @@ const ROLE_OPTIONS: ReadonlyArray<{
 
 export function SignUpForm({ googleEnabled }: SignUpFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { refreshSession } = useAuthSession();
 
-  const [role, setRole] = useState<PublicRegistrationRole>("customer");
+  const requestedRole = searchParams.get("role");
+  const initialRole: PublicRegistrationRole =
+    requestedRole === "vendor" ? "vendor" : "customer";
+
+  const [role, setRole] = useState<PublicRegistrationRole>(initialRole);
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");

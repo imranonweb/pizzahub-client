@@ -2,6 +2,9 @@ import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { PizzaHubBrandMark } from "@/components/brand/pizzahub-logo";
+
+export { PizzaHubBrandMark };
 
 interface AuthShellProps {
   title: string;
@@ -12,40 +15,6 @@ interface AuthShellProps {
   switchLabel: string;
   switchHref: "/sign-in" | "/sign-up";
   children: ReactNode;
-}
-
-export function PizzaHubBrandMark({
-  tone = "dark",
-}: {
-  tone?: "dark" | "light";
-}) {
-  const textColor = tone === "light" ? "text-white" : "text-foreground";
-
-  return (
-    <span className={`inline-flex items-center gap-2.5 ${textColor}`}>
-      <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-        <svg
-          viewBox="0 0 24 24"
-          className="size-5"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M12 3L20.5 19.2C20.8 19.78 20.38 20.48 19.72 20.48H4.28C3.62 20.48 3.2 19.78 3.5 19.2L12 3Z"
-            stroke="currentColor"
-            strokeWidth="1.9"
-            strokeLinejoin="round"
-          />
-          <circle cx="12" cy="12" r="1.4" fill="currentColor" />
-          <circle cx="9.6" cy="16.2" r="1.25" fill="currentColor" />
-          <circle cx="14.5" cy="16.4" r="1.15" fill="currentColor" />
-        </svg>
-      </span>
-      <span className="font-heading text-xl font-bold tracking-[-0.03em]">
-        PizzaHub
-      </span>
-    </span>
-  );
 }
 
 export function AuthShell({
