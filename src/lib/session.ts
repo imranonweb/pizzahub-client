@@ -19,6 +19,8 @@ export interface ServerAuthUser {
   businessName: string;
   subscriptionPlan: SubscriptionPlan;
   subscriptionExpiresAt: Date | null;
+  emailVerified: boolean;
+  createdAt: Date | null;
 }
 
 export interface ServerAuthSession {
@@ -47,6 +49,8 @@ export const getServerSession = cache(
       businessName?: unknown;
       subscriptionPlan?: unknown;
       subscriptionExpiresAt?: unknown;
+      emailVerified?: unknown;
+      createdAt?: unknown;
     };
 
     const role: PizzaHubRole = isValidPizzaHubRole(userRecord.role)
@@ -61,6 +65,13 @@ export const getServerSession = cache(
         ? userRecord.subscriptionExpiresAt
         : typeof userRecord.subscriptionExpiresAt === "string"
           ? new Date(userRecord.subscriptionExpiresAt)
+          : null;
+
+    const createdAt =
+      userRecord.createdAt instanceof Date
+        ? userRecord.createdAt
+        : typeof userRecord.createdAt === "string"
+          ? new Date(userRecord.createdAt)
           : null;
 
     return {
@@ -82,6 +93,8 @@ export const getServerSession = cache(
             : "",
         subscriptionPlan,
         subscriptionExpiresAt,
+        emailVerified: userRecord.emailVerified === true,
+        createdAt,
       },
     };
   },

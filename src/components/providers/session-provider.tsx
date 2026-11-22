@@ -22,6 +22,8 @@ export interface ClientSessionUser {
   businessName: string;
   subscriptionPlan: SubscriptionPlan;
   subscriptionExpiresAt: Date | null;
+  emailVerified: boolean;
+  createdAt: Date | null;
 }
 
 export interface SessionContextValue {
@@ -71,6 +73,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           ? new Date(extra.subscriptionExpiresAt)
           : null;
 
+    const createdAt =
+      extra.createdAt instanceof Date
+        ? extra.createdAt
+        : typeof extra.createdAt === "string"
+          ? new Date(extra.createdAt)
+          : null;
+
     return {
       id: rawUser.id,
       name: rawUser.name,
@@ -82,6 +91,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         typeof extra.businessName === "string" ? extra.businessName : "",
       subscriptionPlan,
       subscriptionExpiresAt,
+      emailVerified: rawUser.emailVerified === true,
+      createdAt,
     };
   }, [data?.user]);
 

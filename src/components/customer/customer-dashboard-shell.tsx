@@ -7,8 +7,10 @@ import {
   LogOut,
   Menu,
   ReceiptText,
+  Settings,
   ShoppingBag,
   Store,
+  UserCircle,
 } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import Link from "next/link";
@@ -70,6 +72,18 @@ const CUSTOMER_NAV_ITEMS = [
     label: "Checkout",
     icon: CreditCard,
     exact: false,
+  },
+  {
+    href: "/dashboard/customer/settings",
+    label: "Account Settings",
+    icon: Settings,
+    exact: false,
+  },
+  {
+    href: "/profile",
+    label: "Profile",
+    icon: UserCircle,
+    exact: true,
   },
 ] as const;
 
@@ -236,10 +250,24 @@ export function CustomerDashboardShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const { signOut } = useAuthSession();
+  const { user: sessionUser, signOut } = useAuthSession();
   const { summary, isHydrated, openDrawer } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const syncedUser = useMemo<CustomerSessionProfile>(
+    () =>
+      sessionUser && sessionUser.id === user.id
+        ? {
+            id: user.id,
+            name: sessionUser.name,
+            email: sessionUser.email,
+            image: sessionUser.image ?? null,
+            role: "customer",
+          }
+        : user,
+    [sessionUser, user],
+  );
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
@@ -251,7 +279,7 @@ export function CustomerDashboardShell({
     }
   };
 
-  const contextValue = useMemo(() => user, [user]);
+  const contextValue = syncedUser;
   const cartCount = isHydrated ? summary.itemCount : 0;
 
   return (
@@ -263,7 +291,7 @@ export function CustomerDashboardShell({
             className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col"
           >
             <CustomerSidebarContent
-              user={user}
+              user={syncedUser}
               pathname={pathname}
               cartCount={cartCount}
               isSigningOut={isSigningOut}
@@ -297,7 +325,7 @@ export function CustomerDashboardShell({
                       </SheetDescription>
                     </SheetHeader>
                     <CustomerSidebarContent
-                      user={user}
+                      user={syncedUser}
                       pathname={pathname}
                       cartCount={cartCount}
                       isSigningOut={isSigningOut}
