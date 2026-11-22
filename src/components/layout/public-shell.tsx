@@ -1,11 +1,22 @@
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { Footer } from "./footer";
 import { Navbar } from "./navbar";
+
+function NavbarFallback() {
+  return (
+    <div
+      className="sticky top-0 z-40 h-16 border-b border-border/80 bg-background/92 backdrop-blur-md"
+      aria-hidden="true"
+    />
+  );
+}
 
 export function PublicShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
-      <Navbar />
+      <Suspense fallback={<NavbarFallback />}>
+        <Navbar />
+      </Suspense>
       <main className="flex-1">{children}</main>
       <Footer />
     </div>
