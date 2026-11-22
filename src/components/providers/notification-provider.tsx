@@ -21,12 +21,13 @@ import {
 export interface NotificationContextValue {
   notifications: AppNotification[];
   unreadCount: number;
+  totalCount: number;
   isLoading: boolean;
   isRefetching: boolean;
   source: "live" | "unavailable";
   notice?: string;
-  markAsRead: (id: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
+  markAsRead: (id: string) => Promise<boolean>;
+  markAllAsRead: () => Promise<boolean>;
   refresh: () => Promise<void>;
 }
 
@@ -49,6 +50,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefetching, setIsRefetching] = useState<boolean>(false);
   const [source, setSource] = useState<"live" | "unavailable">("unavailable");
@@ -59,6 +61,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (!isAuthenticated) {
         setNotifications([]);
         setUnreadCount(0);
+        setTotalCount(0);
+        setSource("unavailable");
+        setNotice(undefined);
         setIsLoading(false);
         setIsRefetching(false);
         return;
@@ -71,10 +76,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const response = await fetchNotifications();
+        const response = await fetchNotifications({ page: 1, limit: 20 });
         setSource(response.source);
         setNotifications(response.items);
         setUnreadCount(response.unreadCount);
+        setTotalCount(response.totalCount);
         setNotice(response.notice);
       } catch (error) {
         setSource("unavailable");
@@ -95,61 +101,68 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     void loadNotifications();
   }, [loadNotifications]);
 
-  const markAsRead = useCallback(
-    async (id: string) => {
-      // Optimistic update
-      setNotifications((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, read: true } : item)),
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+  const markAsRead = useCallback(async (id: string): Promise<boolean> => {
+    const res = await apiMarkAsRead(id);
+    if (!res.ok) {
+      toast.add({
+        title: "Could not mark notification as read",
+        description: res.message,
+        type: "error",
+      });
+      return false;
+    }
 
-      if (source === "live") {
-        const res = await apiMarkAsRead(id);
-        if (!res.ok) {
-          toast.add({
-            title: "Notification update",
-            description: res.message,
-            type: "info",
-          });
+    setNotifications((prev) => {
+      let wasUnread = false;
+      const next = prev.map((item) => {
+        if (item.id === id) {
+          if (!item.read) {
+            wasUnread = true;
+          }
+          return res.notification ?? { ...item, read: true };
         }
+        return item;
+      });
+      if (wasUnread) {
+        setUnreadCount((count) => Math.max(0, count - 1));
       }
-    },
-    [source],
-  );
+      return next;
+    });
 
-  const markAllAsRead = useCallback(async () => {
-    // Optimistic update
+    return true;
+  }, []);
+
+  const markAllAsRead = useCallback(async (): Promise<boolean> => {
+    const res = await apiMarkAllAsRead();
+    if (!res.ok) {
+      toast.add({
+        title: "Could not mark notifications as read",
+        description: res.message,
+        type: "error",
+      });
+      return false;
+    }
+
     setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
     setUnreadCount(0);
 
-    if (source === "live") {
-      const res = await apiMarkAllAsRead();
-      if (!res.ok) {
-        toast.add({
-          title: "Notification update",
-          description: res.message,
-          type: "info",
-        });
-      } else {
-        toast.add({
-          title: "Notifications cleared",
-          description: "All notifications have been marked as read.",
-          type: "success",
-        });
-      }
-    } else {
-      toast.add({
-        title: "All marked as read",
-        description: "Unread notification badges cleared locally.",
-        type: "success",
-      });
-    }
-  }, [source]);
+    toast.add({
+      title: "Notifications cleared",
+      description:
+        res.count > 0
+          ? `${res.count} ${res.count === 1 ? "notification" : "notifications"} marked as read.`
+          : "All notifications are already read.",
+      type: "success",
+    });
+
+    return true;
+  }, []);
 
   const value = useMemo<NotificationContextValue>(
     () => ({
       notifications,
       unreadCount,
+      totalCount,
       isLoading,
       isRefetching,
       source,
@@ -161,6 +174,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     [
       notifications,
       unreadCount,
+      totalCount,
       isLoading,
       isRefetching,
       source,

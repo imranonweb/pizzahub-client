@@ -7,7 +7,7 @@ import {
   ChevronDown,
   Crown,
   HelpCircle,
-  Info,
+  ShieldAlert,
   Sparkles,
   Store,
   UtensilsCrossed,
@@ -15,12 +15,16 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UpgradePlanDialog } from "@/components/vendor/upgrade-plan-dialog";
+import {
+  type BackendVendorSubscription,
+  fetchVendorSubscription,
+} from "@/lib/subscription-api";
 import {
   FREE_PLAN_ACTIVE_ITEM_LIMIT,
   FREE_PLAN_MONTHLY_PRICE,
@@ -34,10 +38,51 @@ export function PricingPageClient() {
   const { user, role, isAuthenticated } = useAuthSession();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [liveSubscription, setLiveSubscription] =
+    useState<BackendVendorSubscription | null>(null);
+  const [backendPremiumPrice, setBackendPremiumPrice] = useState<
+    number | undefined
+  >(undefined);
 
-  const premiumPrice = getPremiumMonthlyPrice();
-  const isVendor = role === "vendor";
-  const userPlan = user?.subscriptionPlan ?? "free";
+  const isVendor = isAuthenticated && role === "vendor";
+  const isNonVendorAuthenticated =
+    isAuthenticated && (role === "customer" || role === "admin");
+
+  useEffect(() => {
+    if (!isVendor) {
+      setLiveSubscription(null);
+      setBackendPremiumPrice(undefined);
+      return;
+    }
+
+    let cancelled = false;
+    fetchVendorSubscription()
+      .then((res) => {
+        if (cancelled) return;
+        if (res.source === "live") {
+          setLiveSubscription(res.subscription);
+          const premium = res.plans.find((p) => p.id === "premium");
+          if (premium && typeof premium.price === "number") {
+            setBackendPremiumPrice(premium.price);
+          }
+        }
+      })
+      .catch(() => {
+        // Fallback smoothly to authenticated session values
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isVendor]);
+
+  const premiumPrice =
+    typeof backendPremiumPrice === "number"
+      ? backendPremiumPrice
+      : getPremiumMonthlyPrice();
+
+  const userPlan = liveSubscription?.plan ?? user?.subscriptionPlan ?? "free";
+  const cancelAtPeriodEnd = liveSubscription?.cancelAtPeriodEnd ?? false;
   const isPremiumVendor = isVendor && userPlan === "premium";
   const isFreeVendor = isVendor && userPlan === "free";
 
@@ -81,31 +126,32 @@ export function PricingPageClient() {
           className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg"
         >
           Start completely free with up to {FREE_PLAN_ACTIVE_ITEM_LIMIT} active
-          menu listings. Upgrade to PizzaHub Premium whenever you are ready for
-          unlimited dishes, priority search visibility, and our Verified
-          storefront badge.
+          menu listings. Upgrade to PizzaHub Premium anytime via Stripe Checkout
+          for unlimited dishes, priority discovery placement, and our Verified
+          Kitchen badge.
         </motion.p>
 
-        {/* Honest demo / backend status banner */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
-          className="mt-6"
-        >
-          <Alert className="rounded-2xl border-primary/25 bg-accent/60 text-left sm:text-center">
-            <Info className="size-4 text-primary" aria-hidden="true" />
-            <AlertTitle className="font-semibold text-foreground">
-              Billing Integration Status · Demo Period
-            </AlertTitle>
-            <AlertDescription className="text-xs text-muted-foreground sm:text-sm">
-              Live Stripe payment processing and self-service billing will be
-              introduced in Client Task 15. Premium pricing is configurable ($
-              {premiumPrice}/mo) and Free plan accounts can activate up to{" "}
-              {FREE_PLAN_ACTIVE_ITEM_LIMIT} items immediately.
-            </AlertDescription>
-          </Alert>
-        </motion.div>
+        {isNonVendorAuthenticated ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35, delay: 0.15 }}
+            className="mt-6"
+          >
+            <Alert className="rounded-2xl border-border bg-card text-left sm:text-center">
+              <ShieldAlert className="size-4 text-primary" aria-hidden="true" />
+              <AlertTitle className="font-semibold text-foreground">
+                Vendor Account Required for Subscription Purchase
+              </AlertTitle>
+              <AlertDescription className="text-xs text-muted-foreground sm:text-sm">
+                You are signed in with a{" "}
+                <strong className="capitalize text-foreground">{role}</strong>{" "}
+                account. Subscriptions apply exclusively to pizzeria vendor
+                kitchens.
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        ) : null}
       </div>
 
       {/* Pricing Cards */}
@@ -249,11 +295,11 @@ export function PricingPageClient() {
               </Button>
             ) : (
               <Button
-                render={<Link href="/sign-up?role=vendor" />}
                 variant="outline"
-                className="h-11 w-full rounded-xl bg-card font-semibold"
+                disabled
+                className="h-11 w-full rounded-xl bg-muted text-muted-foreground"
               >
-                Register as a Vendor
+                Available for Vendor Accounts Only
               </Button>
             )}
           </div>
@@ -285,7 +331,7 @@ export function PricingPageClient() {
               </span>
               {isPremiumVendor ? (
                 <Badge className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                  Your Current Plan
+                  {cancelAtPeriodEnd ? "Cancelling Soon" : "Your Current Plan"}
                 </Badge>
               ) : null}
             </div>
@@ -307,11 +353,11 @@ export function PricingPageClient() {
                   / month
                 </span>
                 <span className="ml-2 text-xs font-medium text-muted-foreground">
-                  · Billed monthly
+                  · Billed monthly via Stripe
                 </span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                (Configurable · Stripe billing scheduled for Task 15)
+                Cancel anytime · Secure Stripe Checkout
               </p>
             </div>
 
@@ -384,10 +430,10 @@ export function PricingPageClient() {
                 className="h-11 w-full rounded-xl font-semibold shadow-xs"
               >
                 <Crown className="size-4" aria-hidden="true" />
-                Join as Premium Vendor
+                Join as Vendor to Upgrade
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Button>
-            ) : isPremiumVendor ? (
+            ) : isPremiumVendor && !cancelAtPeriodEnd ? (
               <Button
                 render={<Link href="/dashboard/vendor/subscription" />}
                 className="h-11 w-full rounded-xl font-semibold"
@@ -395,22 +441,24 @@ export function PricingPageClient() {
                 <Crown className="size-4" aria-hidden="true" />
                 View Subscription Details
               </Button>
-            ) : isFreeVendor ? (
+            ) : isVendor ? (
               <Button
                 type="button"
                 onClick={() => setUpgradeDialogOpen(true)}
                 className="h-11 w-full rounded-xl font-semibold shadow-xs"
               >
                 <Crown className="size-4" aria-hidden="true" />
-                Upgrade to Premium
+                {cancelAtPeriodEnd
+                  ? "Renew Premium Plan"
+                  : "Upgrade to Premium"}
               </Button>
             ) : (
               <Button
-                render={<Link href="/sign-up?role=vendor" />}
-                className="h-11 w-full rounded-xl font-semibold"
+                variant="outline"
+                disabled
+                className="h-11 w-full rounded-xl bg-muted text-muted-foreground"
               >
-                <Crown className="size-4" aria-hidden="true" />
-                Register as a Vendor
+                Vendor Accounts Only
               </Button>
             )}
           </div>
@@ -642,22 +690,34 @@ export function PricingPageClient() {
               </>
             ) : (
               <Button
-                render={<Link href="/menu" />}
+                render={
+                  <Link
+                    href={
+                      role === "admin"
+                        ? "/dashboard/admin"
+                        : "/dashboard/customer"
+                    }
+                  />
+                }
                 className="h-11 rounded-xl px-6 font-semibold"
               >
-                Browse Public Menu
+                Return to Your Dashboard
               </Button>
             )}
           </div>
         </div>
       </section>
 
-      {/* Upgrade Plan Dialog */}
-      <UpgradePlanDialog
-        open={upgradeDialogOpen}
-        onOpenChange={setUpgradeDialogOpen}
-        currentPlan={userPlan}
-      />
+      {/* Upgrade Plan Dialog (Vendors only) */}
+      {isVendor ? (
+        <UpgradePlanDialog
+          open={upgradeDialogOpen}
+          onOpenChange={setUpgradeDialogOpen}
+          currentPlan={userPlan}
+          cancelAtPeriodEnd={cancelAtPeriodEnd}
+          backendPremiumPrice={premiumPrice}
+        />
+      ) : null}
     </div>
   );
 }

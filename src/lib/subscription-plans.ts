@@ -6,9 +6,9 @@ export const FREE_PLAN_MONTHLY_PRICE = 0;
 
 /**
  * Returns the configurable monthly price for the Premium vendor subscription.
- * Reads from `NEXT_PUBLIC_PREMIUM_MONTHLY_PRICE` if configured; otherwise defaults
- * to $29/month with clear UI notices that price is configurable and Stripe billing
- * is pending backend implementation.
+ * Used as fallback display on public pages where unauthenticated visitors
+ * cannot query /api/vendor/subscription/plans; authenticated vendors use
+ * the authoritative backend plan configuration.
  */
 export function getPremiumMonthlyPrice(): number {
   const envPrice = process.env.NEXT_PUBLIC_PREMIUM_MONTHLY_PRICE;
@@ -151,7 +151,7 @@ export const VENDOR_FAQS: VendorFaqItem[] = [
   {
     question: "How much does PizzaHub Premium cost?",
     answer:
-      "PizzaHub Premium is configured at $29 per month (or the platform-configured rate). Payment processing via Stripe is currently scheduled for Client Task 15. Until Stripe checkout is connected, plans are managed transparently in demo mode.",
+      "PizzaHub Premium is billed monthly at the rate returned by the platform billing configuration (typically $29/month). Payments are processed securely through Stripe Checkout.",
   },
   {
     question: "Do new pizzas appear immediately to customers?",
@@ -164,37 +164,38 @@ export const VENDOR_FAQS: VendorFaqItem[] = [
       "Yes! You can toggle any approved pizza between 'Active' and 'Inactive' with one click from your vendor dashboard. Pausing a winter specialty immediately allows you to activate a summer special without paying anything.",
   },
   {
-    question: "How will billing and cancellations work?",
+    question: "How do billing, renewals, and cancellations work?",
     answer:
-      "Once Stripe billing is introduced in Task 15, vendors will have full self-service access through the Stripe Customer Portal to view invoices, update credit cards, and cancel or resume subscriptions with zero friction.",
+      "Premium vendors can manage payment methods, review billing history, and schedule cancellations anytime via the Stripe Customer Billing Portal in their Subscription Settings. Cancelled plans retain Premium access through the end of the current billing period.",
   },
 ];
 
 export interface SubscriptionStatusInfo {
   planLabel: string;
   statusLabel: string;
-  badgeVariant: "default" | "secondary" | "outline";
+  badgeVariant: "default" | "secondary" | "outline" | "destructive";
   isExpiringSoon: boolean;
   isExpired: boolean;
+  isCancelling: boolean;
+  isPaymentFailed: boolean;
+  isPending: boolean;
   formattedExpiry: string | null;
 }
 
 export function getSubscriptionStatusDetails(params: {
   subscriptionPlan: "free" | "premium";
   subscriptionExpiresAt: string | Date | null;
+  subscriptionStatus?: string | null;
+  cancelAtPeriodEnd?: boolean;
 }): SubscriptionStatusInfo {
-  const { subscriptionPlan, subscriptionExpiresAt } = params;
+  const {
+    subscriptionPlan,
+    subscriptionExpiresAt,
+    subscriptionStatus,
+    cancelAtPeriodEnd,
+  } = params;
 
-  if (subscriptionPlan === "free") {
-    return {
-      planLabel: "Free Kitchen Plan",
-      statusLabel: "Free Forever Tier",
-      badgeVariant: "secondary",
-      isExpiringSoon: false,
-      isExpired: false,
-      formattedExpiry: null,
-    };
-  }
+  const normalizedStatus = subscriptionStatus?.trim().toLowerCase() ?? "";
 
   let expiryDate: Date | null = null;
   if (subscriptionExpiresAt instanceof Date) {
@@ -209,47 +210,137 @@ export function getSubscriptionStatusDetails(params: {
     }
   }
 
-  if (!expiryDate) {
+  const formattedExpiry = expiryDate
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(expiryDate)
+    : null;
+
+  const now = Date.now();
+  const isDateExpired = expiryDate !== null && expiryDate.getTime() <= now;
+  const isExpired =
+    normalizedStatus === "expired" ||
+    (subscriptionPlan === "premium" && isDateExpired);
+  const isPaymentFailed =
+    normalizedStatus === "past_due" ||
+    normalizedStatus === "unpaid" ||
+    normalizedStatus === "failed";
+  const isPending =
+    normalizedStatus === "pending" || normalizedStatus === "incomplete";
+  const isCancelled =
+    normalizedStatus === "cancelled" || normalizedStatus === "canceled";
+  const isCancelling =
+    subscriptionPlan === "premium" &&
+    !isExpired &&
+    (Boolean(cancelAtPeriodEnd) || normalizedStatus === "cancelling");
+
+  if (isPaymentFailed) {
     return {
-      planLabel: "PizzaHub Premium Plan",
-      statusLabel: "Active (Renews monthly)",
-      badgeVariant: "default",
+      planLabel: "Free Kitchen Plan",
+      statusLabel: "Payment Failed (Past Due)",
+      badgeVariant: "destructive",
       isExpiringSoon: false,
       isExpired: false,
-      formattedExpiry: null,
+      isCancelling: false,
+      isPaymentFailed: true,
+      isPending: false,
+      formattedExpiry,
     };
   }
 
-  const now = Date.now();
-  const expiryTime = expiryDate.getTime();
-  const isExpired = expiryTime <= now;
-  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-  const isExpiringSoon = !isExpired && expiryTime - now < sevenDaysMs;
-
-  const formattedExpiry = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(expiryDate);
-
   if (isExpired) {
     return {
-      planLabel: "PizzaHub Premium Plan",
+      planLabel: "Free Kitchen Plan",
       statusLabel: "Expired",
       badgeVariant: "outline",
       isExpiringSoon: false,
       isExpired: true,
+      isCancelling: false,
+      isPaymentFailed: false,
+      isPending: false,
+      formattedExpiry,
+    };
+  }
+
+  if (isCancelled && subscriptionPlan === "free") {
+    return {
+      planLabel: "Free Kitchen Plan",
+      statusLabel: "Cancelled",
+      badgeVariant: "outline",
+      isExpiringSoon: false,
+      isExpired: false,
+      isCancelling: false,
+      isPaymentFailed: false,
+      isPending: false,
+      formattedExpiry,
+    };
+  }
+
+  if (isPending && subscriptionPlan === "free") {
+    return {
+      planLabel: "Free Kitchen Plan",
+      statusLabel: "Payment Pending",
+      badgeVariant: "secondary",
+      isExpiringSoon: false,
+      isExpired: false,
+      isCancelling: false,
+      isPaymentFailed: false,
+      isPending: true,
+      formattedExpiry,
+    };
+  }
+
+  if (subscriptionPlan === "free") {
+    return {
+      planLabel: "Free Kitchen Plan",
+      statusLabel: "Free Forever Tier",
+      badgeVariant: "secondary",
+      isExpiringSoon: false,
+      isExpired: false,
+      isCancelling: false,
+      isPaymentFailed: false,
+      isPending: false,
+      formattedExpiry: null,
+    };
+  }
+
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+  const isExpiringSoon =
+    expiryDate !== null &&
+    !isDateExpired &&
+    expiryDate.getTime() - now < sevenDaysMs;
+
+  if (isCancelling) {
+    return {
+      planLabel: "PizzaHub Premium Plan",
+      statusLabel: "Cancelling at period end",
+      badgeVariant: "outline",
+      isExpiringSoon,
+      isExpired: false,
+      isCancelling: true,
+      isPaymentFailed: false,
+      isPending: false,
       formattedExpiry,
     };
   }
 
   return {
     planLabel: "PizzaHub Premium Plan",
-    statusLabel: isExpiringSoon ? "Renews soon" : "Active",
+    statusLabel:
+      normalizedStatus === "trialing"
+        ? "Trial Active"
+        : isExpiringSoon
+          ? "Renews soon"
+          : "Active",
     badgeVariant: "default",
     isExpiringSoon,
     isExpired: false,
+    isCancelling: false,
+    isPaymentFailed: false,
+    isPending: false,
     formattedExpiry,
   };
 }

@@ -41,6 +41,9 @@ export function getRequiredRoleForPath(pathname: string): PizzaHubRole | null {
   if (pathname === "/checkout" || pathname.startsWith("/checkout/")) {
     return "customer";
   }
+  if (pathname === "/payment" || pathname.startsWith("/payment/")) {
+    return "vendor";
+  }
   return null;
 }
 

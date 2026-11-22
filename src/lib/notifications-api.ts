@@ -41,11 +41,21 @@ export interface AppNotification {
   };
 }
 
+export interface NotificationPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 export interface NotificationListResponse {
   source: "live" | "unavailable";
   items: AppNotification[];
   unreadCount: number;
   totalCount: number;
+  pagination: NotificationPagination;
   notice?: string;
 }
 
@@ -55,6 +65,8 @@ export interface NotificationFilterOptions {
   page?: number;
   limit?: number;
 }
+
+const OBJECT_ID_HEX_REGEX = /^[a-f\d]{24}$/i;
 
 export function formatRelativeTime(iso: string): string {
   const parsed = new Date(iso);
@@ -90,7 +102,7 @@ export function formatRelativeTime(iso: string): string {
 
 export function getNotificationCategory(
   type: NotificationType,
-): "orders" | "kitchen" | "moderation" | "general" {
+): "orders" | "moderation" | "subscriptions" | "general" {
   switch (type) {
     case "order_placed":
     case "order_status":
@@ -101,25 +113,40 @@ export function getNotificationCategory(
       return "orders";
     case "menu_approved":
     case "menu_rejected":
-    case "subscription_status":
-      return "kitchen";
     case "menu_moderation":
-    case "platform_event":
       return "moderation";
+    case "subscription_status":
+      return "subscriptions";
     default:
       return "general";
   }
 }
 
-/**
- * Fetches notifications from the backend API if available,
- * or gracefully returns an honest unavailable response when
- * the Express server does not implement notification endpoints.
- */
 export async function fetchNotifications(
   options: NotificationFilterOptions = {},
 ): Promise<NotificationListResponse> {
   const token = await getAuthToken();
+  const limit = Math.min(100, Math.max(1, options.limit ?? 20));
+  const requestedPage = Math.max(1, options.page ?? 1);
+
+  if (!token) {
+    return {
+      source: "unavailable",
+      items: [],
+      unreadCount: 0,
+      totalCount: 0,
+      pagination: {
+        page: requestedPage,
+        limit,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+      notice: "Sign in to load your notifications.",
+    };
+  }
+
   const searchParams = new URLSearchParams();
   if (options.unreadOnly) {
     searchParams.set("unread", "true");
@@ -127,101 +154,170 @@ export async function fetchNotifications(
   if (options.type && options.type !== "all") {
     searchParams.set("type", options.type);
   }
-  if (options.page) {
-    searchParams.set("page", String(options.page));
+  if (requestedPage > 1) {
+    searchParams.set("page", String(requestedPage));
   }
-  if (options.limit) {
-    searchParams.set("limit", String(options.limit));
-  }
+  searchParams.set("limit", String(limit));
 
   const queryString = searchParams.toString();
   const path = `/api/notifications${queryString ? `?${queryString}` : ""}`;
 
   try {
     const data = await apiRequest<{
-      notifications: AppNotification[];
-      unreadCount: number;
-      totalCount: number;
+      success?: boolean;
+      notifications?: AppNotification[];
+      unreadCount?: number;
+      totalCount?: number;
+      pagination?: Partial<NotificationPagination>;
     }>(path, {
       method: "GET",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: { Authorization: `Bearer ${token}` },
     });
+
+    const items = Array.isArray(data.notifications) ? data.notifications : [];
+    const total =
+      typeof data.pagination?.total === "number"
+        ? data.pagination.total
+        : items.length;
+    const totalPages = Math.max(
+      1,
+      typeof data.pagination?.totalPages === "number"
+        ? data.pagination.totalPages
+        : Math.ceil(total / limit),
+    );
+    const page = Math.min(
+      Math.max(1, data.pagination?.page ?? requestedPage),
+      totalPages,
+    );
 
     return {
       source: "live",
-      items: Array.isArray(data.notifications) ? data.notifications : [],
+      items,
       unreadCount: typeof data.unreadCount === "number" ? data.unreadCount : 0,
-      totalCount: typeof data.totalCount === "number" ? data.totalCount : 0,
+      totalCount: typeof data.totalCount === "number" ? data.totalCount : total,
+      pagination: {
+        page,
+        limit: data.pagination?.limit ?? limit,
+        total,
+        totalPages,
+        hasNextPage:
+          typeof data.pagination?.hasNextPage === "boolean"
+            ? data.pagination.hasNextPage
+            : page < totalPages,
+        hasPrevPage:
+          typeof data.pagination?.hasPrevPage === "boolean"
+            ? data.pagination.hasPrevPage
+            : page > 1,
+      },
     };
   } catch (error) {
-    const isExpectedUnavailable =
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError || error.status === 404);
+    const message =
+      error instanceof ApiClientError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Unable to load notifications at this time.";
 
     return {
       source: "unavailable",
       items: [],
       unreadCount: 0,
       totalCount: 0,
-      notice: isExpectedUnavailable
-        ? "Notification service is pending backend implementation on the Express server (D:\\PizzaHub-server). Push events, order updates, and moderation alerts will sync here automatically once deployed."
-        : error instanceof Error
-          ? error.message
-          : "Unable to load notifications at this time.",
+      pagination: {
+        page: requestedPage,
+        limit,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+      notice: message,
     };
   }
 }
 
-/**
- * Marks an individual notification as read.
- */
-export async function markNotificationAsRead(
-  id: string,
-): Promise<{ ok: boolean; message: string }> {
+export async function markNotificationAsRead(id: string): Promise<{
+  ok: boolean;
+  notification?: AppNotification;
+  message: string;
+}> {
+  const trimmedId = id.trim();
+  if (!OBJECT_ID_HEX_REGEX.test(trimmedId)) {
+    return {
+      ok: false,
+      message: "Invalid notification identifier.",
+    };
+  }
+
   const token = await getAuthToken();
+  if (!token) {
+    return {
+      ok: false,
+      message: "Authentication required to update notifications.",
+    };
+  }
+
   try {
-    await apiRequest(`/api/notifications/${encodeURIComponent(id)}/read`, {
+    const res = await apiRequest<{
+      success?: boolean;
+      notification?: AppNotification;
+      message?: string;
+    }>(`/api/notifications/${encodeURIComponent(trimmedId)}/read`, {
       method: "PATCH",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: { Authorization: `Bearer ${token}` },
     });
-    return { ok: true, message: "Notification marked as read." };
-  } catch {
+    return {
+      ok: true,
+      notification: res.notification,
+      message: res.message || "Notification marked as read.",
+    };
+  } catch (error) {
     return {
       ok: false,
       message:
-        "Notification service is pending backend implementation on Express server.",
+        error instanceof Error
+          ? error.message
+          : "Unable to mark notification as read.",
     };
   }
 }
 
-/**
- * Marks all notifications as read for the authenticated user.
- */
 export async function markAllNotificationsAsRead(): Promise<{
   ok: boolean;
   count: number;
   message: string;
 }> {
   const token = await getAuthToken();
+  if (!token) {
+    return {
+      ok: false,
+      count: 0,
+      message: "Authentication required to update notifications.",
+    };
+  }
+
   try {
-    const res = await apiRequest<{ count: number }>(
-      "/api/notifications/mark-all-read",
-      {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
-    );
+    const res = await apiRequest<{
+      success?: boolean;
+      count?: number;
+      message?: string;
+    }>("/api/notifications/mark-all-read", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
     return {
       ok: true,
-      count: res.count ?? 0,
-      message: "All notifications marked as read.",
+      count: typeof res.count === "number" ? res.count : 0,
+      message: res.message || "All notifications marked as read.",
     };
-  } catch {
+  } catch (error) {
     return {
       ok: false,
       count: 0,
       message:
-        "Notification service is pending backend implementation on Express server.",
+        error instanceof Error
+          ? error.message
+          : "Unable to mark all notifications as read.",
     };
   }
 }

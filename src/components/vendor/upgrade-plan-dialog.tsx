@@ -1,7 +1,17 @@
 "use client";
 
-import { Check, Crown, Info, Sparkles } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  Crown,
+  ExternalLink,
+  Loader2,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { createVendorCheckoutSession } from "@/lib/subscription-api";
 import {
   FREE_PLAN_ACTIVE_ITEM_LIMIT,
   FREE_PLAN_MONTHLY_PRICE,
@@ -22,22 +33,74 @@ export function UpgradePlanDialog({
   open,
   onOpenChange,
   currentPlan,
+  cancelAtPeriodEnd = false,
+  backendPremiumPrice,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentPlan: "free" | "premium";
+  cancelAtPeriodEnd?: boolean;
+  backendPremiumPrice?: number;
 }) {
-  const premiumPrice = getPremiumMonthlyPrice();
+  const { role, isAuthenticated } = useAuthSession();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const premiumPrice =
+    typeof backendPremiumPrice === "number" && backendPremiumPrice >= 0
+      ? backendPremiumPrice
+      : getPremiumMonthlyPrice();
+
+  const isVendor = isAuthenticated && role === "vendor";
+  const canStartCheckout =
+    isVendor && (currentPlan === "free" || cancelAtPeriodEnd);
+
+  const handleCheckout = async () => {
+    if (!canStartCheckout || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const result = await createVendorCheckoutSession();
+      if (!result.ok || !result.checkoutUrl) {
+        setErrorMessage(result.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      window.location.assign(result.checkoutUrl);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to initiate Stripe checkout.",
+      );
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!isSubmitting) {
+          if (!nextOpen) {
+            setErrorMessage(null);
+          }
+          onOpenChange(nextOpen);
+        }
+      }}
+    >
       <DialogContent className="rounded-2xl p-6 sm:max-w-lg">
         <DialogHeader>
           <div className="mb-1 inline-flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Crown className="size-5" aria-hidden="true" />
           </div>
           <DialogTitle className="text-xl font-semibold">
-            {currentPlan === "premium"
+            {currentPlan === "premium" && !cancelAtPeriodEnd
               ? "Your Premium Kitchen Plan"
               : "Upgrade to PizzaHub Premium"}
           </DialogTitle>
@@ -112,15 +175,34 @@ export function UpgradePlanDialog({
           </div>
         </div>
 
-        <Alert className="rounded-xl bg-muted/40">
-          <Info className="size-4 text-primary" aria-hidden="true" />
-          <AlertTitle>Subscription checkout pending</AlertTitle>
-          <AlertDescription>
-            Stripe subscription checkout will be connected in Client Task 15.
-            Monthly price is configurable (${premiumPrice}/mo). Free plan
-            vendors can rotate their menu by deactivating an active item.
-          </AlertDescription>
-        </Alert>
+        {errorMessage ? (
+          <Alert variant="destructive" className="rounded-xl">
+            <AlertCircle className="size-4" aria-hidden="true" />
+            <AlertTitle>Checkout unavailable</AlertTitle>
+            <AlertDescription className="text-xs">
+              {errorMessage}
+            </AlertDescription>
+          </Alert>
+        ) : !isVendor ? (
+          <Alert className="rounded-xl bg-muted/40">
+            <AlertCircle className="size-4 text-primary" aria-hidden="true" />
+            <AlertTitle>Vendor account required</AlertTitle>
+            <AlertDescription className="text-xs">
+              Only signed-in Vendor accounts can purchase a kitchen
+              subscription.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Alert className="rounded-xl bg-muted/40">
+            <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
+            <AlertTitle>Secure Stripe Checkout</AlertTitle>
+            <AlertDescription className="text-xs">
+              You will be redirected to Stripe&apos;s hosted checkout page to
+              complete your ${premiumPrice}/month subscription. Card details are
+              never collected on PizzaHub.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <DialogFooter className="-mx-6 -mb-6 mt-1 flex-col gap-2 rounded-b-2xl px-6 py-4 sm:flex-row sm:justify-between">
           <Button
@@ -129,20 +211,49 @@ export function UpgradePlanDialog({
             }
             variant="ghost"
             size="sm"
+            disabled={isSubmitting}
             className="text-xs text-muted-foreground hover:text-foreground"
           >
             <Sparkles className="size-3.5 text-primary" aria-hidden="true" />
             Full Plan Comparison
           </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="rounded-xl bg-card"
-          >
-            Close
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={() => onOpenChange(false)}
+              className="rounded-xl bg-card"
+            >
+              Cancel
+            </Button>
+
+            {canStartCheckout ? (
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => void handleCheckout()}
+                className="rounded-xl font-semibold shadow-xs"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2
+                      className="size-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                    Redirecting to Stripe...
+                  </>
+                ) : (
+                  <>
+                    <Crown className="size-4" aria-hidden="true" />
+                    Continue to Stripe
+                    <ExternalLink className="size-3.5" aria-hidden="true" />
+                  </>
+                )}
+              </Button>
+            ) : null}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
