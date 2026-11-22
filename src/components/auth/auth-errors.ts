@@ -1,3 +1,5 @@
+import { sanitizeCallbackUrl } from "@/lib/auth-routes";
+
 export interface PasswordPolicyStatus {
   minLength: boolean;
   hasUppercase: boolean;
@@ -31,16 +33,7 @@ export function validatePasswordPolicy(password: string): PasswordPolicyStatus {
 }
 
 export function getSafeRedirectPath(rawPath: string | null): string {
-  if (!rawPath) {
-    return "/";
-  }
-
-  const trimmed = rawPath.trim();
-  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
-    return "/";
-  }
-
-  return trimmed;
+  return sanitizeCallbackUrl(rawPath, "/");
 }
 
 export function getSafeAuthErrorMessage(

@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/toast";
 import type { PublicRegistrationRole } from "@/lib/auth";
 import { signUp } from "@/lib/auth-client";
+import { getDashboardPathForRole } from "@/lib/auth-routes";
 import {
   getSafeAuthErrorMessage,
   isValidEmail,
@@ -61,6 +63,7 @@ const ROLE_OPTIONS: ReadonlyArray<{
 
 export function SignUpForm({ googleEnabled }: SignUpFormProps) {
   const router = useRouter();
+  const { refreshSession } = useAuthSession();
 
   const [role, setRole] = useState<PublicRegistrationRole>("customer");
   const [name, setName] = useState("");
@@ -161,6 +164,8 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
         return;
       }
 
+      await refreshSession();
+
       toast.add({
         title: "Account created",
         description:
@@ -170,7 +175,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
         type: "success",
       });
       router.refresh();
-      router.push("/");
+      router.push(getDashboardPathForRole(role));
     } catch {
       const message = getSafeAuthErrorMessage({ status: 500 }, "sign-up");
       setFormError(message);
@@ -568,7 +573,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
       <GoogleAuthButton
         enabled={googleEnabled}
         mode="sign-up"
-        callbackURL="/"
+        callbackURL="/dashboard"
         disabled={isSubmitting}
         onLoadingChange={setIsGoogleLoading}
         onError={(message) => setFormError(message)}

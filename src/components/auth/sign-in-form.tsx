@@ -4,6 +4,7 @@ import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,10 +14,10 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/toast";
 import { signIn } from "@/lib/auth-client";
 import {
-  getSafeAuthErrorMessage,
-  getSafeRedirectPath,
-  isValidEmail,
-} from "./auth-errors";
+  getDashboardPathForRole,
+  sanitizeCallbackUrl,
+} from "@/lib/auth-routes";
+import { getSafeAuthErrorMessage, isValidEmail } from "./auth-errors";
 import { GoogleAuthButton } from "./google-auth-button";
 
 interface SignInFormProps {
@@ -31,7 +32,18 @@ interface SignInFieldErrors {
 export function SignInForm({ googleEnabled }: SignInFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = getSafeRedirectPath(searchParams.get("callbackUrl"));
+  const { refreshSession } = useAuthSession();
+
+  const rawCallbackUrl = searchParams.get("callbackUrl");
+  const explicitCallback = sanitizeCallbackUrl(rawCallbackUrl, "");
+  const redirectTo = explicitCallback || "/dashboard";
+  const errorParam = searchParams.get("error");
+  const redirectNotice =
+    errorParam === "blocked"
+      ? "Your account has been blocked. Please contact support or an administrator."
+      : errorParam === "session-expired"
+        ? "Your session expired. Please sign in again to continue."
+        : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,6 +55,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const isBusy = isSubmitting || isGoogleLoading;
+  const activeAlertMessage = formError ?? redirectNotice;
 
   const validateFields = (): boolean => {
     const errors: SignInFieldErrors = {};
@@ -93,13 +106,21 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
         return;
       }
 
+      await refreshSession();
+
+      const signedInRole = (
+        response.data?.user as { role?: unknown } | undefined
+      )?.role;
+      const destination =
+        explicitCallback || getDashboardPathForRole(signedInRole);
+
       toast.add({
         title: "Welcome back",
         description: "Signed in to your PizzaHub account.",
         type: "success",
       });
       router.refresh();
-      router.push(redirectTo);
+      router.push(destination);
     } catch {
       const message = getSafeAuthErrorMessage({ status: 500 }, "sign-in");
       setFormError(message);
@@ -114,11 +135,11 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
 
   return (
     <div className="space-y-6">
-      {formError ? (
+      {activeAlertMessage ? (
         <Alert variant="destructive" className="rounded-xl">
           <AlertCircle className="size-4" aria-hidden="true" />
           <AlertTitle>Could not sign in</AlertTitle>
-          <AlertDescription>{formError}</AlertDescription>
+          <AlertDescription>{activeAlertMessage}</AlertDescription>
         </Alert>
       ) : null}
 

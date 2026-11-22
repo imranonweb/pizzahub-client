@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Figtree, Geist_Mono } from "next/font/google";
+import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
 
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${bricolageGrotesque.variable} ${figtree.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Toaster>{children}</Toaster>
+        <SessionProvider>
+          <Toaster>{children}</Toaster>
+        </SessionProvider>
       </body>
     </html>
   );
