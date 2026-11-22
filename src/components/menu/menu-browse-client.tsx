@@ -5,7 +5,6 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Info,
   MapPin,
   RotateCcw,
   Search,
@@ -36,7 +35,7 @@ import { cn } from "@/lib/utils";
 import { MenuGridSkeleton } from "./menu-skeletons";
 import { PizzaCard } from "./pizza-card";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 12;
 
 const SORT_LABELS: Record<MenuSortOption, string> = {
   featured: "Featured first",
@@ -96,7 +95,7 @@ export function MenuBrowseClient() {
       const applyParam = (key: string, val: string | undefined) => {
         if (val === undefined) return;
         const trimmed = val.trim();
-        if (trimmed) {
+        if (trimmed && trimmed.toLowerCase() !== "all") {
           next.set(key, trimmed);
         } else {
           next.delete(key);
@@ -198,29 +197,12 @@ export function MenuBrowseClient() {
   const totalCount = result?.pagination.total ?? 0;
   const currentPage = result?.pagination.page ?? urlPage;
   const totalPages = result?.pagination.totalPages ?? 1;
+  const hasNextPage =
+    result?.pagination.hasNextPage ?? currentPage < totalPages;
+  const hasPrevPage = result?.pagination.hasPrevPage ?? currentPage > 1;
 
   return (
     <div className="space-y-8">
-      {result?.source === "preview" && result.apiNotice ? (
-        <Alert className="rounded-2xl border-border bg-accent/65">
-          <Info className="size-4 text-primary" aria-hidden="true" />
-          <AlertTitle>Sample Menu Preview</AlertTitle>
-          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
-            <span>{result.apiNotice}</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setReloadNonce((n) => n + 1)}
-              className="rounded-lg bg-card"
-            >
-              <RotateCcw className="size-3.5" aria-hidden="true" />
-              Retry live API
-            </Button>
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <div className="relative">
@@ -230,14 +212,17 @@ export function MenuBrowseClient() {
             />
             <Input
               type="search"
-              aria-label="Search pizza menu items"
-              placeholder="Search pizzas, toppings, or sides..."
+              aria-label="Search pizza menu items by name"
+              placeholder="Search pizzas by name..."
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
                   setSearchInput("");
                   updateUrlParams({ search: "", page: 1 });
+                } else if (event.key === "Enter") {
+                  event.preventDefault();
+                  updateUrlParams({ search: searchInput.trim(), page: 1 });
                 }
               }}
               className="h-10 rounded-xl bg-background pr-10 pl-10"
@@ -272,7 +257,7 @@ export function MenuBrowseClient() {
             >
               <div className="flex items-center gap-2 truncate">
                 <MapPin
-                  className="size-3.5 text-primary shrink-0"
+                  className="size-3.5 shrink-0 text-primary"
                   aria-hidden="true"
                 />
                 <SelectValue placeholder="All locations">
@@ -305,7 +290,7 @@ export function MenuBrowseClient() {
             >
               <div className="flex items-center gap-2 truncate">
                 <ArrowUpDown
-                  className="size-3.5 text-muted-foreground shrink-0"
+                  className="size-3.5 shrink-0 text-muted-foreground"
                   aria-hidden="true"
                 />
                 <SelectValue placeholder="Sort items">
@@ -469,20 +454,22 @@ export function MenuBrowseClient() {
       {isLoading ? (
         <MenuGridSkeleton />
       ) : errorMessage ? (
-        <Alert variant="destructive" className="rounded-2xl p-5">
-          <AlertCircle className="size-4" aria-hidden="true" />
-          <AlertTitle>Unable to load menu items</AlertTitle>
-          <AlertDescription className="mt-2 flex flex-wrap items-center justify-between gap-3">
-            <span>{errorMessage}</span>
+        <Alert variant="destructive" className="rounded-2xl p-6">
+          <AlertCircle className="size-5" aria-hidden="true" />
+          <AlertTitle className="text-base font-semibold">
+            Menu Service Unavailable
+          </AlertTitle>
+          <AlertDescription className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm leading-relaxed">{errorMessage}</span>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setReloadNonce((n) => n + 1)}
-              className="rounded-xl bg-background text-foreground"
+              className="shrink-0 rounded-xl bg-background text-foreground"
             >
               <RotateCcw className="size-3.5" aria-hidden="true" />
-              Try again
+              Retry connection
             </Button>
           </AlertDescription>
         </Alert>
@@ -606,7 +593,7 @@ export function MenuBrowseClient() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={currentPage <= 1}
+                  disabled={!hasPrevPage}
                   onClick={() => updateUrlParams({ page: currentPage - 1 })}
                   className="h-9 rounded-xl bg-card px-3.5"
                 >
@@ -616,7 +603,7 @@ export function MenuBrowseClient() {
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={currentPage >= totalPages}
+                  disabled={!hasNextPage}
                   onClick={() => updateUrlParams({ page: currentPage + 1 })}
                   className="h-9 rounded-xl bg-card px-3.5"
                 >

@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { PublicShell } from "@/components/layout/public-shell";
 import { MenuDetailClient } from "@/components/menu/menu-detail-client";
 import { MenuDetailSkeleton } from "@/components/menu/menu-skeletons";
-import { requireAuth } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Menu Item Details — PizzaHub",
@@ -13,8 +12,6 @@ export const metadata: Metadata = {
 
 async function MenuDetailGate({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireAuth(`/menu/${id}`);
-
   return <MenuDetailClient itemId={id} />;
 }
 

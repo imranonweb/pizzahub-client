@@ -3,7 +3,6 @@
 import {
   AlertCircle,
   ArrowLeft,
-  Info,
   MapPin,
   Minus,
   Plus,
@@ -133,14 +132,16 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
   }
 
   if (!detail || detail.state === "not-found") {
+    const isInvalid = detail?.isInvalidId;
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-20 text-center sm:px-6">
         <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Menu item not found
+          {isInvalid ? "Invalid menu item ID" : "Menu item not found"}
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-          The menu item you requested does not exist or may have been removed by
-          its kitchen.
+          {isInvalid
+            ? "The menu item ID provided in the URL is not a valid 24-character identifier. Please choose a pizza from our menu."
+            : "The menu item you requested does not exist or may have been removed by its kitchen."}
         </p>
         <Link
           href="/menu"
@@ -227,14 +228,6 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
           Back to Menu
         </Link>
       </div>
-
-      {detail.source === "preview" && detail.apiNotice ? (
-        <Alert className="rounded-2xl border-border bg-accent/65">
-          <Info className="size-4 text-primary" aria-hidden="true" />
-          <AlertTitle>Sample Menu Preview</AlertTitle>
-          <AlertDescription>{detail.apiNotice}</AlertDescription>
-        </Alert>
-      ) : null}
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start">
         <div className="space-y-3">

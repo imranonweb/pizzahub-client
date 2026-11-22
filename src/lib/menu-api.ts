@@ -1,7 +1,3 @@
-import {
-  findTemporaryMenuItemById,
-  queryTemporaryMenu,
-} from "@/data/menu-mock";
 import { ApiClientError, apiRequest } from "./api-client";
 
 export type MenuItemStatus = "pending" | "approved" | "rejected" | "inactive";
@@ -43,34 +39,33 @@ export interface MenuPagination {
   limit: number;
   total: number;
   totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 }
 
 export interface MenuListResult {
   items: PublicMenuItem[];
   locations: string[];
   pagination: MenuPagination;
-  source: "live" | "preview";
+  source: "live";
   catalogEmpty: boolean;
-  apiNotice?: string;
 }
 
 export type MenuItemDetailResult =
   | {
       state: "found";
       item: PublicMenuItem;
-      source: "live" | "preview";
-      apiNotice?: string;
+      source: "live";
     }
   | {
       state: "unavailable";
       item: PublicMenuItem;
-      source: "live" | "preview";
-      apiNotice?: string;
+      source: "live";
     }
   | {
       state: "not-found";
-      source: "live" | "preview";
-      apiNotice?: string;
+      source: "live";
+      isInvalidId?: boolean;
     };
 
 export const MENU_CATEGORIES = [
@@ -81,6 +76,12 @@ export const MENU_CATEGORIES = [
   "Sides & Appetizers",
   "Beverages & Desserts",
 ] as const;
+
+export const OBJECT_ID_HEX_REGEX = /^[a-f\d]{24}$/i;
+
+export function isValidMenuItemId(id: string): boolean {
+  return typeof id === "string" && OBJECT_ID_HEX_REGEX.test(id.trim());
+}
 
 const VALID_STATUSES = new Set<MenuItemStatus>([
   "pending",
@@ -165,100 +166,130 @@ function normalizeMenuItem(raw: Record<string, unknown>): PublicMenuItem {
   };
 }
 
-const PREVIEW_API_NOTICE =
-  "Showing sample menu preview items because the Express /api/menu endpoint is not yet available.";
-
 export async function fetchPublicMenu(
   params: MenuQueryParams = {},
 ): Promise<MenuListResult> {
   const query = new URLSearchParams();
-  if (params.search?.trim()) query.set("search", params.search.trim());
-  if (params.category?.trim()) query.set("category", params.category.trim());
-  if (params.location?.trim()) query.set("location", params.location.trim());
-  if (params.sort) query.set("sort", params.sort);
-  if (params.page) query.set("page", String(params.page));
-  if (params.limit) query.set("limit", String(params.limit));
+
+  if (params.search?.trim()) {
+    query.set("search", params.search.trim());
+  }
+
+  if (
+    params.category?.trim() &&
+    params.category.trim().toLowerCase() !== "all"
+  ) {
+    query.set("category", params.category.trim());
+  }
+
+  if (
+    params.location?.trim() &&
+    params.location.trim().toLowerCase() !== "all"
+  ) {
+    query.set("location", params.location.trim());
+  }
+
+  if (params.sort) {
+    query.set("sort", params.sort);
+  }
+
+  if (params.page && params.page > 1) {
+    query.set("page", String(params.page));
+  }
+
+  if (params.limit) {
+    query.set("limit", String(params.limit));
+  }
 
   const qs = query.toString();
   const path = qs ? `/api/menu?${qs}` : "/api/menu";
 
-  try {
-    const payload = await apiRequest<{
-      items?: Record<string, unknown>[];
-      data?: Record<string, unknown>[];
-      locations?: unknown[];
-      pagination?: Partial<MenuPagination>;
-    }>(path);
-
-    const rawList = Array.isArray(payload.items)
-      ? payload.items
-      : Array.isArray(payload.data)
-        ? payload.data
-        : [];
-
-    const approvedItems = rawList
-      .map(normalizeMenuItem)
-      .filter((item) => item.status === "approved");
-
-    const locations = Array.isArray(payload.locations)
-      ? payload.locations.filter(
-          (loc): loc is string => typeof loc === "string",
-        )
-      : Array.from(new Set(approvedItems.map((item) => item.location))).filter(
-          Boolean,
-        );
-
-    const limit = Math.max(1, params.limit ?? payload.pagination?.limit ?? 6);
-    const total = payload.pagination?.total ?? approvedItems.length;
-    const totalPages = Math.max(
-      1,
-      payload.pagination?.totalPages ?? Math.ceil(total / limit),
-    );
-    const page = Math.min(
-      Math.max(1, params.page ?? payload.pagination?.page ?? 1),
-      totalPages,
-    );
-
-    return {
-      items: approvedItems,
-      locations,
-      pagination: { page, limit, total, totalPages },
-      source: "live",
-      catalogEmpty:
-        total === 0 && !params.search && !params.category && !params.location,
+  const payload = await apiRequest<{
+    success?: boolean;
+    items?: Record<string, unknown>[];
+    locations?: unknown[];
+    pagination?: {
+      page?: number;
+      limit?: number;
+      total?: number;
+      totalPages?: number;
+      hasNextPage?: boolean;
+      hasPrevPage?: boolean;
     };
-  } catch (error) {
-    if (
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError)
-    ) {
-      const fallback = queryTemporaryMenu(params);
-      return {
-        ...fallback,
-        source: "preview",
-        apiNotice: PREVIEW_API_NOTICE,
-      };
-    }
+  }>(path);
 
-    throw error;
-  }
+  const rawList = Array.isArray(payload.items) ? payload.items : [];
+  const approvedItems = rawList.map(normalizeMenuItem);
+
+  const locations = Array.isArray(payload.locations)
+    ? payload.locations
+        .filter(
+          (loc): loc is string =>
+            typeof loc === "string" && loc.trim().length > 0,
+        )
+        .map((loc) => loc.trim())
+    : [];
+
+  const limit = Math.max(1, payload.pagination?.limit ?? params.limit ?? 12);
+  const total = payload.pagination?.total ?? approvedItems.length;
+  const totalPages = Math.max(
+    1,
+    payload.pagination?.totalPages ?? Math.ceil(total / limit),
+  );
+  const page = Math.min(
+    Math.max(1, payload.pagination?.page ?? params.page ?? 1),
+    totalPages,
+  );
+  const hasNextPage =
+    typeof payload.pagination?.hasNextPage === "boolean"
+      ? payload.pagination.hasNextPage
+      : page < totalPages;
+  const hasPrevPage =
+    typeof payload.pagination?.hasPrevPage === "boolean"
+      ? payload.pagination.hasPrevPage
+      : page > 1;
+
+  const pagination: MenuPagination = {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage,
+    hasPrevPage,
+  };
+
+  const hasFilter = Boolean(
+    params.search?.trim() ||
+      (params.category?.trim() &&
+        params.category.trim().toLowerCase() !== "all") ||
+      (params.location?.trim() &&
+        params.location.trim().toLowerCase() !== "all"),
+  );
+
+  return {
+    items: approvedItems,
+    locations,
+    pagination,
+    source: "live",
+    catalogEmpty: total === 0 && !hasFilter,
+  };
 }
 
 export async function fetchPublicMenuItemById(
   rawId: string,
 ): Promise<MenuItemDetailResult> {
   const id = rawId.trim();
-  if (!id || !/^[a-zA-Z0-9_-]{3,64}$/.test(id)) {
-    return { state: "not-found", source: "live" };
+  if (!id || !OBJECT_ID_HEX_REGEX.test(id)) {
+    return { state: "not-found", source: "live", isInvalidId: true };
   }
 
   try {
     const payload = await apiRequest<{
+      success?: boolean;
       item?: Record<string, unknown>;
-      data?: Record<string, unknown>;
     }>(`/api/menu/${encodeURIComponent(id)}`);
 
-    const rawItem = payload.item ?? payload.data;
+    const rawItem = payload.item;
     if (!rawItem) {
       return { state: "not-found", source: "live" };
     }
@@ -274,32 +305,8 @@ export async function fetchPublicMenuItemById(
       if (error.status === 404 && !error.isRouteNotFound) {
         return { state: "not-found", source: "live" };
       }
-
-      if (error.isRouteNotFound || error.isNetworkError) {
-        const previewItem = findTemporaryMenuItemById(id);
-        if (!previewItem) {
-          return {
-            state: "not-found",
-            source: "preview",
-            apiNotice: PREVIEW_API_NOTICE,
-          };
-        }
-
-        if (previewItem.status !== "approved") {
-          return {
-            state: "unavailable",
-            item: previewItem,
-            source: "preview",
-            apiNotice: PREVIEW_API_NOTICE,
-          };
-        }
-
-        return {
-          state: "found",
-          item: previewItem,
-          source: "preview",
-          apiNotice: PREVIEW_API_NOTICE,
-        };
+      if (error.status === 400) {
+        return { state: "not-found", source: "live", isInvalidId: true };
       }
     }
 

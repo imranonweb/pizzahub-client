@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 const QUICK_DISCOVERY_TAGS = [
   { label: "Margherita", query: "Margherita" },
   { label: "Diavola", query: "Diavola" },
-  { label: "Vegetarian", query: "Vegetarian" },
-  { label: "Sourdough", query: "Sourdough" },
-  { label: "Mozzarella", query: "Mozzarella" },
+  { label: "Marinara", query: "Marinara" },
+  { label: "Quattro Formaggi", query: "Quattro Formaggi" },
+  { label: "Calzone", query: "Calzone" },
 ] as const;
 
 export function HeroSearch() {
@@ -45,8 +45,8 @@ export function HeroSearch() {
           />
           <Input
             type="search"
-            aria-label="Search pizzas, crusts, or toppings"
-            placeholder="Search pizza name, crust, or toppings (e.g. San Marzano)..."
+            aria-label="Search pizza by name"
+            placeholder="Search pizza by name (e.g. Margherita, Diavola)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-12 rounded-xl border-border/80 bg-card pr-10 pl-10 text-sm shadow-2xs focus-visible:ring-primary"
