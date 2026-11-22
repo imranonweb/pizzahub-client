@@ -79,6 +79,5 @@ export const config = {
     "/profile",
     "/profile/:path*",
     "/payment/:path*",
-    "/menu/:id+",
   ],
 };

@@ -1,12 +1,60 @@
-import { ArrowRight, MapPin, Sparkles } from "lucide-react";
-import Image from "next/image";
+"use client";
+
+import { AlertCircle, ArrowRight, RotateCcw } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { TEMPORARY_FEATURED_PIZZAS } from "@/data/homepage-mock";
+import { useEffect, useState } from "react";
+import { MenuGridSkeleton } from "@/components/menu/menu-skeletons";
+import { PizzaCard } from "@/components/menu/pizza-card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { fetchPublicMenu, type MenuListResult } from "@/lib/menu-api";
 import { cn } from "@/lib/utils";
 
+const FEATURED_ITEMS_LIMIT = 3;
+
 export function FeaturedPizzasSection() {
+  const [result, setResult] = useState<MenuListResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    void reloadNonce;
+
+    fetchPublicMenu({
+      sort: "featured",
+      page: 1,
+      limit: FEATURED_ITEMS_LIMIT,
+    })
+      .then((data) => {
+        if (!cancelled) {
+          setResult(data);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "Unable to load featured menu items.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadNonce]);
+
   return (
     <section
       aria-labelledby="featured-pizzas-heading"
@@ -21,8 +69,8 @@ export function FeaturedPizzasSection() {
             Featured from local ovens
           </h2>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Sample menu showcase from neighborhood kitchens. Full searchable
-            menus connect directly to the live catalog.
+            Signature wood-fired pies and customer favorites freshly prepared by
+            approved PizzaHub kitchens.
           </p>
         </div>
 
@@ -38,81 +86,65 @@ export function FeaturedPizzasSection() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {TEMPORARY_FEATURED_PIZZAS.map((item) => (
-          <article
-            key={item.id}
-            className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+      {isLoading ? (
+        <MenuGridSkeleton count={FEATURED_ITEMS_LIMIT} />
+      ) : errorMessage ? (
+        <Alert variant="destructive" className="rounded-2xl p-6">
+          <AlertCircle className="size-5" aria-hidden="true" />
+          <AlertTitle className="text-base font-semibold">
+            Featured Menu Unavailable
+          </AlertTitle>
+          <AlertDescription className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm leading-relaxed">{errorMessage}</span>
+            <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setReloadNonce((n) => n + 1)}
+                className="rounded-xl bg-background text-foreground"
+              >
+                <RotateCcw className="size-3.5" aria-hidden="true" />
+                Retry
+              </Button>
+              <Link
+                href="/menu"
+                className={cn(
+                  buttonVariants({ variant: "default", size: "sm" }),
+                  "rounded-xl",
+                )}
+              >
+                Browse Menu
+              </Link>
+            </div>
+          </AlertDescription>
+        </Alert>
+      ) : !result || result.catalogEmpty || result.items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card px-6 py-14 text-center">
+          <h3 className="font-heading text-xl font-semibold text-foreground">
+            No approved pizzas published yet
+          </h3>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Local kitchens have not published approved menu items yet. Check
+            back soon or browse the menu catalog.
+          </p>
+          <Link
+            href="/menu"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "default" }),
+              "mt-5 h-10 rounded-xl px-5 font-semibold",
+            )}
           >
-            <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
-              <Image
-                src={item.image}
-                alt={item.itemName}
-                fill
-                sizes="(min-width: 1024px) 31vw, (min-width: 640px) 46vw, 100vw"
-                className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.03]"
-              />
-              {item.isPremiumVendor ? (
-                <div className="absolute top-3 left-3">
-                  <Badge className="gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
-                    <Sparkles className="size-3" aria-hidden="true" />
-                    Premium
-                  </Badge>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="flex flex-1 flex-col justify-between gap-4 p-5">
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="rounded-full font-medium"
-                  >
-                    {item.category}
-                  </Badge>
-                  <span className="font-heading text-base font-bold tabular-nums text-foreground">
-                    ${item.price.toFixed(2)}
-                  </span>
-                </div>
-
-                <h3 className="font-heading text-lg font-semibold leading-snug text-foreground">
-                  {item.itemName}
-                </h3>
-
-                <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                  {item.description}
-                </p>
-              </div>
-
-              <div className="space-y-3 border-t border-border/70 pt-3.5">
-                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <span className="truncate font-medium text-foreground">
-                    {item.vendorName}
-                  </span>
-                  <span className="inline-flex shrink-0 items-center gap-1">
-                    <MapPin
-                      className="size-3.5 text-primary"
-                      aria-hidden="true"
-                    />
-                    {item.location}
-                  </span>
-                </div>
-
-                <Link
-                  href={`/menu/${item.id}`}
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "default" }),
-                    "h-10 w-full rounded-xl font-medium group-hover:border-primary/40 group-hover:bg-accent/60",
-                  )}
-                >
-                  View Details
-                </Link>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+            Browse Menu
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {result.items.map((item) => (
+            <PizzaCard key={item.id} item={item} headingAs="h3" />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

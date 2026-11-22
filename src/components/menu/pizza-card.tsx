@@ -9,9 +9,11 @@ import { cn } from "@/lib/utils";
 
 interface PizzaCardProps {
   item: PublicMenuItem;
+  headingAs?: "h2" | "h3";
 }
 
-export function PizzaCard({ item }: PizzaCardProps) {
+export function PizzaCard({ item, headingAs = "h2" }: PizzaCardProps) {
+  const Heading = headingAs;
   const coverImage = item.images[0] || "/images/auth-pizza-hero.jpg";
   const isPremium = item.vendor.subscriptionPlan === "premium";
   const isAvailable = item.status === "approved";
@@ -55,14 +57,14 @@ export function PizzaCard({ item }: PizzaCardProps) {
             </span>
           </div>
 
-          <h2 className="font-heading text-lg font-semibold leading-snug text-foreground">
+          <Heading className="font-heading text-lg font-semibold leading-snug text-foreground">
             <Link
               href={`/menu/${encodeURIComponent(item.id)}`}
               className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               {item.itemName}
             </Link>
-          </h2>
+          </Heading>
 
           <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
             {item.description}

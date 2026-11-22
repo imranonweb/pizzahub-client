@@ -2,11 +2,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const SKELETON_ITEMS = ["s1", "s2", "s3", "s4", "s5", "s6"] as const;
 
-export function MenuGridSkeleton() {
+export function MenuGridSkeleton({ count = 6 }: { count?: number }) {
   return (
     <section aria-busy="true" aria-label="Loading menu items">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {SKELETON_ITEMS.map((key) => (
+        {SKELETON_ITEMS.slice(0, count).map((key) => (
           <div
             key={key}
             className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
