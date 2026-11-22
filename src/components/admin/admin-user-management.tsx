@@ -259,7 +259,7 @@ export function AdminUserManagement() {
         toast.add({
           title:
             result.reason === "backend-unavailable"
-              ? "User management API not implemented yet"
+              ? "User management service unavailable"
               : "Could not update user status",
           description: result.message,
           type: result.reason === "backend-unavailable" ? "warning" : "error",

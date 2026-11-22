@@ -181,7 +181,7 @@ export function CheckoutClient({
         });
         toast.add({
           title: isUnavailable
-            ? "Ordering API not implemented yet"
+            ? "Order service unavailable"
             : "Review your cart",
           description:
             serverCheck.message ?? "Server item verification failed.",
@@ -215,9 +215,7 @@ export function CheckoutClient({
           message,
         });
         toast.add({
-          title: isUnavailable
-            ? "Ordering API not implemented yet"
-            : "Order failed",
+          title: isUnavailable ? "Order service unavailable" : "Order failed",
           description: message,
           type: isUnavailable ? "warning" : "error",
         });

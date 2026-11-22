@@ -102,7 +102,7 @@ export function CustomerOrderDetailView({ orderId }: { orderId: string }) {
         toast.add({
           title:
             mutation.reason === "backend-unavailable"
-              ? "Order cancellation API not implemented yet"
+              ? "Order cancellation unavailable"
               : "Could not cancel order",
           description: mutation.message,
           type: mutation.reason === "backend-unavailable" ? "warning" : "error",

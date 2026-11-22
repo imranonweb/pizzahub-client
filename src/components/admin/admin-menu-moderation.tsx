@@ -194,7 +194,7 @@ export function AdminMenuModeration() {
         toast.add({
           title:
             result.reason === "backend-unavailable"
-              ? "Moderation API not implemented yet"
+              ? "Moderation service unavailable"
               : "Could not approve listing",
           description: result.message,
           type: result.reason === "backend-unavailable" ? "warning" : "error",
@@ -257,7 +257,7 @@ export function AdminMenuModeration() {
         toast.add({
           title:
             result.reason === "backend-unavailable"
-              ? "Moderation API not implemented yet"
+              ? "Moderation service unavailable"
               : "Could not reject listing",
           description: result.message,
           type: result.reason === "backend-unavailable" ? "warning" : "error",

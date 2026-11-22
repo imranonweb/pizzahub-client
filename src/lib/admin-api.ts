@@ -73,62 +73,17 @@ const VALID_MENU_STATUSES = new Set<MenuItemStatus>([
 ]);
 
 const ADMIN_OVERVIEW_UNAVAILABLE_NOTICE =
-  "The Express admin overview API (/api/admin/overview) is not implemented yet. Real user counts, menu approval backlogs, and platform activity will appear here once deployed.";
+  "Unable to load live platform overview metrics from the PizzaHub admin API. Please check your connection or retry.";
 
 const ADMIN_MENU_UNAVAILABLE_NOTICE =
-  "The Express admin moderation API (/api/admin/menu) is not implemented yet. Menu submissions awaiting review and approve/reject actions require those backend endpoints.";
+  "Unable to reach the PizzaHub admin moderation API (/api/admin/menu). Please check your connection or retry.";
 
 const ADMIN_USERS_UNAVAILABLE_NOTICE =
-  "The Express admin user management API (/api/admin/users) is not implemented yet. Platform account records and block controls require those backend endpoints.";
+  "Unable to reach the PizzaHub admin user management API (/api/admin/users). Please check your connection or retry.";
 
 function toNumber(value: unknown): number {
   const n = typeof value === "number" ? value : Number(value ?? 0);
   return Number.isFinite(n) && n >= 0 ? n : 0;
-}
-
-function normalizeStats(raw: Record<string, unknown>): AdminPlatformStats {
-  return {
-    totalUsers: toNumber(raw.totalUsers),
-    totalCustomers: toNumber(raw.totalCustomers),
-    totalVendors: toNumber(raw.totalVendors),
-    activeVendors: toNumber(raw.activeVendors),
-    totalMenuItems: toNumber(raw.totalMenuItems),
-    pendingMenuApprovals: toNumber(raw.pendingMenuApprovals),
-    approvedMenuItems: toNumber(raw.approvedMenuItems),
-    rejectedMenuItems: toNumber(raw.rejectedMenuItems),
-  };
-}
-
-function normalizeActivityEntry(
-  raw: Record<string, unknown>,
-  index: number,
-): AdminActivityEntry {
-  const rawType = typeof raw.type === "string" ? raw.type : "";
-  const type =
-    rawType === "menu" || rawType === "user" || rawType === "platform"
-      ? rawType
-      : "platform";
-
-  return {
-    id:
-      typeof raw.id === "string"
-        ? raw.id
-        : typeof raw._id === "string"
-          ? raw._id
-          : `activity-${index}`,
-    type,
-    summary:
-      typeof raw.summary === "string" && raw.summary.trim()
-        ? raw.summary
-        : "Platform update",
-    actorName: typeof raw.actorName === "string" ? raw.actorName : undefined,
-    targetLabel:
-      typeof raw.targetLabel === "string" ? raw.targetLabel : undefined,
-    createdAt:
-      typeof raw.createdAt === "string"
-        ? raw.createdAt
-        : new Date(0).toISOString(),
-  };
 }
 
 function normalizeAdminMenuItem(
@@ -346,25 +301,80 @@ export async function fetchAdminOverview(): Promise<AdminOverviewResponse> {
   }
 
   try {
-    const payload = await apiRequest<{
-      stats?: Record<string, unknown>;
-      recentActivity?: Record<string, unknown>[];
-      data?: {
-        stats?: Record<string, unknown>;
-        recentActivity?: Record<string, unknown>[];
-      };
-    }>("/api/admin/overview", { headers: authHeaders });
+    const [usersPayload, activeVendorsPayload, menuPayload] = await Promise.all(
+      [
+        apiRequest<{
+          users?: Record<string, unknown>[];
+          counts?: Record<string, unknown>;
+        }>("/api/admin/users?limit=5", { headers: authHeaders }),
+        apiRequest<{
+          pagination?: { total?: unknown };
+          users?: Record<string, unknown>[];
+        }>("/api/admin/users?role=vendor&status=active&limit=1", {
+          headers: authHeaders,
+        }),
+        apiRequest<{
+          items?: Record<string, unknown>[];
+          counts?: Record<string, unknown>;
+        }>("/api/admin/menu?limit=5", { headers: authHeaders }),
+      ],
+    );
 
-    const rawStats = payload.stats ?? payload.data?.stats;
-    const rawActivity =
-      payload.recentActivity ?? payload.data?.recentActivity ?? [];
+    const userCounts = usersPayload.counts ?? {};
+    const menuCounts = menuPayload.counts ?? {};
+    const activeVendorsCount =
+      activeVendorsPayload.pagination?.total !== undefined
+        ? toNumber(activeVendorsPayload.pagination.total)
+        : Array.isArray(activeVendorsPayload.users)
+          ? activeVendorsPayload.users.length
+          : 0;
+
+    const stats: AdminPlatformStats = {
+      totalUsers: toNumber(userCounts.total),
+      totalCustomers: toNumber(userCounts.customers),
+      totalVendors: toNumber(userCounts.vendors),
+      activeVendors: activeVendorsCount,
+      totalMenuItems: toNumber(menuCounts.total ?? menuCounts.all),
+      pendingMenuApprovals: toNumber(menuCounts.pending),
+      approvedMenuItems: toNumber(menuCounts.approved),
+      rejectedMenuItems: toNumber(menuCounts.rejected),
+    };
+
+    const recentMenuItems = Array.isArray(menuPayload.items)
+      ? menuPayload.items.map(normalizeAdminMenuItem)
+      : [];
+    const recentUsers = Array.isArray(usersPayload.users)
+      ? usersPayload.users.map(normalizeAdminUser)
+      : [];
+
+    const derivedActivity: AdminActivityEntry[] = [
+      ...recentMenuItems.map((item) => ({
+        id: `menu-${item.id}`,
+        type: "menu" as const,
+        summary: `${item.vendor.businessName} submitted "${item.itemName}" (${item.status})`,
+        actorName: item.vendor.businessName,
+        targetLabel: item.itemName,
+        createdAt: item.createdAt,
+      })),
+      ...recentUsers.map((user) => ({
+        id: `user-${user.id}`,
+        type: "user" as const,
+        summary: `New ${user.role} account registered: ${user.name}`,
+        actorName: user.name,
+        targetLabel: user.email,
+        createdAt: user.createdAt,
+      })),
+    ]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .slice(0, 6);
 
     return {
       source: "live",
-      stats: rawStats ? normalizeStats(rawStats) : null,
-      recentActivity: Array.isArray(rawActivity)
-        ? rawActivity.map(normalizeActivityEntry)
-        : [],
+      stats,
+      recentActivity: derivedActivity,
     };
   } catch (error) {
     if (
@@ -399,7 +409,8 @@ export async function fetchAdminMenuItems(): Promise<AdminMenuListResponse> {
     const payload = await apiRequest<{
       items?: Record<string, unknown>[];
       data?: Record<string, unknown>[];
-    }>("/api/admin/menu", { headers: authHeaders });
+      counts?: Record<string, unknown>;
+    }>("/api/admin/menu?limit=100", { headers: authHeaders });
 
     const rawItems = Array.isArray(payload.items)
       ? payload.items
@@ -408,10 +419,21 @@ export async function fetchAdminMenuItems(): Promise<AdminMenuListResponse> {
         : [];
 
     const items = rawItems.map(normalizeAdminMenuItem);
+    const computed = computeMenuCounts(items);
+    const counts: AdminMenuCounts = payload.counts
+      ? {
+          all: toNumber(payload.counts.total ?? payload.counts.all),
+          pending: toNumber(payload.counts.pending),
+          approved: toNumber(payload.counts.approved),
+          rejected: toNumber(payload.counts.rejected),
+          inactive: toNumber(payload.counts.inactive),
+        }
+      : computed;
+
     return {
       source: "live",
       items,
-      counts: computeMenuCounts(items),
+      counts,
     };
   } catch (error) {
     if (
@@ -484,7 +506,7 @@ export async function moderateAdminMenuItem(
       ok: false,
       ...classifyAdminError(
         error,
-        "The Express menu moderation endpoint is not available yet. No status change was saved.",
+        "Unable to reach the admin menu moderation API. No status change was saved.",
       ),
     };
   }
@@ -506,7 +528,8 @@ export async function fetchAdminUsers(): Promise<AdminUsersListResponse> {
     const payload = await apiRequest<{
       users?: Record<string, unknown>[];
       data?: Record<string, unknown>[];
-    }>("/api/admin/users", { headers: authHeaders });
+      counts?: Record<string, unknown>;
+    }>("/api/admin/users?limit=100", { headers: authHeaders });
 
     const rawUsers = Array.isArray(payload.users)
       ? payload.users
@@ -515,10 +538,22 @@ export async function fetchAdminUsers(): Promise<AdminUsersListResponse> {
         : [];
 
     const users = rawUsers.map(normalizeAdminUser);
+    const computed = computeUsersCounts(users);
+    const counts: AdminUsersCounts = payload.counts
+      ? {
+          total: toNumber(payload.counts.total),
+          active: toNumber(payload.counts.active),
+          blocked: toNumber(payload.counts.blocked),
+          customers: toNumber(payload.counts.customers),
+          vendors: toNumber(payload.counts.vendors),
+          admins: toNumber(payload.counts.admins),
+        }
+      : computed;
+
     return {
       source: "live",
       users,
-      counts: computeUsersCounts(users),
+      counts,
     };
   } catch (error) {
     if (
@@ -577,7 +612,7 @@ export async function updateAdminUserBlockStatus(
       ok: false,
       ...classifyAdminError(
         error,
-        "The Express user management endpoint is not available yet. Account access was not changed.",
+        "Unable to reach the admin user management API. Account access was not changed.",
       ),
     };
   }

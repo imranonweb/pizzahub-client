@@ -26,7 +26,7 @@ export type ContactUpdateResult =
     };
 
 const PROFILE_API_UNAVAILABLE_NOTICE =
-  "Customer contact phone and saved delivery address endpoints (/api/profile) are not implemented yet on the Express server. Name and avatar updates remain live via Better Auth.";
+  "Unable to reach the PizzaHub profile API (/api/profile). Name and avatar updates remain available via your session, or retry in a moment.";
 
 export async function updateAccountProfile(input: {
   name: string;

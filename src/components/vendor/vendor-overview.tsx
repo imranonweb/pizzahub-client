@@ -477,8 +477,8 @@ export function VendorOverview() {
               No live menu activity yet
             </p>
             <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
-              Recent submissions and approval updates will appear here once the
-              Express vendor API endpoints are implemented.
+              Unable to reach the vendor menu API right now. Retry or navigate
+              to Menu Manager once the backend server is reachable.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2.5">
               <Button

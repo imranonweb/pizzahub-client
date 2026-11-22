@@ -64,7 +64,7 @@ const VALID_STATUSES = new Set<MenuItemStatus>([
 ]);
 
 const VENDOR_API_UNAVAILABLE_NOTICE =
-  "The Express vendor menu API (/api/vendor/menu) is not implemented yet. Real menu counts, listings, and changes will sync automatically once those server endpoints are deployed.";
+  "Unable to reach the PizzaHub vendor menu API (/api/vendor/menu). Please check your connection or retry.";
 
 export function createEmptyVendorMenuStats(): VendorMenuStats {
   return {

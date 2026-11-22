@@ -146,7 +146,7 @@ export function PizzaForm({
         });
         toast.add({
           title: isUnavailable
-            ? "Vendor API not implemented yet"
+            ? "Vendor menu service unavailable"
             : "Failed to save item",
           description: result.message,
           type: isUnavailable ? "warning" : "error",

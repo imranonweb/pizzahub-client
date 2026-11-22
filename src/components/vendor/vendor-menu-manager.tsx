@@ -183,7 +183,7 @@ export function VendorMenuManager() {
         toast.add({
           title:
             result.reason === "backend-unavailable"
-              ? "Vendor API not implemented yet"
+              ? "Vendor menu service unavailable"
               : "Status update failed",
           description: result.message,
           type: result.reason === "backend-unavailable" ? "warning" : "error",
@@ -213,7 +213,7 @@ export function VendorMenuManager() {
         toast.add({
           title:
             result.reason === "backend-unavailable"
-              ? "Vendor API not implemented yet"
+              ? "Vendor menu service unavailable"
               : "Could not delete listing",
           description: result.message,
           type: result.reason === "backend-unavailable" ? "warning" : "error",

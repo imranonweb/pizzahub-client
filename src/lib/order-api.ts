@@ -52,7 +52,9 @@ export interface CartServerValidationResult {
 }
 
 const ORDERS_API_UNAVAILABLE_NOTICE =
-  "The Express customer ordering API (/api/orders) is not implemented yet. Live order submission, tracking history, and cancellation require those server endpoints.";
+  "Unable to reach the PizzaHub ordering API (/api/orders). Please check your connection or retry.";
+
+const ORDER_OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
 
 function toPositiveNumber(val: unknown): number {
   const n = typeof val === "number" ? val : Number(val ?? 0);
@@ -259,7 +261,7 @@ export async function validateCartItemsAgainstServer(
         ok: false,
         reason: "backend-unavailable",
         message:
-          "Live item availability and pricing cannot be verified because the Express /api/menu endpoint is not implemented yet.",
+          "Live item availability and pricing cannot be verified because the menu server could not be reached.",
       };
     }
 
@@ -393,7 +395,7 @@ export async function fetchCustomerOrders(): Promise<CustomerOrdersListResponse>
     const payload = await apiRequest<{
       orders?: Record<string, unknown>[];
       data?: Record<string, unknown>[];
-    }>("/api/orders/my", { headers: authHeaders });
+    }>("/api/orders/my?limit=100", { headers: authHeaders });
 
     const rawOrders = Array.isArray(payload.orders)
       ? payload.orders
@@ -425,7 +427,7 @@ export async function fetchCustomerOrderById(
   rawId: string,
 ): Promise<CustomerOrderDetailResult> {
   const id = rawId.trim();
-  if (!id || !/^[a-zA-Z0-9_-]{2,64}$/.test(id)) {
+  if (!id || !ORDER_OBJECT_ID_REGEX.test(id)) {
     return { state: "not-found" };
   }
 
@@ -476,6 +478,15 @@ export async function fetchCustomerOrderById(
 export async function cancelCustomerOrder(
   id: string,
 ): Promise<OrderMutationResult<CustomerOrder>> {
+  const trimmedId = id.trim();
+  if (!ORDER_OBJECT_ID_REGEX.test(trimmedId)) {
+    return {
+      ok: false,
+      reason: "validation",
+      message: "Invalid order ID format.",
+    };
+  }
+
   const authHeaders = await getBearerHeaders();
   if (!authHeaders) {
     return {
@@ -490,9 +501,13 @@ export async function cancelCustomerOrder(
       order?: Record<string, unknown>;
       data?: Record<string, unknown>;
       message?: string;
-    }>(`/api/orders/${encodeURIComponent(id)}/cancel`, {
+    }>(`/api/orders/${encodeURIComponent(trimmedId)}/cancel`, {
       method: "PATCH",
-      headers: authHeaders,
+      headers: {
+        ...authHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
     });
 
     const rawOrder = response.order ?? response.data;

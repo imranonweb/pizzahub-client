@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   PlusCircle,
+  ShoppingBag,
   Sparkles,
   Store,
   UtensilsCrossed,
@@ -69,6 +70,12 @@ const VENDOR_NAV_ITEMS = [
     href: "/dashboard/vendor/add",
     label: "Add Pizza",
     icon: PlusCircle,
+    exact: false,
+  },
+  {
+    href: "/dashboard/vendor/orders",
+    label: "Incoming Orders",
+    icon: ShoppingBag,
     exact: false,
   },
   {
