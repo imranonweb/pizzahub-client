@@ -1,6 +1,14 @@
-import { type Db, MongoClient } from "mongodb";
+import { type Db, MongoClient, type MongoClientOptions } from "mongodb";
 
 const DEFAULT_DB_NAME = "pizzahub";
+
+const SERVERLESS_MONGO_OPTIONS: MongoClientOptions = {
+  maxPoolSize: 10,
+  minPoolSize: 0,
+  maxIdleTimeMS: 60_000,
+  serverSelectionTimeoutMS: 8_000,
+  connectTimeoutMS: 8_000,
+};
 
 interface MongoGlobalCache {
   client?: MongoClient;
@@ -32,11 +40,11 @@ export function getMongoClient(): MongoClient {
   const uri = process.env.DB_URI?.trim();
   if (!uri) {
     throw new Error(
-      "Missing required environment variable DB_URI. Set DB_URI in .env to a valid MongoDB connection string.",
+      "Missing required environment variable DB_URI. Set DB_URI in your environment to a valid MongoDB connection string.",
     );
   }
 
-  const client = new MongoClient(uri);
+  const client = new MongoClient(uri, SERVERLESS_MONGO_OPTIONS);
   cache.client = client;
   return client;
 }

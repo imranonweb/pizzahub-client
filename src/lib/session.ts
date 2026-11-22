@@ -2,7 +2,7 @@ import { getSessionCookie } from "better-auth/cookies";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { auth, type PizzaHubRole, type SubscriptionPlan } from "./auth";
+import { getAuth, type PizzaHubRole, type SubscriptionPlan } from "./auth";
 import {
   buildSignInRedirectUrl,
   getDashboardPathForRole,
@@ -35,7 +35,7 @@ export interface ServerAuthSession {
 export const getServerSession = cache(
   async (): Promise<ServerAuthSession | null> => {
     const requestHeaders = await headers();
-    const rawSession = await auth.api.getSession({
+    const rawSession = await getAuth().api.getSession({
       headers: requestHeaders,
     });
 

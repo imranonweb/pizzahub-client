@@ -1,6 +1,6 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import {
   buildSignInRedirectUrl,
   getDashboardPathForRole,
@@ -18,9 +18,11 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  let sessionResult: Awaited<ReturnType<typeof auth.api.getSession>> = null;
+  let sessionResult: Awaited<
+    ReturnType<ReturnType<typeof getAuth>["api"]["getSession"]>
+  > = null;
   try {
-    sessionResult = await auth.api.getSession({
+    sessionResult = await getAuth().api.getSession({
       headers: request.headers,
     });
   } catch {

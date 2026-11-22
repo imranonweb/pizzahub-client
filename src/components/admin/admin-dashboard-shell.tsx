@@ -11,7 +11,7 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
-import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -241,86 +241,84 @@ export function AdminDashboardShell({
   const contextValue = useMemo(() => user, [user]);
 
   return (
-    <MotionConfig reducedMotion="user">
-      <AdminProfileContext.Provider value={contextValue}>
-        <div className="flex min-h-dvh w-full bg-background text-foreground">
-          <aside
-            aria-label="Admin navigation"
-            className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col"
-          >
-            <AdminSidebarContent
-              user={user}
-              pathname={pathname}
-              isSigningOut={isSigningOut}
-              onSignOut={handleSignOut}
-            />
-          </aside>
+    <AdminProfileContext.Provider value={contextValue}>
+      <div className="flex min-h-dvh w-full bg-background text-foreground">
+        <aside
+          aria-label="Admin navigation"
+          className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col"
+        >
+          <AdminSidebarContent
+            user={user}
+            pathname={pathname}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+          />
+        </aside>
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm lg:hidden">
-              <div className="flex items-center gap-2.5">
-                <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                  <SheetTrigger
-                    render={
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        aria-label="Open admin navigation menu"
-                        className="rounded-xl bg-card"
-                      />
-                    }
-                  >
-                    <Menu className="size-5" aria-hidden="true" />
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-72 bg-sidebar p-0">
-                    <SheetHeader className="sr-only">
-                      <SheetTitle>Admin Navigation</SheetTitle>
-                      <SheetDescription>
-                        Navigate PizzaHub admin moderation and user management
-                        views.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <AdminSidebarContent
-                      user={user}
-                      pathname={pathname}
-                      isSigningOut={isSigningOut}
-                      onSignOut={handleSignOut}
-                      onNavigate={() => setMobileOpen(false)}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm lg:hidden">
+            <div className="flex items-center gap-2.5">
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Open admin navigation menu"
+                      className="rounded-xl bg-card"
                     />
-                  </SheetContent>
-                </Sheet>
-                <span className="font-heading text-base font-semibold tracking-tight text-foreground">
-                  PizzaHub Admin
-                </span>
-              </div>
-
-              <Button
-                render={<Link href="/dashboard/admin/menu" />}
-                size="sm"
-                className="h-9 rounded-xl px-3 font-medium"
-              >
-                <ClipboardCheck className="size-4" aria-hidden="true" />
-                Moderation
-              </Button>
-            </header>
-
-            <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={pathname}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                  className="mx-auto w-full max-w-6xl"
+                  }
                 >
-                  {children}
-                </motion.div>
-              </AnimatePresence>
-            </main>
-          </div>
+                  <Menu className="size-5" aria-hidden="true" />
+                </SheetTrigger>
+                <SheetContent side="left" className="w-72 bg-sidebar p-0">
+                  <SheetHeader className="sr-only">
+                    <SheetTitle>Admin Navigation</SheetTitle>
+                    <SheetDescription>
+                      Navigate PizzaHub admin moderation and user management
+                      views.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <AdminSidebarContent
+                    user={user}
+                    pathname={pathname}
+                    isSigningOut={isSigningOut}
+                    onSignOut={handleSignOut}
+                    onNavigate={() => setMobileOpen(false)}
+                  />
+                </SheetContent>
+              </Sheet>
+              <span className="font-heading text-base font-semibold tracking-tight text-foreground">
+                PizzaHub Admin
+              </span>
+            </div>
+
+            <Button
+              render={<Link href="/dashboard/admin/menu" />}
+              size="sm"
+              className="h-9 rounded-xl px-3 font-medium"
+            >
+              <ClipboardCheck className="size-4" aria-hidden="true" />
+              Moderation
+            </Button>
+          </header>
+
+          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                className="mx-auto w-full max-w-6xl"
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </main>
         </div>
-      </AdminProfileContext.Provider>
-    </MotionConfig>
+      </div>
+    </AdminProfileContext.Provider>
   );
 }

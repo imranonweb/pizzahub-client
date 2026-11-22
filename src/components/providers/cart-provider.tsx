@@ -1,6 +1,7 @@
 "use client";
 
 import { MotionConfig } from "motion/react";
+import dynamic from "next/dynamic";
 import {
   createContext,
   type ReactNode,
@@ -10,7 +11,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { CartDrawer } from "@/components/cart/cart-drawer";
 import {
   addItemToCartList,
   CART_STORAGE_KEY,
@@ -21,6 +21,11 @@ import {
   sanitizeStoredCartItems,
   updateCartItemQuantity,
 } from "@/lib/cart-rules";
+
+const CartDrawer = dynamic(
+  () => import("@/components/cart/cart-drawer").then((mod) => mod.CartDrawer),
+  { ssr: false },
+);
 
 export interface CartContextValue {
   items: CartItem[];
@@ -45,6 +50,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [hasOpenedDrawer, setHasOpenedDrawer] = useState(false);
 
   useEffect(() => {
     try {
@@ -84,7 +90,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, isHydrated]);
 
-  const openDrawer = useCallback(() => setIsDrawerOpen(true), []);
+  const setDrawerOpen = useCallback((open: boolean) => {
+    if (open) {
+      setHasOpenedDrawer(true);
+    }
+    setIsDrawerOpen(open);
+  }, []);
+
+  const openDrawer = useCallback(() => {
+    setHasOpenedDrawer(true);
+    setIsDrawerOpen(true);
+  }, []);
+
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
 
   const addItem = useCallback(
@@ -134,7 +151,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       isDrawerOpen,
       openDrawer,
       closeDrawer,
-      setDrawerOpen: setIsDrawerOpen,
+      setDrawerOpen,
       addItem,
       updateQuantity,
       removeItem,
@@ -148,6 +165,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       isDrawerOpen,
       openDrawer,
       closeDrawer,
+      setDrawerOpen,
       addItem,
       updateQuantity,
       removeItem,
@@ -160,7 +178,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <MotionConfig reducedMotion="user">
       <CartContext.Provider value={value}>
         {children}
-        <CartDrawer />
+        {hasOpenedDrawer ? <CartDrawer /> : null}
       </CartContext.Provider>
     </MotionConfig>
   );
