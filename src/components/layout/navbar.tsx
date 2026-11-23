@@ -38,6 +38,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { toast } from "@/components/ui/toast";
 import { getDashboardPathForRole } from "@/lib/auth-routes";
 import { cn } from "@/lib/utils";
@@ -145,6 +146,7 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-2.5">
+          <ThemeToggle />
           {showCartButton ? (
             <Button
               type="button"
@@ -292,6 +294,7 @@ export function Navbar() {
         </div>
 
         <div className="flex md:hidden items-center gap-2">
+          <ThemeToggle />
           {showCartButton ? (
             <Button
               type="button"

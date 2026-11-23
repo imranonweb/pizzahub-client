@@ -3,16 +3,18 @@
 import {
   AlertCircle,
   ArrowRight,
+  CheckCircle2,
   Clock,
   Info,
   ReceiptText,
   RotateCw,
-  ShoppingBag,
   Store,
+  XCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { useCart } from "@/components/providers/cart-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -68,10 +70,23 @@ export function CustomerOverview() {
 
   const isLive = data?.source === "live";
   const orders = data?.orders ?? [];
-  const activeOrdersCount = orders.filter((o) =>
-    ["pending", "accepted", "preparing", "ready", "out_for_delivery"].includes(
-      o.status,
-    ),
+  const pendingOrdersCount = orders.filter(
+    (o) => o.status === "pending",
+  ).length;
+  const acceptedOrdersCount = orders.filter((o) =>
+    [
+      "accepted",
+      "preparing",
+      "ready",
+      "out_for_delivery",
+      "delivered",
+    ].includes(o.status),
+  ).length;
+  const rejectedOrdersCount = orders.filter(
+    (o) => o.status === "rejected",
+  ).length;
+  const cancelledOrdersCount = orders.filter(
+    (o) => o.status === "cancelled",
   ).length;
   const deliveredOrdersCount = orders.filter(
     (o) => o.status === "delivered",
@@ -79,25 +94,32 @@ export function CustomerOverview() {
 
   const summaryCards = [
     {
-      label: "Items in Cart",
-      value: isHydrated ? String(summary.itemCount) : "0",
-      caption:
-        isHydrated && summary.itemCount > 0
-          ? `Est. subtotal $${summary.subtotal.toFixed(2)}`
-          : "Cart persisted locally",
-      icon: ShoppingBag,
-    },
-    {
       label: "Total Orders",
       value: isLive ? String(orders.length) : "—",
       caption: isLive ? "All submitted orders" : "Awaiting orders API",
       icon: ReceiptText,
     },
     {
-      label: "Active Orders",
-      value: isLive ? String(activeOrdersCount) : "—",
-      caption: isLive ? "Pending or in progress" : "Awaiting orders API",
+      label: "Pending Orders",
+      value: isLive ? String(pendingOrdersCount) : "—",
+      caption: isLive ? "Awaiting vendor confirmation" : "Awaiting orders API",
       icon: Clock,
+    },
+    {
+      label: "Accepted Orders",
+      value: isLive ? String(acceptedOrdersCount) : "—",
+      caption: isLive
+        ? `${deliveredOrdersCount} delivered so far`
+        : "Awaiting orders API",
+      icon: CheckCircle2,
+    },
+    {
+      label: "Rejected Orders",
+      value: isLive ? String(rejectedOrdersCount) : "—",
+      caption: isLive
+        ? `${cancelledOrdersCount} cancelled by you`
+        : "Awaiting orders API",
+      icon: XCircle,
     },
   ];
 
@@ -173,8 +195,8 @@ export function CustomerOverview() {
       ) : null}
 
       <section
-        aria-label="Customer summary"
-        className="grid gap-4 sm:grid-cols-3"
+        aria-label="Customer order summary"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
       >
         {summaryCards.map((card, index) => {
           const Icon = card.icon;
@@ -208,6 +230,34 @@ export function CustomerOverview() {
           );
         })}
       </section>
+
+      <StatusDistributionChart
+        title="Order Status Breakdown"
+        description="Overview of your pending, accepted, rejected, and cancelled pizza orders."
+        emptyMessage="Place your first pizza order to track order distribution here."
+        segments={[
+          {
+            label: "Pending",
+            value: isLive ? pendingOrdersCount : 0,
+            colorClass: "bg-chart-4",
+          },
+          {
+            label: "Accepted / Completed",
+            value: isLive ? acceptedOrdersCount : 0,
+            colorClass: "bg-chart-3",
+          },
+          {
+            label: "Rejected",
+            value: isLive ? rejectedOrdersCount : 0,
+            colorClass: "bg-chart-1",
+          },
+          {
+            label: "Cancelled",
+            value: isLive ? cancelledOrdersCount : 0,
+            colorClass: "bg-chart-5",
+          },
+        ]}
+      />
 
       <div className="grid gap-6 lg:grid-cols-12">
         <section

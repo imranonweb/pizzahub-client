@@ -50,12 +50,14 @@ export interface CustomerOrder {
   deliveryAddress: string;
   contactPhone: string;
   orderNotes: string;
+  deliveryDate: string | null;
   createdAt: string;
   updatedAt: string;
   statusHistory: OrderTimelineEvent[];
 }
 
 export interface CheckoutFormValues {
+  deliveryDate: string;
   deliveryAddress: string;
   contactPhone: string;
   orderNotes: string;
@@ -86,12 +88,32 @@ export function normalizeOrderStatus(raw: unknown): OrderStatus {
   return "pending";
 }
 
+export function getTodayIsoDate(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function validateCheckoutForm(values: CheckoutFormValues): {
   valid: boolean;
   errors: CheckoutFormErrors;
   sanitized?: CheckoutFormValues;
 } {
   const errors: CheckoutFormErrors = {};
+
+  const deliveryDate = values.deliveryDate.trim();
+  if (!deliveryDate) {
+    errors.deliveryDate = "Select a preferred delivery date.";
+  } else if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(deliveryDate) ||
+    Number.isNaN(new Date(`${deliveryDate}T00:00:00Z`).getTime())
+  ) {
+    errors.deliveryDate = "Delivery date must use YYYY-MM-DD format.";
+  } else if (deliveryDate < getTodayIsoDate()) {
+    errors.deliveryDate = "Delivery date cannot be in the past.";
+  }
 
   const deliveryAddress = values.deliveryAddress.trim();
   if (!deliveryAddress) {
@@ -128,6 +150,7 @@ export function validateCheckoutForm(values: CheckoutFormValues): {
     valid: true,
     errors: {},
     sanitized: {
+      deliveryDate,
       deliveryAddress,
       contactPhone,
       orderNotes,

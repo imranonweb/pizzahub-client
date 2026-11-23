@@ -175,6 +175,10 @@ function normalizeCustomerOrder(raw: Record<string, unknown>): CustomerOrder {
       typeof raw.deliveryAddress === "string" ? raw.deliveryAddress : "",
     contactPhone: typeof raw.contactPhone === "string" ? raw.contactPhone : "",
     orderNotes: typeof raw.orderNotes === "string" ? raw.orderNotes : "",
+    deliveryDate:
+      typeof raw.deliveryDate === "string" && raw.deliveryDate.trim()
+        ? raw.deliveryDate.trim()
+        : null,
     createdAt:
       typeof raw.createdAt === "string"
         ? raw.createdAt
@@ -332,6 +336,7 @@ export async function validateCartItemsAgainstServer(
 
 export async function createCustomerOrder(input: {
   items: { menuItemId: string; quantity: number }[];
+  deliveryDate?: string;
   deliveryAddress: string;
   contactPhone: string;
   orderNotes?: string;
@@ -360,6 +365,9 @@ export async function createCustomerOrder(input: {
         items: input.items,
         deliveryAddress: input.deliveryAddress,
         contactPhone: input.contactPhone,
+        ...(input.deliveryDate?.trim()
+          ? { deliveryDate: input.deliveryDate.trim() }
+          : {}),
         ...(input.orderNotes?.trim()
           ? { orderNotes: input.orderNotes.trim() }
           : {}),

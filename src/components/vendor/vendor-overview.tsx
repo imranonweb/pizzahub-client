@@ -3,11 +3,13 @@
 import {
   AlertCircle,
   CheckCircle2,
+  ClipboardCheck,
   Clock,
   Crown,
   Info,
   PlusCircle,
   RotateCw,
+  ShoppingBag,
   Sparkles,
   Store,
   UtensilsCrossed,
@@ -17,6 +19,7 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +31,10 @@ import {
   fetchVendorMenuItems,
   type VendorMenuListResponse,
 } from "@/lib/vendor-menu-api";
+import {
+  fetchVendorOrders,
+  type VendorOrdersListResponse,
+} from "@/lib/vendor-order-api";
 import { UpgradePlanDialog } from "./upgrade-plan-dialog";
 import { useVendorProfile } from "./vendor-dashboard-shell";
 import { VendorStatusBadge } from "./vendor-status-badge";
@@ -48,6 +55,9 @@ function formatShortDate(iso: string): string {
 export function VendorOverview() {
   const user = useVendorProfile();
   const [data, setData] = useState<VendorMenuListResponse | null>(null);
+  const [ordersData, setOrdersData] = useState<VendorOrdersListResponse | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -56,8 +66,12 @@ export function VendorOverview() {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const response = await fetchVendorMenuItems();
-      setData(response);
+      const [menuResponse, ordersResponse] = await Promise.all([
+        fetchVendorMenuItems(),
+        fetchVendorOrders({ limit: 100 }),
+      ]);
+      setData(menuResponse);
+      setOrdersData(ordersResponse);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -74,7 +88,30 @@ export function VendorOverview() {
   }, [loadOverview]);
 
   const isBackendLive = data?.source === "live";
+  const isOrdersLive = ordersData?.source === "live";
   const stats = data?.stats ?? createEmptyVendorMenuStats();
+  const vendorOrders = ordersData?.orders ?? [];
+  const pendingCustomerOrdersCount = vendorOrders.filter(
+    (o) => o.status === "pending",
+  ).length;
+  const acceptedOrdersCount = vendorOrders.filter((o) =>
+    [
+      "accepted",
+      "preparing",
+      "ready",
+      "out_for_delivery",
+      "delivered",
+    ].includes(o.status),
+  ).length;
+  const inKitchenOrdersCount = vendorOrders.filter((o) =>
+    ["accepted", "preparing"].includes(o.status),
+  ).length;
+  const readyOrDeliveredOrdersCount = vendorOrders.filter((o) =>
+    ["ready", "out_for_delivery", "delivered"].includes(o.status),
+  ).length;
+  const declinedOrCancelledOrdersCount = vendorOrders.filter((o) =>
+    ["rejected", "cancelled"].includes(o.status),
+  ).length;
   const isPremium = user.subscriptionPlan === "premium";
 
   const activeUsageValue = isBackendLive ? stats.active : 0;
@@ -130,6 +167,22 @@ export function VendorOverview() {
         ? "Needs update before approval"
         : "Awaiting vendor API",
       icon: XCircle,
+    },
+    {
+      label: "Pending Orders",
+      value: isOrdersLive ? String(pendingCustomerOrdersCount) : "—",
+      caption: isOrdersLive
+        ? "Customer orders awaiting response"
+        : "Awaiting orders API",
+      icon: ShoppingBag,
+    },
+    {
+      label: "Accepted Orders",
+      value: isOrdersLive ? String(acceptedOrdersCount) : "—",
+      caption: isOrdersLive
+        ? "Accepted, preparing, or completed"
+        : "Awaiting orders API",
+      icon: ClipboardCheck,
     },
   ];
 
@@ -205,8 +258,8 @@ export function VendorOverview() {
       ) : null}
 
       <section
-        aria-label="Menu summary metrics"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        aria-label="Menu and order summary metrics"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
       >
         {isLoading
           ? statCards.map((card) => (
@@ -249,6 +302,64 @@ export function VendorOverview() {
               );
             })}
       </section>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <StatusDistributionChart
+          title="Menu Status Breakdown"
+          description="Live moderation and active status across your pizza listings."
+          emptyMessage="Add your first pizza item to see menu distribution."
+          segments={[
+            {
+              label: "Active / Approved",
+              value: isBackendLive ? stats.active : 0,
+              colorClass: "bg-chart-3",
+            },
+            {
+              label: "Pending Review",
+              value: isBackendLive ? stats.pending : 0,
+              colorClass: "bg-chart-4",
+            },
+            {
+              label: "Inactive",
+              value: isBackendLive ? stats.inactive : 0,
+              colorClass: "bg-chart-5",
+            },
+            {
+              label: "Rejected",
+              value: isBackendLive ? stats.rejected : 0,
+              colorClass: "bg-chart-1",
+            },
+          ]}
+        />
+
+        <StatusDistributionChart
+          title="Incoming Order Status"
+          description="Customer order fulfillment pipeline for your kitchen."
+          emptyMessage="No incoming customer orders recorded yet."
+          segments={[
+            {
+              label: "Pending Response",
+              value: isOrdersLive ? pendingCustomerOrdersCount : 0,
+              colorClass: "bg-chart-4",
+            },
+            {
+              label: "Accepted / Preparing",
+              value: isOrdersLive ? inKitchenOrdersCount : 0,
+              colorClass: "bg-chart-2",
+            },
+            {
+              label: "Ready / Delivered",
+              value: isOrdersLive ? readyOrDeliveredOrdersCount : 0,
+              colorClass: "bg-chart-3",
+            },
+            {
+              label: "Rejected / Cancelled",
+              value: isOrdersLive ? declinedOrCancelledOrdersCount : 0,
+              colorClass: "bg-chart-1",
+            },
+          ]}
+        />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
         <section

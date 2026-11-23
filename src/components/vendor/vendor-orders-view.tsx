@@ -421,6 +421,11 @@ export function VendorOrdersView() {
                           <Clock className="size-3.5" aria-hidden="true" />
                           {formatOrderDate(order.createdAt)}
                         </span>
+                        {order.deliveryDate ? (
+                          <span className="font-medium text-foreground">
+                            Delivery: {order.deliveryDate}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
 

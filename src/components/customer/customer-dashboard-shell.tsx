@@ -39,6 +39,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
 import type { CustomerSessionProfile } from "./customer-types";
 
@@ -142,6 +143,7 @@ function CustomerSidebarContent({
           >
             <PizzaHubBrandMark />
           </Link>
+          <ThemeToggle className="size-8" />
         </div>
 
         <nav aria-label="Customer workspace" className="space-y-1">
@@ -347,6 +349,7 @@ export function CustomerDashboardShell({
             </div>
 
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <NotificationBell />
               <Button
                 type="button"

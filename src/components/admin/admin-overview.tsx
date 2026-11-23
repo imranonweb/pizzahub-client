@@ -7,16 +7,17 @@ import {
   ClipboardCheck,
   Clock,
   Info,
+  ReceiptText,
   RotateCw,
   ShieldCheck,
   ShoppingBag,
-  Store,
   Users,
   UtensilsCrossed,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +25,7 @@ import {
   type AdminOverviewResponse,
   fetchAdminOverview,
 } from "@/lib/admin-api";
+import { formatCurrencyAmountFromCents } from "@/lib/subscription-api";
 import { useAdminProfile } from "./admin-dashboard-shell";
 
 function formatUtcTimestamp(iso: string): string {
@@ -87,16 +89,11 @@ export function AdminOverview() {
     {
       label: "Total Vendors",
       value: isLiveStats && stats ? String(stats.totalVendors) : "—",
-      caption: isLiveStats
-        ? "Registered kitchen partners"
-        : "Awaiting admin API",
+      caption:
+        isLiveStats && stats
+          ? `${stats.activeVendors} active unblocked`
+          : "Awaiting admin API",
       icon: ChefHat,
-    },
-    {
-      label: "Active Vendors",
-      value: isLiveStats && stats ? String(stats.activeVendors) : "—",
-      caption: isLiveStats ? "Unblocked vendors" : "Awaiting admin API",
-      icon: Store,
     },
     {
       label: "Total Menu Items",
@@ -113,6 +110,15 @@ export function AdminOverview() {
         ? "Listings waiting for review"
         : "Awaiting admin API",
       icon: Clock,
+    },
+    {
+      label: "Total Transactions",
+      value: isLiveStats && stats ? String(stats.totalTransactions) : "—",
+      caption:
+        isLiveStats && stats
+          ? `Paid revenue: ${formatCurrencyAmountFromCents(stats.totalRevenueCents)}`
+          : "Awaiting admin API",
+      icon: ReceiptText,
     },
   ];
 
@@ -232,6 +238,61 @@ export function AdminOverview() {
               );
             })}
       </section>
+
+      {isLiveStats && stats ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <StatusDistributionChart
+            title="Account Distribution"
+            description="Registered users across customer, vendor, and administrator roles."
+            segments={[
+              {
+                label: "Customers",
+                value: stats.totalCustomers,
+                colorClass: "bg-[var(--chart-1)]",
+              },
+              {
+                label: "Active Vendors",
+                value: stats.activeVendors,
+                colorClass: "bg-[var(--chart-2)]",
+              },
+              {
+                label: "Blocked / Other Accounts",
+                value: Math.max(
+                  0,
+                  stats.totalUsers - stats.totalCustomers - stats.activeVendors,
+                ),
+                colorClass: "bg-[var(--chart-5)]",
+              },
+            ]}
+          />
+          <StatusDistributionChart
+            title="Menu Moderation Breakdown"
+            description="Distribution of vendor dish submissions by current moderation status."
+            segments={[
+              {
+                label: "Approved (Active)",
+                value: stats.approvedMenuItems,
+                colorClass: "bg-[var(--chart-3)]",
+              },
+              {
+                label: "Pending Review",
+                value: stats.pendingMenuApprovals,
+                colorClass: "bg-[var(--chart-4)]",
+              },
+              {
+                label: "Rejected",
+                value: stats.rejectedMenuItems,
+                colorClass: "bg-destructive",
+              },
+              {
+                label: "Inactive",
+                value: stats.inactiveMenuItems,
+                colorClass: "bg-muted-foreground/50",
+              },
+            ]}
+          />
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-12">
         <section
@@ -362,7 +423,7 @@ export function AdminOverview() {
             </ul>
           </div>
 
-          <div className="grid gap-2.5 border-t border-border/70 pt-4 sm:grid-cols-2">
+          <div className="grid gap-2.5 border-t border-border/70 pt-4 sm:grid-cols-3">
             <Button
               render={<Link href="/dashboard/admin/menu" />}
               variant="outline"
@@ -378,6 +439,14 @@ export function AdminOverview() {
               className="h-9 rounded-xl bg-background"
             >
               User Management
+            </Button>
+            <Button
+              render={<Link href="/dashboard/admin/transactions" />}
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-xl bg-background"
+            >
+              Transactions
             </Button>
           </div>
         </section>

@@ -10,6 +10,9 @@ export interface AdminPlatformStats {
   pendingMenuApprovals: number;
   approvedMenuItems: number;
   rejectedMenuItems: number;
+  inactiveMenuItems: number;
+  totalTransactions: number;
+  totalRevenueCents: number;
 }
 
 export interface AdminModerationMenuItem {
@@ -72,7 +75,7 @@ export function canAdminModerateItem(params: {
   actorId: string;
   itemVendorId: string;
   itemStatus: MenuItemStatus;
-  action: "approve" | "reject";
+  action: "approve" | "reject" | "deactivate" | "delete";
 }): ActionEligibilityResult {
   const { actorRole, actorBlocked, actorId, itemVendorId, itemStatus, action } =
     params;
@@ -87,14 +90,18 @@ export function canAdminModerateItem(params: {
   if (actorRole !== "admin") {
     return {
       allowed: false,
-      reason: "Only administrator accounts can approve or reject menu items.",
+      reason: "Only administrator accounts can moderate menu items.",
     };
+  }
+
+  if (action === "delete") {
+    return { allowed: true };
   }
 
   if (actorId && itemVendorId && actorId === itemVendorId) {
     return {
       allowed: false,
-      reason: "Vendors cannot approve or reject their own listings.",
+      reason: "Vendors cannot moderate their own listings.",
     };
   }
 
@@ -105,10 +112,24 @@ export function canAdminModerateItem(params: {
     };
   }
 
+  if (action === "approve" && itemStatus === "rejected") {
+    return {
+      allowed: false,
+      reason: "Rejected items must be updated by the vendor before re-review.",
+    };
+  }
+
   if (action === "reject" && itemStatus === "rejected") {
     return {
       allowed: false,
       reason: "This menu item is already rejected.",
+    };
+  }
+
+  if (action === "deactivate" && itemStatus !== "approved") {
+    return {
+      allowed: false,
+      reason: "Only approved active items can be deactivated.",
     };
   }
 

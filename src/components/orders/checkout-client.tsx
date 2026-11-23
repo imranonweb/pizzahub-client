@@ -33,6 +33,7 @@ import {
   type CheckoutFormField,
   type CheckoutFormValues,
   type CustomerOrder,
+  getTodayIsoDate,
   validateCheckoutForm,
 } from "@/lib/order-rules";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,7 @@ export function CheckoutClient({
   } = useCart();
 
   const [values, setValues] = useState<CheckoutFormValues>({
+    deliveryDate: getTodayIsoDate(),
     deliveryAddress: "",
     contactPhone: "",
     orderNotes: "",
@@ -195,6 +197,7 @@ export function CheckoutClient({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
         })),
+        deliveryDate: formValidation.sanitized.deliveryDate,
         deliveryAddress: formValidation.sanitized.deliveryAddress,
         contactPhone: formValidation.sanitized.contactPhone,
         orderNotes: formValidation.sanitized.orderNotes,
@@ -235,6 +238,7 @@ export function CheckoutClient({
     }
   };
 
+  const dateErrorId = `${formId}-date-error`;
   const addressErrorId = `${formId}-address-error`;
   const phoneErrorId = `${formId}-phone-error`;
   const notesErrorId = `${formId}-notes-error`;
@@ -299,6 +303,35 @@ export function CheckoutClient({
             <h2 className="font-heading text-base font-semibold text-foreground">
               Delivery & Contact Details
             </h2>
+
+            <div className="space-y-2">
+              <Label htmlFor={`${formId}-date`} className="font-medium">
+                Delivery date
+              </Label>
+              <Input
+                id={`${formId}-date`}
+                name="deliveryDate"
+                type="date"
+                min={getTodayIsoDate()}
+                value={values.deliveryDate}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.deliveryDate)}
+                aria-describedby={errors.deliveryDate ? dateErrorId : undefined}
+                onChange={(event) =>
+                  updateField("deliveryDate", event.target.value)
+                }
+                className="h-10 rounded-xl bg-background px-3.5"
+              />
+              {errors.deliveryDate ? (
+                <p
+                  id={dateErrorId}
+                  role="alert"
+                  className="text-xs font-medium text-destructive"
+                >
+                  {errors.deliveryDate}
+                </p>
+              ) : null}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor={`${formId}-address`} className="font-medium">

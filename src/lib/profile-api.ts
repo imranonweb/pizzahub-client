@@ -233,3 +233,160 @@ export async function updateCustomerContactProfile(
     };
   }
 }
+
+export interface VendorBusinessProfileValues {
+  businessName: string;
+  contactPhone: string;
+  deliveryAddress: string;
+}
+
+export interface VendorBusinessProfileResponse {
+  source: "live" | "unavailable";
+  profile: VendorBusinessProfileValues | null;
+  notice?: string;
+}
+
+export type VendorBusinessProfileUpdateResult =
+  | {
+      ok: true;
+      profile: VendorBusinessProfileValues;
+      message: string;
+    }
+  | {
+      ok: false;
+      reason: "backend-unavailable" | "unauthorized" | "error";
+      message: string;
+    };
+
+export async function fetchVendorBusinessProfile(): Promise<VendorBusinessProfileResponse> {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
+    return {
+      source: "unavailable",
+      profile: null,
+      notice:
+        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+    };
+  }
+
+  try {
+    const payload = await apiRequest<{
+      profile?: Record<string, unknown>;
+      data?: Record<string, unknown>;
+      businessName?: unknown;
+      contactPhone?: unknown;
+      deliveryAddress?: unknown;
+    }>("/api/profile", { headers: authHeaders });
+
+    const source = payload.profile ?? payload.data ?? payload;
+    return {
+      source: "live",
+      profile: {
+        businessName:
+          typeof source.businessName === "string" ? source.businessName : "",
+        contactPhone:
+          typeof source.contactPhone === "string" ? source.contactPhone : "",
+        deliveryAddress:
+          typeof source.deliveryAddress === "string"
+            ? source.deliveryAddress
+            : "",
+      },
+    };
+  } catch (error) {
+    if (
+      error instanceof ApiClientError &&
+      (error.isRouteNotFound || error.isNetworkError)
+    ) {
+      return {
+        source: "unavailable",
+        profile: null,
+        notice: PROFILE_API_UNAVAILABLE_NOTICE,
+      };
+    }
+
+    throw error;
+  }
+}
+
+export async function updateVendorBusinessProfile(
+  values: VendorBusinessProfileValues,
+): Promise<VendorBusinessProfileUpdateResult> {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
+    return {
+      ok: false,
+      reason: "unauthorized",
+      message: "Your session expired. Sign in again to save kitchen details.",
+    };
+  }
+
+  try {
+    const payload = await apiRequest<{
+      profile?: Record<string, unknown>;
+      data?: Record<string, unknown>;
+      message?: string;
+    }>("/api/profile", {
+      method: "PATCH",
+      headers: {
+        ...authHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        businessName: values.businessName.trim(),
+        contactPhone: values.contactPhone.trim(),
+        deliveryAddress: values.deliveryAddress.trim(),
+      }),
+    });
+
+    const source = payload.profile ?? payload.data ?? {};
+    return {
+      ok: true,
+      profile: {
+        businessName:
+          typeof source.businessName === "string"
+            ? source.businessName
+            : values.businessName.trim(),
+        contactPhone:
+          typeof source.contactPhone === "string"
+            ? source.contactPhone
+            : values.contactPhone.trim(),
+        deliveryAddress:
+          typeof source.deliveryAddress === "string"
+            ? source.deliveryAddress
+            : values.deliveryAddress.trim(),
+      },
+      message: payload.message || "Kitchen profile details saved.",
+    };
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      if (error.isRouteNotFound || error.isNetworkError) {
+        return {
+          ok: false,
+          reason: "backend-unavailable",
+          message: PROFILE_API_UNAVAILABLE_NOTICE,
+        };
+      }
+      if (error.status === 401 || error.status === 403) {
+        return {
+          ok: false,
+          reason: "unauthorized",
+          message: error.message,
+        };
+      }
+      return {
+        ok: false,
+        reason: "error",
+        message: error.message,
+      };
+    }
+
+    return {
+      ok: false,
+      reason: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to save kitchen profile.",
+    };
+  }
+}

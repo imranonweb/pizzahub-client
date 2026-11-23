@@ -10,10 +10,12 @@ import {
   Info,
   Loader2,
   MapPin,
+  PauseCircle,
   RotateCcw,
   RotateCw,
   Search,
   Store,
+  Trash2,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -55,6 +57,7 @@ import { toast } from "@/components/ui/toast";
 import { VendorStatusBadge } from "@/components/vendor/vendor-status-badge";
 import {
   type AdminMenuListResponse,
+  deleteAdminMenuItem,
   fetchAdminMenuItems,
   moderateAdminMenuItem,
 } from "@/lib/admin-api";
@@ -110,6 +113,10 @@ export function AdminMenuModeration() {
   const [approveTarget, setApproveTarget] =
     useState<AdminModerationMenuItem | null>(null);
   const [rejectTarget, setRejectTarget] =
+    useState<AdminModerationMenuItem | null>(null);
+  const [deactivateTarget, setDeactivateTarget] =
+    useState<AdminModerationMenuItem | null>(null);
+  const [deleteTarget, setDeleteTarget] =
     useState<AdminModerationMenuItem | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [rejectionError, setRejectionError] = useState<string | null>(null);
@@ -273,6 +280,61 @@ export function AdminMenuModeration() {
       setRejectTarget(null);
       setInspectItem(null);
       setRejectionReason("");
+      await loadMenuItems();
+    } finally {
+      setIsModerating(false);
+    }
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (!deactivateTarget || isModerating) return;
+    setIsModerating(true);
+    try {
+      const result = await moderateAdminMenuItem(
+        deactivateTarget.id,
+        "inactive",
+      );
+      if (!result.ok) {
+        toast.add({
+          title: "Could not deactivate listing",
+          description: result.message,
+          type: "error",
+        });
+        return;
+      }
+      toast.add({
+        title: "Listing deactivated",
+        description: result.message,
+        type: "success",
+      });
+      setDeactivateTarget(null);
+      setInspectItem(null);
+      await loadMenuItems();
+    } finally {
+      setIsModerating(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget || isModerating) return;
+    setIsModerating(true);
+    try {
+      const result = await deleteAdminMenuItem(deleteTarget.id);
+      if (!result.ok) {
+        toast.add({
+          title: "Could not delete listing",
+          description: result.message,
+          type: "error",
+        });
+        return;
+      }
+      toast.add({
+        title: "Listing deleted",
+        description: result.message,
+        type: "success",
+      });
+      setDeleteTarget(null);
+      setInspectItem(null);
       await loadMenuItems();
     } finally {
       setIsModerating(false);
@@ -645,6 +707,23 @@ export function AdminMenuModeration() {
                         Approve
                       </Button>
 
+                      {item.status === "approved" ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isModerating}
+                          onClick={() => setDeactivateTarget(item)}
+                          className="h-9 rounded-xl bg-background px-3 text-xs font-medium"
+                        >
+                          <PauseCircle
+                            className="size-3.5"
+                            aria-hidden="true"
+                          />
+                          Deactivate
+                        </Button>
+                      ) : null}
+
                       <Button
                         type="button"
                         variant="outline"
@@ -655,6 +734,18 @@ export function AdminMenuModeration() {
                       >
                         <X className="size-3.5" aria-hidden="true" />
                         Reject
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={isModerating}
+                        aria-label={`Delete ${item.itemName}`}
+                        onClick={() => setDeleteTarget(item)}
+                        className="size-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </motion.article>
@@ -960,6 +1051,72 @@ export function AdminMenuModeration() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={Boolean(deactivateTarget)}
+        onOpenChange={(open) => {
+          if (!open && !isModerating) setDeactivateTarget(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl p-6 sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate published item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deactivating{" "}
+              <strong className="text-foreground">
+                {deactivateTarget?.itemName}
+              </strong>{" "}
+              will hide it from the public customer menu without deleting it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isModerating} className="rounded-xl">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isModerating}
+              onClick={() => void handleConfirmDeactivate()}
+              className="rounded-xl"
+            >
+              {isModerating ? "Deactivating..." : "Deactivate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && !isModerating) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl p-6 sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete menu item permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deleting{" "}
+              <strong className="text-foreground">
+                {deleteTarget?.itemName}
+              </strong>{" "}
+              permanently removes this listing from the platform. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isModerating} className="rounded-xl">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isModerating}
+              onClick={() => void handleConfirmDelete()}
+              className="rounded-xl"
+            >
+              {isModerating ? "Deleting..." : "Delete Permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

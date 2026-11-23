@@ -1,4 +1,10 @@
-import { ArrowRight, CheckCircle2, MapPin, Phone } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  MapPin,
+  Phone,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
@@ -37,7 +43,16 @@ export function OrderConfirmationCard({ order }: { order: CustomerOrder }) {
         <OrderStatusBadge status={order.status} />
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-background p-4 text-sm sm:grid-cols-2">
+      <div className="grid gap-4 rounded-2xl border border-border bg-background p-4 text-sm sm:grid-cols-3">
+        {order.deliveryDate ? (
+          <div className="space-y-1">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Calendar className="size-3.5 text-primary" aria-hidden="true" />
+              Delivery Date
+            </p>
+            <p className="font-medium text-foreground">{order.deliveryDate}</p>
+          </div>
+        ) : null}
         <div className="space-y-1">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <MapPin className="size-3.5 text-primary" aria-hidden="true" />

@@ -10,7 +10,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { fetchPublicMenu, type MenuListResult } from "@/lib/menu-api";
 import { cn } from "@/lib/utils";
 
-const FEATURED_ITEMS_LIMIT = 3;
+const FEATURED_ITEMS_LIMIT = 6;
 
 export function FeaturedPizzasSection() {
   const [result, setResult] = useState<MenuListResult | null>(null);

@@ -260,6 +260,7 @@ export function CustomerOrderDetailView({ orderId }: { orderId: string }) {
           </div>
           <p className="text-sm text-muted-foreground">
             Placed {formatOrderDate(order.createdAt)} · {order.vendorName}
+            {order.deliveryDate ? ` · Delivery: ${order.deliveryDate}` : ""}
           </p>
         </div>
 

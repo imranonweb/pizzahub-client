@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Sparkles,
   Store,
+  UserCircle,
   UtensilsCrossed,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -38,6 +39,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
 import type { VendorSessionProfile } from "./vendor-types";
 
@@ -82,6 +84,12 @@ const VENDOR_NAV_ITEMS = [
     href: "/dashboard/vendor/subscription",
     label: "Subscription",
     icon: Crown,
+    exact: false,
+  },
+  {
+    href: "/dashboard/vendor/profile",
+    label: "Profile Settings",
+    icon: UserCircle,
     exact: false,
   },
   {
@@ -145,6 +153,7 @@ function SidebarContent({
           >
             <PizzaHubBrandMark />
           </Link>
+          <ThemeToggle className="size-8" />
         </div>
 
         <nav aria-label="Vendor workspace" className="space-y-1">
@@ -333,6 +342,7 @@ export function VendorDashboardShell({
             </div>
 
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <NotificationBell />
               <Button
                 render={<Link href="/dashboard/vendor/add" />}

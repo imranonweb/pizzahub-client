@@ -369,6 +369,9 @@ export function CustomerOrdersView() {
 
                   <p className="text-xs text-muted-foreground">
                     Placed {formatOrderDate(order.createdAt)}
+                    {order.deliveryDate
+                      ? ` · Delivery: ${order.deliveryDate}`
+                      : ""}
                   </p>
                 </div>
 
