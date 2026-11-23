@@ -339,6 +339,8 @@ function createAuthInstance() {
           definePayload: ({ user }) => ({
             sub: user.id,
             email: user.email,
+            name: user.name,
+            role: user.role,
           }),
         },
       }),
