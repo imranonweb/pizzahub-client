@@ -410,15 +410,15 @@ export function AdminOverview() {
                 <span className="font-semibold text-foreground">
                   Account protection:
                 </span>{" "}
-                Self-blocking your own admin session and public role escalation
-                are blocked in both UI and auth hooks.
+                Active administrator accounts are protected from self-blocking
+                to prevent accidental platform lockout.
               </li>
               <li className="rounded-xl border border-border/80 bg-background p-3">
                 <span className="font-semibold text-foreground">
-                  Server authorization:
+                  Audit ledger integrity:
                 </span>{" "}
-                Express endpoints must independently verify Bearer JWTs and
-                current database roles before executing changes.
+                Subscription payment transactions are recorded automatically in
+                read-only mode for financial accuracy.
               </li>
             </ul>
           </div>

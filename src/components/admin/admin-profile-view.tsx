@@ -96,7 +96,7 @@ export function AdminProfileView() {
                 Role Assignment
               </dt>
               <dd className="mt-1 font-medium text-foreground capitalize">
-                {user.role} (Server-enforced)
+                {user.role}
               </dd>
             </div>
           </dl>
@@ -150,8 +150,8 @@ export function AdminProfileView() {
               avoid accidental platform lockout.
             </li>
             <li className="rounded-xl border border-border/80 bg-background p-3">
-              All admin routes verify Better Auth session state and active
-              unblocked status before rendering.
+              All administrative moderation and user management actions require
+              an active, verified administrator session.
             </li>
           </ul>
         </section>

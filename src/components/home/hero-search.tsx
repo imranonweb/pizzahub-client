@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 const QUICK_DISCOVERY_TAGS = [
   { label: "Margherita", query: "Margherita" },
   { label: "Diavola", query: "Diavola" },
-  { label: "Marinara", query: "Marinara" },
-  { label: "Quattro Formaggi", query: "Quattro Formaggi" },
-  { label: "Calzone", query: "Calzone" },
+  { label: "Truffle Mushroom", query: "Truffle" },
+  { label: "Vegetarian", query: "Vegetarian" },
+  { label: "Garlic Knots", query: "Garlic" },
 ] as const;
 
 export function HeroSearch() {
@@ -46,7 +46,7 @@ export function HeroSearch() {
           <Input
             type="search"
             aria-label="Search pizza by name"
-            placeholder="Search pizza by name (e.g. Margherita, Diavola)..."
+            placeholder="Search pizza, topping, or kitchen (e.g. Margherita, Diavola)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-12 rounded-xl border-border/80 bg-card pr-10 pl-10 text-sm shadow-2xs focus-visible:ring-primary"
@@ -73,7 +73,6 @@ export function HeroSearch() {
         </Button>
       </form>
 
-      {/* Quick discovery tags */}
       <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1 font-medium text-foreground/80">
           <Sparkles className="size-3 text-primary" aria-hidden="true" />

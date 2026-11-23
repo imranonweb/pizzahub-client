@@ -241,8 +241,8 @@ export function CartDrawer() {
                 </span>
               </div>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Item availability and authoritative pricing are verified against
-                the Express server at checkout.
+                Pay with Cash on Delivery upon arrival. Menu availability and
+                totals are confirmed at checkout.
               </p>
             </div>
 

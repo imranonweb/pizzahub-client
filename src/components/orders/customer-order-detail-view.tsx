@@ -375,7 +375,7 @@ export function CustomerOrderDetailView({ orderId }: { orderId: string }) {
                 </span>
               </div>
               <div className="flex items-center justify-between font-heading text-lg font-bold text-foreground">
-                <span>Authoritative Total</span>
+                <span>Total (Cash on Delivery)</span>
                 <span className="tabular-nums">${order.total.toFixed(2)}</span>
               </div>
             </div>

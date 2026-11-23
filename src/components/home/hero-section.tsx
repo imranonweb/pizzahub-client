@@ -51,14 +51,14 @@ export function HeroSection() {
                 className="size-4.5 shrink-0 text-primary"
                 aria-hidden="true"
               />
-              <span>Admin-approved menus</span>
+              <span>Verified pizzeria menus</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Clock
                 className="size-4.5 shrink-0 text-primary"
                 aria-hidden="true"
               />
-              <span>Clear order tracking</span>
+              <span>Live order tracking</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Store

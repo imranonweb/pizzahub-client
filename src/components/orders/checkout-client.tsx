@@ -174,7 +174,7 @@ export function CheckoutClient({
         setSubmitNotice({
           tone: isUnavailable ? "info" : "error",
           title: isUnavailable
-            ? "Menu verification endpoint unavailable"
+            ? "Kitchen menu service unavailable"
             : serverCheck.reason === "price-changed"
               ? "Menu prices updated"
               : "Order validation blocked",
@@ -214,7 +214,7 @@ export function CheckoutClient({
         setSubmitNotice({
           tone: isUnavailable ? "info" : "error",
           title: isUnavailable
-            ? "Express order endpoint unavailable"
+            ? "Order service temporarily unavailable"
             : "Could not place order",
           message,
         });
@@ -626,8 +626,8 @@ export function CheckoutClient({
               </span>
             </div>
             <p className="text-[11px] leading-relaxed text-muted-foreground">
-              Final billed totals are calculated solely by the Express server
-              from current approved menu prices.
+              Prices reflect current kitchen menu rates. Payment is collected in
+              cash upon delivery.
             </p>
           </div>
         </aside>

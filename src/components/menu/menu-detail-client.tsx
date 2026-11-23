@@ -140,7 +140,7 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
           {isInvalid
-            ? "The menu item ID provided in the URL is not a valid 24-character identifier. Please choose a pizza from our menu."
+            ? "The pizza link you followed is invalid or no longer active. Please choose a dish from our current menu."
             : "The menu item you requested does not exist or may have been removed by its kitchen."}
         </p>
         <Link
