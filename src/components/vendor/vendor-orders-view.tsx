@@ -435,7 +435,7 @@ export function VendorOrdersView() {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {order.items.reduce((acc, i) => acc + i.quantity, 0)}{" "}
-                        item(s)
+                        item(s) · Cash on Delivery
                       </p>
                     </div>
                   </div>

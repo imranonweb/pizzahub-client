@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Crown,
   Loader2,
+  LogOut,
   Mail,
   RotateCw,
   Sparkles,
@@ -40,9 +41,20 @@ function getInitials(name: string): string {
 export function VendorProfileView() {
   const user = useVendorProfile();
   const router = useRouter();
-  const { refreshSession } = useAuthSession();
+  const { refreshSession, signOut } = useAuthSession();
   const formId = useId();
   const submittingRef = useRef(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      await signOut("/");
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   const [values, setValues] = useState<VendorBusinessProfileValues>({
     businessName: user.businessName,
@@ -185,7 +197,7 @@ export function VendorProfileView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           {isPremium ? (
             <Badge className="gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
               <Crown className="size-3.5" aria-hidden="true" />
@@ -200,6 +212,17 @@ export function VendorProfileView() {
               Free Plan
             </Badge>
           )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isSigningOut}
+            onClick={handleSignOut}
+            className="h-9 gap-1.5 rounded-xl bg-card px-3.5 text-destructive hover:text-destructive"
+          >
+            <LogOut className="size-4" aria-hidden="true" />
+            <span>{isSigningOut ? "Signing out..." : "Sign Out"}</span>
+          </Button>
         </div>
       </div>
 

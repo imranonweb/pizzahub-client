@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  Loader2,
-  Sparkles,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Info, Loader2 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -21,10 +15,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
-import {
-  CATEGORY_MEDIA_PRESETS,
-  type CategoryMediaPreset,
-} from "@/lib/category-media";
 import { MENU_CATEGORIES } from "@/lib/menu-api";
 import {
   createVendorMenuItem,
@@ -190,54 +180,8 @@ export function PizzaForm({
   const descriptionErrorId = `${formId}-description-error`;
   const imagesErrorId = `${formId}-images-error`;
 
-  const handleApplyDemoPreset = (preset: CategoryMediaPreset) => {
-    if (isSubmitting) return;
-    setValues({
-      itemName: preset.demoItem.itemName,
-      category: preset.demoItem.category,
-      price: preset.demoItem.price,
-      location: preset.demoItem.location,
-      description: preset.demoItem.description,
-      images: [...preset.demoItem.images],
-    });
-    setErrors({});
-    setSubmitNotice(null);
-    toast.add({
-      title: `Filled "${preset.demoItem.itemName}"`,
-      description: `Loaded demo ${preset.category} details and cover photo. You can edit any field before submitting.`,
-      type: "info",
-    });
-  };
-
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      <div className="rounded-2xl border border-border bg-muted/25 p-3.5">
-        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
-            <Sparkles className="size-3.5 text-primary" aria-hidden="true" />
-            Quick-Fill Demo Item by Category
-          </span>
-          <span className="text-[11px] text-muted-foreground">
-            Pre-fills recipe details & photo for fast testing
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {CATEGORY_MEDIA_PRESETS.map((preset) => (
-            <Button
-              key={preset.slug}
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isSubmitting}
-              onClick={() => handleApplyDemoPreset(preset)}
-              className="h-8 rounded-xl bg-card px-2.5 text-xs font-medium"
-            >
-              {preset.shortLabel}
-            </Button>
-          ))}
-        </div>
-      </div>
-
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor={`${formId}-itemName`} className="font-medium">

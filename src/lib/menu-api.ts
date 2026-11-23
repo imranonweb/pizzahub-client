@@ -166,14 +166,71 @@ function normalizeMenuItem(raw: Record<string, unknown>): PublicMenuItem {
   };
 }
 
+function scoreAndFilterPublicMenuItems(
+  items: readonly PublicMenuItem[],
+  rawSearch: string,
+): PublicMenuItem[] {
+  const cleaned = rawSearch.trim().toLowerCase();
+  if (!cleaned) {
+    return [...items];
+  }
+
+  const tokens = cleaned
+    .split(/\s+/)
+    .map((t) => t.replace(/^[#$]+/, ""))
+    .filter(Boolean);
+
+  if (tokens.length === 0) {
+    return [...items];
+  }
+
+  const scored: { item: PublicMenuItem; score: number }[] = [];
+
+  for (const item of items) {
+    const nameLower = item.itemName.toLowerCase();
+    const categoryLower = item.category.toLowerCase();
+    const locationLower = item.location.toLowerCase();
+    const vendorBizLower = item.vendor.businessName.toLowerCase();
+    const vendorNameLower = item.vendor.name.toLowerCase();
+    const descLower = item.description.toLowerCase();
+    const priceStr = item.price.toFixed(2);
+
+    const combined = `${nameLower} ${categoryLower} ${locationLower} ${vendorBizLower} ${vendorNameLower} ${descLower} ${priceStr}`;
+
+    const matchesAllTokens = tokens.every((token) => combined.includes(token));
+    if (!matchesAllTokens) {
+      continue;
+    }
+
+    let score = 0;
+    if (nameLower === cleaned) score += 100;
+    else if (nameLower.startsWith(cleaned)) score += 60;
+    else if (nameLower.includes(cleaned)) score += 40;
+
+    for (const token of tokens) {
+      if (nameLower.includes(token)) score += 20;
+      if (categoryLower.includes(token)) score += 12;
+      if (vendorBizLower.includes(token) || vendorNameLower.includes(token)) {
+        score += 12;
+      }
+      if (locationLower.includes(token)) score += 10;
+      if (descLower.includes(token)) score += 6;
+    }
+
+    scored.push({ item, score });
+  }
+
+  return scored.sort((a, b) => b.score - a.score).map((entry) => entry.item);
+}
+
 export async function fetchPublicMenu(
   params: MenuQueryParams = {},
 ): Promise<MenuListResult> {
-  const query = new URLSearchParams();
+  const searchTerm = params.search?.trim() ?? "";
+  const requestedPage = Math.max(1, params.page ?? 1);
+  const requestedLimit = Math.max(1, params.limit ?? 12);
 
-  if (params.search?.trim()) {
-    query.set("search", params.search.trim());
-  }
+  const query = new URLSearchParams();
 
   if (
     params.category?.trim() &&
@@ -193,12 +250,15 @@ export async function fetchPublicMenu(
     query.set("sort", params.sort);
   }
 
-  if (params.page && params.page > 1) {
-    query.set("page", String(params.page));
-  }
-
-  if (params.limit) {
-    query.set("limit", String(params.limit));
+  if (searchTerm) {
+    // Fetch full filtered catalog (up to 50) so client can search across
+    // itemName, description, category, location, and vendor kitchen name.
+    query.set("limit", "50");
+  } else {
+    if (requestedPage > 1) {
+      query.set("page", String(requestedPage));
+    }
+    query.set("limit", String(requestedLimit));
   }
 
   const qs = query.toString();
@@ -219,7 +279,7 @@ export async function fetchPublicMenu(
   }>(path);
 
   const rawList = Array.isArray(payload.items) ? payload.items : [];
-  const approvedItems = rawList.map(normalizeMenuItem);
+  const allApprovedItems = rawList.map(normalizeMenuItem);
 
   const locations = Array.isArray(payload.locations)
     ? payload.locations
@@ -230,24 +290,36 @@ export async function fetchPublicMenu(
         .map((loc) => loc.trim())
     : [];
 
-  const limit = Math.max(1, payload.pagination?.limit ?? params.limit ?? 12);
-  const total = payload.pagination?.total ?? approvedItems.length;
-  const totalPages = Math.max(
+  let approvedItems = allApprovedItems;
+  const limit = requestedLimit;
+  let total = payload.pagination?.total ?? allApprovedItems.length;
+  let totalPages = Math.max(
     1,
     payload.pagination?.totalPages ?? Math.ceil(total / limit),
   );
-  const page = Math.min(
-    Math.max(1, payload.pagination?.page ?? params.page ?? 1),
+  let page = Math.min(
+    Math.max(1, payload.pagination?.page ?? requestedPage),
     totalPages,
   );
-  const hasNextPage =
+  let hasNextPage =
     typeof payload.pagination?.hasNextPage === "boolean"
       ? payload.pagination.hasNextPage
       : page < totalPages;
-  const hasPrevPage =
+  let hasPrevPage =
     typeof payload.pagination?.hasPrevPage === "boolean"
       ? payload.pagination.hasPrevPage
       : page > 1;
+
+  if (searchTerm) {
+    const matched = scoreAndFilterPublicMenuItems(allApprovedItems, searchTerm);
+    total = matched.length;
+    totalPages = Math.max(1, Math.ceil(total / requestedLimit));
+    page = Math.min(requestedPage, totalPages);
+    const start = (page - 1) * requestedLimit;
+    approvedItems = matched.slice(start, start + requestedLimit);
+    hasNextPage = page < totalPages;
+    hasPrevPage = page > 1;
+  }
 
   const pagination: MenuPagination = {
     page,

@@ -712,15 +712,19 @@ export async function fetchAdminTransactions(
     };
   }
 
+  const searchTerm = params.search?.trim().toLowerCase() ?? "";
   const query = new URLSearchParams();
-  if (params.search?.trim()) query.set("search", params.search.trim());
   if (params.status && params.status !== "all") {
     query.set("status", params.status);
   }
   if (params.plan && params.plan !== "all") query.set("plan", params.plan);
   if (params.sort && params.sort !== "newest") query.set("sort", params.sort);
-  if (requestedPage > 1) query.set("page", String(requestedPage));
-  query.set("limit", String(limit));
+  if (searchTerm) {
+    query.set("limit", "100");
+  } else {
+    if (requestedPage > 1) query.set("page", String(requestedPage));
+    query.set("limit", String(limit));
+  }
 
   const qs = query.toString();
   const path = qs ? `/api/admin/transactions?${qs}` : "/api/admin/transactions";
@@ -732,9 +736,65 @@ export async function fetchAdminTransactions(
       pagination?: Partial<AdminTransactionsPagination>;
     }>(path, { headers: authHeaders });
 
-    const transactions = Array.isArray(payload.transactions)
+    const allTransactions = Array.isArray(payload.transactions)
       ? payload.transactions.map(normalizeAdminTransaction)
       : [];
+
+    const counts: AdminTransactionCounts | null = payload.counts
+      ? {
+          total: toNumber(payload.counts.total),
+          paid: toNumber(payload.counts.paid),
+          failed: toNumber(payload.counts.failed),
+          pending: toNumber(payload.counts.pending),
+          cancelled: toNumber(payload.counts.cancelled),
+          totalRevenueCents: toNumber(payload.counts.totalRevenueCents),
+        }
+      : null;
+
+    if (searchTerm) {
+      const tokens = searchTerm
+        .split(/\s+/)
+        .map((t) => t.replace(/^[#$]+/, ""))
+        .filter(Boolean);
+      const matched = allTransactions.filter((tx) => {
+        const haystack = [
+          tx.id,
+          tx.stripeSessionId ?? "",
+          tx.stripeSubscriptionId ?? "",
+          tx.stripeInvoiceId ?? "",
+          tx.vendor.businessName,
+          tx.vendor.name,
+          tx.vendor.email,
+          tx.plan,
+          tx.status,
+          tx.amountFormatted.toFixed(2),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return tokens.every((token) => haystack.includes(token));
+      });
+
+      const total = matched.length;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const page = Math.min(requestedPage, totalPages);
+      const start = (page - 1) * limit;
+
+      return {
+        source: "live",
+        transactions: matched.slice(start, start + limit),
+        counts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
+    }
+
+    const transactions = allTransactions;
     const total =
       typeof payload.pagination?.total === "number"
         ? payload.pagination.total
@@ -749,17 +809,6 @@ export async function fetchAdminTransactions(
       Math.max(1, payload.pagination?.page ?? requestedPage),
       totalPages,
     );
-
-    const counts: AdminTransactionCounts | null = payload.counts
-      ? {
-          total: toNumber(payload.counts.total),
-          paid: toNumber(payload.counts.paid),
-          failed: toNumber(payload.counts.failed),
-          pending: toNumber(payload.counts.pending),
-          cancelled: toNumber(payload.counts.cancelled),
-          totalRevenueCents: toNumber(payload.counts.totalRevenueCents),
-        }
-      : null;
 
     return {
       source: "live",

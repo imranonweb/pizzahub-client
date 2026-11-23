@@ -235,20 +235,22 @@ export async function fetchVendorOrders(
     };
   }
 
+  const searchTerm = params.search?.trim().toLowerCase() ?? "";
   const query = new URLSearchParams();
-  if (params.search?.trim()) {
-    query.set("search", params.search.trim());
-  }
   if (params.status && params.status !== "all") {
     query.set("status", params.status);
   }
   if (params.sort && params.sort !== "newest") {
     query.set("sort", params.sort);
   }
-  if (requestedPage > 1) {
-    query.set("page", String(requestedPage));
+  if (searchTerm) {
+    query.set("limit", "100");
+  } else {
+    if (requestedPage > 1) {
+      query.set("page", String(requestedPage));
+    }
+    query.set("limit", String(limit));
   }
-  query.set("limit", String(limit));
 
   const qs = query.toString();
   const path = qs ? `/api/vendor/orders?${qs}` : "/api/vendor/orders";
@@ -263,9 +265,54 @@ export async function fetchVendorOrders(
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const orders = Array.isArray(payload.orders)
+    const allOrders = Array.isArray(payload.orders)
       ? payload.orders.map(normalizeVendorOrder)
       : [];
+
+    if (searchTerm) {
+      const tokens = searchTerm
+        .split(/\s+/)
+        .map((t) => t.replace(/^[#$]+/, ""))
+        .filter(Boolean);
+      const matched = allOrders.filter((order) => {
+        const itemNames = order.items.map((i) => i.itemName).join(" ");
+        const haystack = [
+          order.id,
+          order.customer.name,
+          order.contactPhone,
+          order.deliveryAddress,
+          order.deliveryDate ?? "",
+          order.orderNotes,
+          order.status,
+          order.total.toFixed(2),
+          "cash on delivery cod",
+          itemNames,
+        ]
+          .join(" ")
+          .toLowerCase();
+        return tokens.every((token) => haystack.includes(token));
+      });
+
+      const total = matched.length;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const page = Math.min(requestedPage, totalPages);
+      const start = (page - 1) * limit;
+
+      return {
+        source: "live",
+        orders: matched.slice(start, start + limit),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
+    }
+
+    const orders = allOrders;
     const total =
       typeof payload.pagination?.total === "number"
         ? payload.pagination.total

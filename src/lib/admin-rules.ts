@@ -215,11 +215,19 @@ export function filterAdminMenuItems(
     }
 
     if (search) {
+      const tokens = search
+        .split(/\s+/)
+        .map((t) => t.replace(/^[#$]+/, ""))
+        .filter(Boolean);
       const haystack = [
+        item.id,
         item.itemName,
         item.description,
         item.location,
         item.category,
+        item.status,
+        item.price.toFixed(2),
+        item.rejectionReason ?? "",
         item.vendor.businessName,
         item.vendor.name,
         item.vendor.email,
@@ -227,7 +235,7 @@ export function filterAdminMenuItems(
         .join(" ")
         .toLowerCase();
 
-      if (!haystack.includes(search)) {
+      if (!tokens.every((token) => haystack.includes(token))) {
         return false;
       }
     }
@@ -278,10 +286,22 @@ export function filterAdminUsers(
     }
 
     if (search) {
-      const haystack = [user.name, user.email, user.businessName]
+      const tokens = search
+        .split(/\s+/)
+        .map((t) => t.replace(/^[#$]+/, ""))
+        .filter(Boolean);
+      const haystack = [
+        user.id,
+        user.name,
+        user.email,
+        user.businessName,
+        user.role,
+        user.subscriptionPlan,
+        user.isBlocked ? "blocked" : "active",
+      ]
         .join(" ")
         .toLowerCase();
-      if (!haystack.includes(search)) {
+      if (!tokens.every((token) => haystack.includes(token))) {
         return false;
       }
     }

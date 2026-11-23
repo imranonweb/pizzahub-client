@@ -371,7 +371,8 @@ export function CustomerOrdersView() {
                     Placed {formatOrderDate(order.createdAt)}
                     {order.deliveryDate
                       ? ` · Delivery: ${order.deliveryDate}`
-                      : ""}
+                      : ""}{" "}
+                    · Cash on Delivery
                   </p>
                 </div>
 

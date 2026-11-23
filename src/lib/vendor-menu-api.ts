@@ -175,9 +175,13 @@ export function filterVendorMenuItems(
     }
 
     if (search) {
+      const tokens = search
+        .split(/\s+/)
+        .map((t) => t.replace(/^[#$]+/, ""))
+        .filter(Boolean);
       const haystack =
-        `${item.itemName} ${item.location} ${item.description} ${item.category}`.toLowerCase();
-      if (!haystack.includes(search)) {
+        `${item.id} ${item.itemName} ${item.location} ${item.description} ${item.category} ${item.status} ${item.price.toFixed(2)}`.toLowerCase();
+      if (!tokens.every((token) => haystack.includes(token))) {
         return false;
       }
     }

@@ -363,6 +363,12 @@ export function CustomerOrderDetailView({ orderId }: { orderId: string }) {
 
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between text-muted-foreground">
+                <span>Payment Method</span>
+                <span className="font-medium text-foreground">
+                  Cash on Delivery (COD)
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
                 <span>Subtotal</span>
                 <span className="font-medium text-foreground tabular-nums">
                   ${order.subtotal.toFixed(2)}

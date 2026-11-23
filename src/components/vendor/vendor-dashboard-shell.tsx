@@ -142,8 +142,8 @@ function SidebarContent({
   const isPremium = user.subscriptionPlan === "premium";
 
   return (
-    <div className="flex h-full flex-col justify-between">
-      <div className="space-y-6 p-4">
+    <div className="flex h-full flex-col justify-between overflow-hidden">
+      <div className="flex-1 space-y-5 overflow-y-auto p-4">
         <div className="flex items-center justify-between px-1">
           <Link
             href="/"
@@ -206,7 +206,7 @@ function SidebarContent({
         </div>
       </div>
 
-      <div className="space-y-3 border-t border-sidebar-border p-4">
+      <div className="shrink-0 space-y-2.5 border-t border-sidebar-border p-3.5">
         <div className="rounded-2xl border border-sidebar-border bg-card p-3">
           <div className="flex items-center gap-3">
             <Avatar size="default">
@@ -271,9 +271,27 @@ export function VendorDashboardShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const { signOut } = useAuthSession();
+  const { user: sessionUser, signOut } = useAuthSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const syncedUser = useMemo<VendorSessionProfile>(
+    () =>
+      sessionUser && sessionUser.id === user.id
+        ? {
+            ...user,
+            name: sessionUser.name || user.name,
+            email: sessionUser.email || user.email,
+            image: sessionUser.image ?? user.image,
+            businessName: sessionUser.businessName || user.businessName,
+            subscriptionPlan:
+              sessionUser.subscriptionPlan === "premium"
+                ? "premium"
+                : user.subscriptionPlan,
+          }
+        : user,
+    [sessionUser, user],
+  );
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
@@ -285,8 +303,8 @@ export function VendorDashboardShell({
     }
   };
 
-  const contextValue = useMemo(() => user, [user]);
-  const displayName = user.businessName.trim() || user.name;
+  const contextValue = syncedUser;
+  const displayName = syncedUser.businessName.trim() || syncedUser.name;
 
   return (
     <VendorProfileContext.Provider value={contextValue}>
@@ -296,7 +314,7 @@ export function VendorDashboardShell({
           className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col"
         >
           <SidebarContent
-            user={user}
+            user={syncedUser}
             pathname={pathname}
             isSigningOut={isSigningOut}
             onSignOut={handleSignOut}
@@ -304,39 +322,41 @@ export function VendorDashboardShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm lg:hidden">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
             <div className="flex items-center gap-2.5">
-              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      aria-label="Open vendor navigation menu"
-                      className="rounded-xl bg-card"
+              <div className="lg:hidden">
+                <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                  <SheetTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label="Open vendor navigation menu"
+                        className="rounded-xl bg-card"
+                      />
+                    }
+                  >
+                    <Menu className="size-5" aria-hidden="true" />
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-72 bg-sidebar p-0">
+                    <SheetHeader className="sr-only">
+                      <SheetTitle>Vendor Navigation</SheetTitle>
+                      <SheetDescription>
+                        Navigate vendor dashboard views and account actions.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <SidebarContent
+                      user={syncedUser}
+                      pathname={pathname}
+                      isSigningOut={isSigningOut}
+                      onSignOut={handleSignOut}
+                      onNavigate={() => setMobileOpen(false)}
                     />
-                  }
-                >
-                  <Menu className="size-5" aria-hidden="true" />
-                </SheetTrigger>
-                <SheetContent side="left" className="w-72 bg-sidebar p-0">
-                  <SheetHeader className="sr-only">
-                    <SheetTitle>Vendor Navigation</SheetTitle>
-                    <SheetDescription>
-                      Navigate vendor dashboard views and account actions.
-                    </SheetDescription>
-                  </SheetHeader>
-                  <SidebarContent
-                    user={user}
-                    pathname={pathname}
-                    isSigningOut={isSigningOut}
-                    onSignOut={handleSignOut}
-                    onNavigate={() => setMobileOpen(false)}
-                  />
-                </SheetContent>
-              </Sheet>
-              <span className="font-heading text-base font-semibold tracking-tight text-foreground">
+                  </SheetContent>
+                </Sheet>
+              </div>
+              <span className="truncate font-heading text-base font-semibold tracking-tight text-foreground">
                 {displayName}
               </span>
             </div>
@@ -347,10 +367,21 @@ export function VendorDashboardShell({
               <Button
                 render={<Link href="/dashboard/vendor/add" />}
                 size="sm"
-                className="h-9 rounded-xl px-3 font-medium"
+                className="hidden h-9 rounded-xl px-3 font-medium sm:inline-flex"
               >
                 <PlusCircle className="size-4" aria-hidden="true" />
                 Add Pizza
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isSigningOut}
+                onClick={handleSignOut}
+                className="h-9 gap-1.5 rounded-xl bg-card px-3 font-medium text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="size-4" aria-hidden="true" />
+                <span>{isSigningOut ? "Signing out..." : "Sign Out"}</span>
               </Button>
             </div>
           </header>

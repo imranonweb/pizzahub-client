@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Banknote,
   Calendar,
   CheckCircle2,
   MapPin,
@@ -43,7 +44,7 @@ export function OrderConfirmationCard({ order }: { order: CustomerOrder }) {
         <OrderStatusBadge status={order.status} />
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-background p-4 text-sm sm:grid-cols-3">
+      <div className="grid gap-4 rounded-2xl border border-border bg-background p-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
         {order.deliveryDate ? (
           <div className="space-y-1">
             <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -53,6 +54,13 @@ export function OrderConfirmationCard({ order }: { order: CustomerOrder }) {
             <p className="font-medium text-foreground">{order.deliveryDate}</p>
           </div>
         ) : null}
+        <div className="space-y-1">
+          <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <Banknote className="size-3.5 text-primary" aria-hidden="true" />
+            Payment Method
+          </p>
+          <p className="font-medium text-foreground">Cash on Delivery (COD)</p>
+        </div>
         <div className="space-y-1">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <MapPin className="size-3.5 text-primary" aria-hidden="true" />

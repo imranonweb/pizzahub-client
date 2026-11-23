@@ -3,11 +3,12 @@
 import {
   AlertCircle,
   ArrowLeft,
+  Banknote,
+  CheckCircle2,
   Info,
   Loader2,
   Minus,
   Plus,
-  ShieldCheck,
   ShoppingBag,
   Trash2,
 } from "lucide-react";
@@ -432,15 +433,37 @@ export function CheckoutClient({
               ) : null}
             </div>
 
-            <Alert className="rounded-xl bg-muted/35">
-              <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
-              <AlertTitle>Server-side validation required</AlertTitle>
-              <AlertDescription className="text-xs">
-                Online Stripe checkout is not enabled for customer orders.
-                Before creating your order, Express verifies item status,
-                ownership, and authoritative totals.
-              </AlertDescription>
-            </Alert>
+            <div className="space-y-2.5">
+              <Label className="font-medium">Payment method</Label>
+              <div
+                role="radiogroup"
+                aria-label="Payment method"
+                className="rounded-2xl border-2 border-primary bg-primary/5 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                      <Banknote className="size-4.5" aria-hidden="true" />
+                    </span>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">
+                          Cash on Delivery (COD)
+                        </p>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                          <CheckCircle2 className="size-3" aria-hidden="true" />
+                          Selected
+                        </span>
+                      </div>
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        Pay directly in cash when your order arrives at your
+                        doorstep. No upfront online card payment required.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {submitNotice ? (
               <Alert
@@ -471,7 +494,7 @@ export function CheckoutClient({
                   Verifying & Placing Order...
                 </>
               ) : (
-                "Place Order"
+                `Place Order (Cash on Delivery · $${summary.subtotal.toFixed(2)})`
               )}
             </Button>
           </form>
@@ -584,6 +607,12 @@ export function CheckoutClient({
           <Separator />
 
           <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Payment method</span>
+              <span className="font-medium text-foreground">
+                Cash on Delivery
+              </span>
+            </div>
             <div className="flex items-center justify-between text-muted-foreground">
               <span>Estimated subtotal</span>
               <span className="font-medium text-foreground tabular-nums">

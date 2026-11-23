@@ -68,6 +68,12 @@ export function Navbar() {
   const showCartButton = !isAuthenticated || role === "customer";
 
   const dashboardHref = getDashboardPathForRole(role);
+  const profileHref =
+    role === "vendor"
+      ? "/dashboard/vendor/profile"
+      : role === "admin"
+        ? "/dashboard/admin/profile"
+        : "/profile";
 
   const navItems = [
     { label: "Home", href: "/", matchExact: true },
@@ -240,7 +246,7 @@ export function Navbar() {
                   ) : null}
 
                   <DropdownMenuItem
-                    render={<Link href="/profile" />}
+                    render={<Link href={profileHref} />}
                     className="cursor-pointer rounded-lg px-2.5 py-2"
                   >
                     <UserCog className="size-4" aria-hidden="true" />
@@ -368,9 +374,9 @@ export function Navbar() {
                       <SheetClose
                         render={
                           <Link
-                            href="/profile"
+                            href={profileHref}
                             aria-current={
-                              isActiveLink("/profile", false)
+                              isActiveLink(profileHref, false)
                                 ? "page"
                                 : undefined
                             }
@@ -378,7 +384,7 @@ export function Navbar() {
                         }
                         className={cn(
                           "flex items-center rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
-                          isActiveLink("/profile", false)
+                          isActiveLink(profileHref, false)
                             ? "bg-accent font-semibold text-foreground"
                             : "text-muted-foreground hover:bg-muted hover:text-foreground",
                         )}

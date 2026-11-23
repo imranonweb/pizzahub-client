@@ -194,18 +194,28 @@ export function filterCustomerOrders(
     }
 
     if (search) {
+      const tokens = search
+        .split(/\s+/)
+        .map((t) => t.replace(/^[#$]+/, ""))
+        .filter(Boolean);
       const itemNames = order.items.map((i) => i.itemName).join(" ");
       const haystack = [
         order.id,
         order.vendorName,
         order.vendorLocation,
         order.deliveryAddress,
+        order.contactPhone,
+        order.deliveryDate ?? "",
+        order.orderNotes,
+        order.status,
+        order.total.toFixed(2),
+        "cash on delivery cod",
         itemNames,
       ]
         .join(" ")
         .toLowerCase();
 
-      if (!haystack.includes(search)) {
+      if (!tokens.every((token) => haystack.includes(token))) {
         return false;
       }
     }
