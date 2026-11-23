@@ -1,5 +1,10 @@
 import { ApiClientError, apiRequest } from "./api-client";
-import { authClient, getAuthToken } from "./auth-client";
+import { authClient } from "./auth-client";
+import {
+  getBearerHeaders,
+  resolveApiUnavailableNotice,
+  TOKEN_UNAVAILABLE_NOTICE,
+} from "./authenticated-api";
 import type { ContactProfileValues } from "./profile-validation";
 
 export interface AuthMutationResult {
@@ -104,22 +109,13 @@ export async function changeAccountPassword(input: {
   }
 }
 
-async function getBearerHeaders(): Promise<Record<string, string> | null> {
-  const token = await getAuthToken().catch(() => null);
-  if (!token) return null;
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 export async function fetchCustomerContactProfile(): Promise<CustomerContactProfileResponse> {
   const authHeaders = await getBearerHeaders();
   if (!authHeaders) {
     return {
       source: "unavailable",
       profile: null,
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -144,18 +140,14 @@ export async function fetchCustomerContactProfile(): Promise<CustomerContactProf
       },
     };
   } catch (error) {
-    if (
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError)
-    ) {
-      return {
-        source: "unavailable",
-        profile: null,
-        notice: PROFILE_API_UNAVAILABLE_NOTICE,
-      };
-    }
-
-    throw error;
+    return {
+      source: "unavailable",
+      profile: null,
+      notice: resolveApiUnavailableNotice(
+        error,
+        PROFILE_API_UNAVAILABLE_NOTICE,
+      ),
+    };
   }
 }
 
@@ -264,8 +256,7 @@ export async function fetchVendorBusinessProfile(): Promise<VendorBusinessProfil
     return {
       source: "unavailable",
       profile: null,
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -293,18 +284,14 @@ export async function fetchVendorBusinessProfile(): Promise<VendorBusinessProfil
       },
     };
   } catch (error) {
-    if (
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError)
-    ) {
-      return {
-        source: "unavailable",
-        profile: null,
-        notice: PROFILE_API_UNAVAILABLE_NOTICE,
-      };
-    }
-
-    throw error;
+    return {
+      source: "unavailable",
+      profile: null,
+      notice: resolveApiUnavailableNotice(
+        error,
+        PROFILE_API_UNAVAILABLE_NOTICE,
+      ),
+    };
   }
 }
 

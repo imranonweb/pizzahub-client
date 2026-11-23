@@ -221,9 +221,29 @@ export function VendorOverview() {
       {data?.source === "unavailable" && data.notice ? (
         <Alert className="rounded-2xl bg-accent/65 p-4">
           <Info className="size-4 text-primary" aria-hidden="true" />
-          <AlertTitle>Vendor Menu Backend Pending</AlertTitle>
+          <AlertTitle>Vendor Menu Service Notice</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
             <span>{data.notice}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void loadOverview()}
+              className="rounded-xl bg-card"
+            >
+              <RotateCw className="size-3.5" aria-hidden="true" />
+              Retry API
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {ordersData?.source === "unavailable" && ordersData.notice ? (
+        <Alert className="rounded-2xl bg-accent/65 p-4">
+          <Info className="size-4 text-primary" aria-hidden="true" />
+          <AlertTitle>Vendor Orders Service Notice</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>{ordersData.notice}</span>
             <Button
               type="button"
               variant="outline"

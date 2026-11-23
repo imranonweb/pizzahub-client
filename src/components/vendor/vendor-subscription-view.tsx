@@ -14,7 +14,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,8 @@ function formatTxDate(iso: string | null): string {
 export function VendorSubscriptionView() {
   const user = useVendorProfile();
   const { refreshSession } = useAuthSession();
+  const refreshSessionRef = useRef(refreshSession);
+  refreshSessionRef.current = refreshSession;
 
   const [menuData, setMenuData] = useState<VendorMenuListResponse | null>(null);
   const [subData, setSubData] =
@@ -80,6 +82,7 @@ export function VendorSubscriptionView() {
         const verified = await verifyVendorCheckoutSession();
         if (verified.reconciled) {
           subRes = await fetchVendorSubscription();
+          await refreshSessionRef.current();
         }
       }
       setMenuData(menuRes);
@@ -87,7 +90,6 @@ export function VendorSubscriptionView() {
       if (subRes.source === "unavailable" && subRes.notice) {
         setErrorMessage(subRes.notice);
       }
-      await refreshSession();
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -97,7 +99,7 @@ export function VendorSubscriptionView() {
     } finally {
       setIsLoading(false);
     }
-  }, [refreshSession]);
+  }, []);
 
   useEffect(() => {
     void loadData();

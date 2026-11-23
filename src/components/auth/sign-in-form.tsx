@@ -119,8 +119,12 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
         description: "Signed in to your PizzaHub account.",
         type: "success",
       });
-      router.refresh();
-      router.push(destination);
+      if (typeof window !== "undefined") {
+        window.location.assign(destination);
+      } else {
+        router.refresh();
+        router.push(destination);
+      }
     } catch {
       const message = getSafeAuthErrorMessage({ status: 500 }, "sign-in");
       setFormError(message);

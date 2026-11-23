@@ -1,5 +1,8 @@
-import { ApiClientError, apiRequest } from "./api-client";
-import { getAuthToken } from "./auth-client";
+import { apiRequest } from "./api-client";
+import {
+  getBearerHeaders,
+  resolveApiUnavailableNotice,
+} from "./authenticated-api";
 
 export type NotificationRole = "customer" | "vendor" | "admin";
 
@@ -125,11 +128,11 @@ export function getNotificationCategory(
 export async function fetchNotifications(
   options: NotificationFilterOptions = {},
 ): Promise<NotificationListResponse> {
-  const token = await getAuthToken();
+  const authHeaders = await getBearerHeaders();
   const limit = Math.min(100, Math.max(1, options.limit ?? 20));
   const requestedPage = Math.max(1, options.page ?? 1);
 
-  if (!token) {
+  if (!authHeaders) {
     return {
       source: "unavailable",
       items: [],
@@ -171,7 +174,7 @@ export async function fetchNotifications(
       pagination?: Partial<NotificationPagination>;
     }>(path, {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: authHeaders,
     });
 
     const items = Array.isArray(data.notifications) ? data.notifications : [];
@@ -211,13 +214,6 @@ export async function fetchNotifications(
       },
     };
   } catch (error) {
-    const message =
-      error instanceof ApiClientError
-        ? error.message
-        : error instanceof Error
-          ? error.message
-          : "Unable to load notifications at this time.";
-
     return {
       source: "unavailable",
       items: [],
@@ -231,7 +227,10 @@ export async function fetchNotifications(
         hasNextPage: false,
         hasPrevPage: false,
       },
-      notice: message,
+      notice: resolveApiUnavailableNotice(
+        error,
+        "Unable to load notifications at this time.",
+      ),
     };
   }
 }
@@ -249,8 +248,8 @@ export async function markNotificationAsRead(id: string): Promise<{
     };
   }
 
-  const token = await getAuthToken();
-  if (!token) {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
     return {
       ok: false,
       message: "Authentication required to update notifications.",
@@ -264,7 +263,7 @@ export async function markNotificationAsRead(id: string): Promise<{
       message?: string;
     }>(`/api/notifications/${encodeURIComponent(trimmedId)}/read`, {
       method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: authHeaders,
     });
     return {
       ok: true,
@@ -287,8 +286,8 @@ export async function markAllNotificationsAsRead(): Promise<{
   count: number;
   message: string;
 }> {
-  const token = await getAuthToken();
-  if (!token) {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
     return {
       ok: false,
       count: 0,
@@ -303,7 +302,7 @@ export async function markAllNotificationsAsRead(): Promise<{
       message?: string;
     }>("/api/notifications/mark-all-read", {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: authHeaders,
     });
     return {
       ok: true,

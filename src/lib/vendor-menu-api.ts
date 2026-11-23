@@ -1,5 +1,9 @@
 import { ApiClientError, apiRequest } from "./api-client";
-import { getAuthToken } from "./auth-client";
+import {
+  getBearerHeaders,
+  resolveApiUnavailableNotice,
+  TOKEN_UNAVAILABLE_NOTICE,
+} from "./authenticated-api";
 import type { MenuItemStatus } from "./menu-api";
 import {
   FREE_PLAN_ACTIVE_ITEM_LIMIT,
@@ -246,17 +250,6 @@ function classifyApiError(error: unknown): {
   };
 }
 
-async function getBearerHeaders(): Promise<Record<string, string> | null> {
-  const token = await getAuthToken().catch(() => null);
-  if (!token) {
-    return null;
-  }
-
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 export async function fetchVendorMenuItems(): Promise<VendorMenuListResponse> {
   const authHeaders = await getBearerHeaders();
   if (!authHeaders) {
@@ -264,8 +257,7 @@ export async function fetchVendorMenuItems(): Promise<VendorMenuListResponse> {
       source: "unavailable",
       items: [],
       stats: createEmptyVendorMenuStats(),
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -290,19 +282,12 @@ export async function fetchVendorMenuItems(): Promise<VendorMenuListResponse> {
       stats: computeVendorMenuStats(items),
     };
   } catch (error) {
-    if (
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError)
-    ) {
-      return {
-        source: "unavailable",
-        items: [],
-        stats: createEmptyVendorMenuStats(),
-        notice: VENDOR_API_UNAVAILABLE_NOTICE,
-      };
-    }
-
-    throw error;
+    return {
+      source: "unavailable",
+      items: [],
+      stats: createEmptyVendorMenuStats(),
+      notice: resolveApiUnavailableNotice(error, VENDOR_API_UNAVAILABLE_NOTICE),
+    };
   }
 }
 

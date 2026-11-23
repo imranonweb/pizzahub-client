@@ -157,7 +157,7 @@ export function AdminOverview() {
       {data?.source === "unavailable" && data.notice ? (
         <Alert className="rounded-2xl bg-accent/65 p-4">
           <Info className="size-4 text-primary" aria-hidden="true" />
-          <AlertTitle>Admin Analytics Backend Pending</AlertTitle>
+          <AlertTitle>Admin Analytics Service Notice</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
             <span>{data.notice}</span>
             <Button

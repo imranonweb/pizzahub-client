@@ -144,6 +144,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/dashboard"
+                  prefetch={false}
                   className="hover:text-foreground transition-colors"
                 >
                   My Dashboard
@@ -152,6 +153,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/profile"
+                  prefetch={false}
                   className="hover:text-foreground transition-colors"
                 >
                   Profile Settings

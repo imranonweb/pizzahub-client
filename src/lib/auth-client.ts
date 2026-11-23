@@ -87,10 +87,72 @@ export async function signInWithGoogle(callbackURL = "/dashboard") {
   });
 }
 
-export async function getAuthToken(): Promise<string | null> {
-  const { data, error } = await authClient.token();
-  if (error || !data?.token) {
-    return null;
+let cachedToken: { value: string; expiresAtMs: number } | null = null;
+let inFlightTokenRequest: Promise<string | null> | null = null;
+
+function readJwtExpiryMs(token: string): number {
+  const fallbackExpiry = Date.now() + 2 * 60_000;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3 || !parts[1]) {
+      return fallbackExpiry;
+    }
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const payload = JSON.parse(atob(padded)) as { exp?: unknown };
+    if (typeof payload.exp === "number" && Number.isFinite(payload.exp)) {
+      return payload.exp * 1000;
+    }
+  } catch {
+    // Fall back to a conservative short TTL if payload decoding fails.
   }
-  return data.token;
+  return fallbackExpiry;
+}
+
+export function clearAuthTokenCache(): void {
+  cachedToken = null;
+  inFlightTokenRequest = null;
+}
+
+export async function getAuthToken(options?: {
+  forceRefresh?: boolean;
+}): Promise<string | null> {
+  if (!options?.forceRefresh && cachedToken) {
+    // Keep a 45s safety margin before expiration so API calls never send an about-to-expire JWT.
+    if (Date.now() + 45_000 < cachedToken.expiresAtMs) {
+      return cachedToken.value;
+    }
+    cachedToken = null;
+  }
+
+  if (options?.forceRefresh) {
+    cachedToken = null;
+  }
+
+  if (inFlightTokenRequest) {
+    return inFlightTokenRequest;
+  }
+
+  inFlightTokenRequest = (async () => {
+    try {
+      const { data, error } = await authClient.token();
+      if (error || !data?.token) {
+        cachedToken = null;
+        return null;
+      }
+
+      cachedToken = {
+        value: data.token,
+        expiresAtMs: readJwtExpiryMs(data.token),
+      };
+      return data.token;
+    } catch {
+      cachedToken = null;
+      return null;
+    } finally {
+      inFlightTokenRequest = null;
+    }
+  })();
+
+  return inFlightTokenRequest;
 }

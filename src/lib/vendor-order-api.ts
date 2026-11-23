@@ -1,5 +1,9 @@
-import { ApiClientError, apiRequest } from "./api-client";
-import { getAuthToken } from "./auth-client";
+import { apiRequest } from "./api-client";
+import {
+  getBearerHeaders,
+  resolveApiUnavailableNotice,
+  TOKEN_UNAVAILABLE_NOTICE,
+} from "./authenticated-api";
 import {
   type CustomerOrderItem,
   normalizeOrderStatus,
@@ -224,14 +228,13 @@ export async function fetchVendorOrders(
     hasPrevPage: false,
   };
 
-  const token = await getAuthToken().catch(() => null);
-  if (!token) {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
     return {
       source: "unavailable",
       orders: [],
       pagination: emptyPagination,
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -262,7 +265,7 @@ export async function fetchVendorOrders(
       pagination?: Partial<VendorOrdersPagination>;
     }>(path, {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: authHeaders,
     });
 
     const allOrders = Array.isArray(payload.orders)
@@ -347,18 +350,14 @@ export async function fetchVendorOrders(
       },
     };
   } catch (error) {
-    const message =
-      error instanceof ApiClientError
-        ? error.message
-        : error instanceof Error
-          ? error.message
-          : "Unable to load incoming kitchen orders.";
-
     return {
       source: "unavailable",
       orders: [],
       pagination: emptyPagination,
-      notice: message,
+      notice: resolveApiUnavailableNotice(
+        error,
+        "Unable to load incoming kitchen orders.",
+      ),
     };
   }
 }
@@ -376,8 +375,8 @@ export async function updateVendorOrderStatus(
     };
   }
 
-  const token = await getAuthToken().catch(() => null);
-  if (!token) {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
     return {
       ok: false,
       message: "Your session expired. Sign in again to update order status.",
@@ -399,7 +398,7 @@ export async function updateVendorOrderStatus(
     }>(`/api/vendor/orders/${encodeURIComponent(trimmedId)}/status`, {
       method: "PATCH",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),

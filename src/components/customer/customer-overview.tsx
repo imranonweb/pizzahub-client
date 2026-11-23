@@ -158,7 +158,7 @@ export function CustomerOverview() {
       {data?.source === "unavailable" && data.notice ? (
         <Alert className="rounded-2xl bg-accent/65 p-4">
           <Info className="size-4 text-primary" aria-hidden="true" />
-          <AlertTitle>Customer Ordering Backend Pending</AlertTitle>
+          <AlertTitle>Customer Orders Service Notice</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
             <span>{data.notice}</span>
             <Button
@@ -198,37 +198,46 @@ export function CustomerOverview() {
         aria-label="Customer order summary"
         className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
       >
-        {summaryCards.map((card, index) => {
-          const Icon = card.icon;
-          return (
-            <motion.div
-              key={card.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.24,
-                delay: index * 0.05,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="flex flex-col justify-between rounded-2xl border border-border bg-card p-5 shadow-2xs"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-muted-foreground">
-                  {card.label}
-                </span>
-                <span className="flex size-8 items-center justify-center rounded-xl bg-muted text-primary">
-                  <Icon className="size-4" aria-hidden="true" />
-                </span>
-              </div>
-              <div className="mt-4 space-y-1">
-                <p className="font-heading text-3xl font-bold tracking-tight text-foreground tabular-nums">
-                  {card.value}
-                </p>
-                <p className="text-xs text-muted-foreground">{card.caption}</p>
-              </div>
-            </motion.div>
-          );
-        })}
+        {isLoading
+          ? summaryCards.map((card) => (
+              <Skeleton
+                key={card.label}
+                className="h-32 rounded-2xl border border-border"
+              />
+            ))
+          : summaryCards.map((card, index) => {
+              const Icon = card.icon;
+              return (
+                <motion.div
+                  key={card.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.24,
+                    delay: index * 0.05,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="flex flex-col justify-between rounded-2xl border border-border bg-card p-5 shadow-2xs"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {card.label}
+                    </span>
+                    <span className="flex size-8 items-center justify-center rounded-xl bg-muted text-primary">
+                      <Icon className="size-4" aria-hidden="true" />
+                    </span>
+                  </div>
+                  <div className="mt-4 space-y-1">
+                    <p className="font-heading text-3xl font-bold tracking-tight text-foreground tabular-nums">
+                      {card.value}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {card.caption}
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
       </section>
 
       <StatusDistributionChart

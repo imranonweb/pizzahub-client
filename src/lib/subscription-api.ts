@@ -1,5 +1,9 @@
-import { ApiClientError, apiRequest } from "./api-client";
-import { getAuthToken } from "./auth-client";
+import { apiRequest } from "./api-client";
+import {
+  getBearerHeaders,
+  resolveApiUnavailableNotice,
+  TOKEN_UNAVAILABLE_NOTICE,
+} from "./authenticated-api";
 
 export type VendorSubscriptionPlan = "free" | "premium";
 
@@ -121,15 +125,14 @@ export async function verifyVendorCheckoutSession(
 }
 
 export async function fetchVendorSubscription(): Promise<VendorSubscriptionSummaryResponse> {
-  const token = await getAuthToken();
-  if (!token) {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
     return {
       source: "unavailable",
       subscription: null,
       recentTransactions: [],
       plans: [],
-      notice:
-        "Authentication session token unavailable. Please refresh or sign in again.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -141,9 +144,7 @@ export async function fetchVendorSubscription(): Promise<VendorSubscriptionSumma
       plans?: BackendSubscriptionPlanInfo[];
     }>("/api/vendor/subscription", {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: authHeaders,
     });
 
     return {
@@ -155,24 +156,22 @@ export async function fetchVendorSubscription(): Promise<VendorSubscriptionSumma
       plans: Array.isArray(payload.plans) ? payload.plans : [],
     };
   } catch (error) {
-    const message =
-      error instanceof ApiClientError
-        ? error.message
-        : "Unable to load subscription details from PizzaHub API.";
-
     return {
       source: "unavailable",
       subscription: null,
       recentTransactions: [],
       plans: [],
-      notice: message,
+      notice: resolveApiUnavailableNotice(
+        error,
+        "Unable to load subscription details from PizzaHub API.",
+      ),
     };
   }
 }
 
 export async function createVendorCheckoutSession(): Promise<CheckoutSessionActionResult> {
-  const token = await getAuthToken();
-  if (!token) {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
     return {
       ok: false,
       message: "Sign in with a verified vendor account before checking out.",
@@ -202,7 +201,7 @@ export async function createVendorCheckoutSession(): Promise<CheckoutSessionActi
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       body: JSON.stringify(body),
       timeoutMs: 10000,
@@ -234,8 +233,8 @@ export async function createVendorCheckoutSession(): Promise<CheckoutSessionActi
 }
 
 export async function createVendorBillingPortalSession(): Promise<BillingPortalActionResult> {
-  const token = await getAuthToken();
-  if (!token) {
+  const authHeaders = await getBearerHeaders();
+  if (!authHeaders) {
     return {
       ok: false,
       message: "Sign in with a verified vendor account to manage billing.",
@@ -256,7 +255,7 @@ export async function createVendorBillingPortalSession(): Promise<BillingPortalA
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       body: JSON.stringify(body),
       timeoutMs: 10000,

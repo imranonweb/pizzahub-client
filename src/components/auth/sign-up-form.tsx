@@ -171,6 +171,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
 
       await refreshSession();
 
+      const destination = getDashboardPathForRole(role);
       toast.add({
         title: "Account created",
         description:
@@ -179,8 +180,12 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
             : "Your customer account is ready. Welcome to PizzaHub.",
         type: "success",
       });
-      router.refresh();
-      router.push(getDashboardPathForRole(role));
+      if (typeof window !== "undefined") {
+        window.location.assign(destination);
+      } else {
+        router.refresh();
+        router.push(destination);
+      }
     } catch {
       const message = getSafeAuthErrorMessage({ status: 500 }, "sign-up");
       setFormError(message);

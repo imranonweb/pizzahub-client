@@ -6,8 +6,12 @@ import type {
 } from "./admin-rules";
 import { ApiClientError, apiRequest } from "./api-client";
 import type { PizzaHubRole, SubscriptionPlan } from "./auth";
-import { getAuthToken } from "./auth-client";
 import { isValidPizzaHubRole } from "./auth-routes";
+import {
+  getBearerHeaders,
+  resolveApiUnavailableNotice,
+  TOKEN_UNAVAILABLE_NOTICE,
+} from "./authenticated-api";
 import type { MenuItemStatus } from "./menu-api";
 
 export interface AdminOverviewResponse {
@@ -345,14 +349,6 @@ function classifyAdminError(
   };
 }
 
-async function getBearerHeaders(): Promise<Record<string, string> | null> {
-  const token = await getAuthToken().catch(() => null);
-  if (!token) return null;
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 export async function fetchAdminOverview(): Promise<AdminOverviewResponse> {
   const authHeaders = await getBearerHeaders();
   if (!authHeaders) {
@@ -360,8 +356,7 @@ export async function fetchAdminOverview(): Promise<AdminOverviewResponse> {
       source: "unavailable",
       stats: null,
       recentActivity: [],
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -450,19 +445,15 @@ export async function fetchAdminOverview(): Promise<AdminOverviewResponse> {
       recentActivity: derivedActivity,
     };
   } catch (error) {
-    if (
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError)
-    ) {
-      return {
-        source: "unavailable",
-        stats: null,
-        recentActivity: [],
-        notice: ADMIN_OVERVIEW_UNAVAILABLE_NOTICE,
-      };
-    }
-
-    throw error;
+    return {
+      source: "unavailable",
+      stats: null,
+      recentActivity: [],
+      notice: resolveApiUnavailableNotice(
+        error,
+        ADMIN_OVERVIEW_UNAVAILABLE_NOTICE,
+      ),
+    };
   }
 }
 
@@ -473,8 +464,7 @@ export async function fetchAdminMenuItems(): Promise<AdminMenuListResponse> {
       source: "unavailable",
       items: [],
       counts: null,
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -509,19 +499,12 @@ export async function fetchAdminMenuItems(): Promise<AdminMenuListResponse> {
       counts,
     };
   } catch (error) {
-    if (
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError)
-    ) {
-      return {
-        source: "unavailable",
-        items: [],
-        counts: null,
-        notice: ADMIN_MENU_UNAVAILABLE_NOTICE,
-      };
-    }
-
-    throw error;
+    return {
+      source: "unavailable",
+      items: [],
+      counts: null,
+      notice: resolveApiUnavailableNotice(error, ADMIN_MENU_UNAVAILABLE_NOTICE),
+    };
   }
 }
 
@@ -707,8 +690,7 @@ export async function fetchAdminTransactions(
       transactions: [],
       counts: null,
       pagination: emptyPagination,
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -830,19 +812,15 @@ export async function fetchAdminTransactions(
       },
     };
   } catch (error) {
-    const message =
-      error instanceof ApiClientError
-        ? error.message
-        : error instanceof Error
-          ? error.message
-          : "Unable to load platform transactions.";
-
     return {
       source: "unavailable",
       transactions: [],
       counts: null,
       pagination: emptyPagination,
-      notice: message,
+      notice: resolveApiUnavailableNotice(
+        error,
+        "Unable to load platform transactions.",
+      ),
     };
   }
 }
@@ -854,8 +832,7 @@ export async function fetchAdminUsers(): Promise<AdminUsersListResponse> {
       source: "unavailable",
       users: [],
       counts: null,
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -891,19 +868,15 @@ export async function fetchAdminUsers(): Promise<AdminUsersListResponse> {
       counts,
     };
   } catch (error) {
-    if (
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError)
-    ) {
-      return {
-        source: "unavailable",
-        users: [],
-        counts: null,
-        notice: ADMIN_USERS_UNAVAILABLE_NOTICE,
-      };
-    }
-
-    throw error;
+    return {
+      source: "unavailable",
+      users: [],
+      counts: null,
+      notice: resolveApiUnavailableNotice(
+        error,
+        ADMIN_USERS_UNAVAILABLE_NOTICE,
+      ),
+    };
   }
 }
 

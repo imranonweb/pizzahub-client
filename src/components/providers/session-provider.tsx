@@ -9,7 +9,7 @@ import {
   useMemo,
 } from "react";
 import type { PizzaHubRole, SubscriptionPlan } from "@/lib/auth";
-import { authClient, useSession } from "@/lib/auth-client";
+import { authClient, clearAuthTokenCache, useSession } from "@/lib/auth-client";
 import { isValidPizzaHubRole } from "@/lib/auth-routes";
 
 export interface ClientSessionUser {
@@ -102,10 +102,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const handleSignOut = useCallback(
     async (redirectTo = "/sign-in") => {
-      await authClient.signOut();
-      await refetch();
-      router.refresh();
-      router.push(redirectTo);
+      clearAuthTokenCache();
+      try {
+        await authClient.signOut();
+      } finally {
+        await refetch().catch(() => undefined);
+        if (typeof window !== "undefined") {
+          window.location.assign(redirectTo);
+        } else {
+          router.refresh();
+          router.push(redirectTo);
+        }
+      }
     },
     [refetch, router],
   );

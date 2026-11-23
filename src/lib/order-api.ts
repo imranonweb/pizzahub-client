@@ -1,5 +1,9 @@
 import { ApiClientError, apiRequest } from "./api-client";
-import { getAuthToken } from "./auth-client";
+import {
+  getBearerHeaders,
+  resolveApiUnavailableNotice,
+  TOKEN_UNAVAILABLE_NOTICE,
+} from "./authenticated-api";
 import type { CartItem } from "./cart-rules";
 import { fetchPublicMenuItemById } from "./menu-api";
 import {
@@ -232,14 +236,6 @@ function classifyOrderError(error: unknown): {
   };
 }
 
-async function getBearerHeaders(): Promise<Record<string, string> | null> {
-  const token = await getAuthToken().catch(() => null);
-  if (!token) return null;
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 export async function validateCartItemsAgainstServer(
   items: readonly CartItem[],
   customerId: string,
@@ -394,8 +390,7 @@ export async function fetchCustomerOrders(): Promise<CustomerOrdersListResponse>
     return {
       source: "unavailable",
       orders: [],
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -416,18 +411,11 @@ export async function fetchCustomerOrders(): Promise<CustomerOrdersListResponse>
       orders: rawOrders.map(normalizeCustomerOrder),
     };
   } catch (error) {
-    if (
-      error instanceof ApiClientError &&
-      (error.isRouteNotFound || error.isNetworkError)
-    ) {
-      return {
-        source: "unavailable",
-        orders: [],
-        notice: ORDERS_API_UNAVAILABLE_NOTICE,
-      };
-    }
-
-    throw error;
+    return {
+      source: "unavailable",
+      orders: [],
+      notice: resolveApiUnavailableNotice(error, ORDERS_API_UNAVAILABLE_NOTICE),
+    };
   }
 }
 
@@ -443,8 +431,7 @@ export async function fetchCustomerOrderById(
   if (!authHeaders) {
     return {
       state: "unavailable",
-      notice:
-        "Unable to issue an API token for your current session. Sign out and sign in again if this persists.",
+      notice: TOKEN_UNAVAILABLE_NOTICE,
     };
   }
 
@@ -466,20 +453,18 @@ export async function fetchCustomerOrderById(
       order: normalizeCustomerOrder(rawOrder),
     };
   } catch (error) {
-    if (error instanceof ApiClientError) {
-      if (error.status === 404 && !error.isRouteNotFound) {
-        return { state: "not-found" };
-      }
-
-      if (error.isRouteNotFound || error.isNetworkError) {
-        return {
-          state: "unavailable",
-          notice: ORDERS_API_UNAVAILABLE_NOTICE,
-        };
-      }
+    if (
+      error instanceof ApiClientError &&
+      error.status === 404 &&
+      !error.isRouteNotFound
+    ) {
+      return { state: "not-found" };
     }
 
-    throw error;
+    return {
+      state: "unavailable",
+      notice: resolveApiUnavailableNotice(error, ORDERS_API_UNAVAILABLE_NOTICE),
+    };
   }
 }
 
