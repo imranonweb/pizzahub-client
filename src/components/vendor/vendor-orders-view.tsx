@@ -13,13 +13,11 @@ import {
   MapPin,
   Phone,
   RotateCw,
-  Search,
   ShoppingBag,
   User,
-  X,
   XCircle,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { OrderTimeline } from "@/components/orders/order-timeline";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,8 +30,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  type SearchSuggestionOption,
+  SearchSuggestionsInput,
+} from "@/components/ui/search-suggestions-input";
 import {
   Select,
   SelectContent,
@@ -140,7 +141,7 @@ export function VendorOrdersView() {
         }
         return trimmed;
       });
-    }, 260);
+    }, 150);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
@@ -214,6 +215,30 @@ export function VendorOrdersView() {
   const pagination = data?.pagination;
   const isUnavailable = data?.source === "unavailable";
 
+  const orderSuggestions = useMemo<SearchSuggestionOption[]>(() => {
+    const trimmed = searchInput.trim().toLowerCase();
+    const matched = trimmed
+      ? orders.filter((order) => {
+          const dishes = order.items.map((i) => i.itemName).join(" ");
+          return `${order.id} ${order.customer.name} ${order.deliveryAddress} ${dishes}`
+            .toLowerCase()
+            .includes(trimmed);
+        })
+      : orders;
+    return matched.slice(0, 6).map((order) => ({
+      id: order.id,
+      label: `${order.customer.name} · #${order.id.slice(-8).toUpperCase()}`,
+      value: order.customer.name || order.id,
+      subtitle:
+        order.items
+          .map((i) => `${i.quantity}× ${i.itemName}`)
+          .slice(0, 2)
+          .join(", ") || order.deliveryAddress,
+      badge: order.status.replaceAll("_", " "),
+      rightText: `$${order.total.toFixed(2)}`,
+    }));
+  }, [orders, searchInput]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -247,34 +272,25 @@ export function VendorOrdersView() {
       {/* Filters */}
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              type="search"
-              aria-label="Search incoming orders"
-              placeholder="Search by order ID, customer, address, or dish..."
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              className="h-10 rounded-xl bg-background pr-10 pl-10"
-            />
-            {searchInput ? (
-              <button
-                type="button"
-                aria-label="Clear order search"
-                onClick={() => {
-                  setSearchInput("");
-                  setDebouncedSearch("");
-                  setPage(1);
-                }}
-                className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <X className="size-3.5" aria-hidden="true" />
-              </button>
-            ) : null}
-          </div>
+          <SearchSuggestionsInput
+            value={searchInput}
+            onValueChange={setSearchInput}
+            onClear={() => {
+              setSearchInput("");
+              setDebouncedSearch("");
+              setPage(1);
+            }}
+            suggestions={orderSuggestions}
+            onSelectSuggestion={(option) => {
+              setSearchInput(option.value);
+              setDebouncedSearch(option.value.trim());
+              setPage(1);
+            }}
+            suggestionHeader="Matching Incoming Orders"
+            ariaLabel="Search incoming orders"
+            clearAriaLabel="Clear order search"
+            placeholder="Search by order ID, customer, address, or dish..."
+          />
 
           <Select
             value={sortOption}
@@ -404,7 +420,7 @@ export function VendorOrdersView() {
                   key={order.id}
                   className="rounded-2xl border border-border bg-card p-5 shadow-2xs transition-colors hover:border-border/90"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border/70 pb-4">
+                  <div className="flex flex-col gap-3 border-b border-border/70 pb-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2.5">
                         <span className="font-mono text-xs font-semibold text-foreground">
@@ -429,7 +445,7 @@ export function VendorOrdersView() {
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="font-heading text-lg font-bold text-foreground tabular-nums">
                         ${order.total.toFixed(2)}
                       </p>

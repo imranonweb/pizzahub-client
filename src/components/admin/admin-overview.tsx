@@ -212,8 +212,8 @@ export function AdminOverview() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
-                    duration: 0.24,
-                    delay: index * 0.04,
+                    duration: 0.16,
+                    delay: index * 0.02,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className="flex flex-col justify-between rounded-2xl border border-border bg-card p-5 shadow-2xs"

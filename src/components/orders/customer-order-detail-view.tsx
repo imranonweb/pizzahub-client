@@ -253,8 +253,8 @@ export function CustomerOrderDetailView({ orderId }: { orderId: string }) {
             Back to My Orders
           </Link>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-heading text-2xl font-bold tracking-[-0.02em] text-foreground sm:text-3xl">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+            <h1 className="font-heading text-xl font-bold tracking-[-0.02em] break-all text-foreground sm:text-3xl">
               Order #{order.id}
             </h1>
             <CopyOrderButton orderId={order.id} />

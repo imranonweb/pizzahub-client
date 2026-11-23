@@ -10,14 +10,15 @@ import {
   Lock,
   ReceiptText,
   RotateCw,
-  Search,
-  X,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  type SearchSuggestionOption,
+  SearchSuggestionsInput,
+} from "@/components/ui/search-suggestions-input";
 import {
   Select,
   SelectContent,
@@ -114,7 +115,7 @@ export function AdminTransactionsView() {
         if (prev !== trimmed) setPage(1);
         return trimmed;
       });
-    }, 260);
+    }, 150);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
@@ -148,6 +149,25 @@ export function AdminTransactionsView() {
   const transactions = data?.transactions ?? [];
   const pagination = data?.pagination;
   const isUnavailable = data?.source === "unavailable";
+
+  const txSuggestions = useMemo<SearchSuggestionOption[]>(() => {
+    const trimmed = searchInput.trim().toLowerCase();
+    const matched = trimmed
+      ? transactions.filter((tx) =>
+          `${tx.vendor.businessName} ${tx.vendor.name} ${tx.vendor.email} ${tx.stripeSubscriptionId ?? ""} ${tx.stripeSessionId ?? ""}`
+            .toLowerCase()
+            .includes(trimmed),
+        )
+      : transactions;
+    return matched.slice(0, 6).map((tx) => ({
+      id: tx.id,
+      label: tx.vendor.businessName,
+      value: tx.vendor.businessName || tx.vendor.email,
+      subtitle: `${tx.vendor.name} · ${formatDateTime(tx.createdAt)}`,
+      badge: tx.status,
+      rightText: formatCurrencyAmountFromCents(tx.amount, tx.currency),
+    }));
+  }, [searchInput, transactions]);
 
   return (
     <div className="space-y-6">
@@ -242,34 +262,25 @@ export function AdminTransactionsView() {
       {/* Filter Bar */}
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.8fr)_minmax(0,1fr)]">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              type="search"
-              aria-label="Search transactions"
-              placeholder="Search vendor name, email, or Stripe ID..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="h-10 rounded-xl bg-background pr-10 pl-10"
-            />
-            {searchInput ? (
-              <button
-                type="button"
-                aria-label="Clear search"
-                onClick={() => {
-                  setSearchInput("");
-                  setDebouncedSearch("");
-                  setPage(1);
-                }}
-                className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <X className="size-3.5" aria-hidden="true" />
-              </button>
-            ) : null}
-          </div>
+          <SearchSuggestionsInput
+            value={searchInput}
+            onValueChange={setSearchInput}
+            onClear={() => {
+              setSearchInput("");
+              setDebouncedSearch("");
+              setPage(1);
+            }}
+            suggestions={txSuggestions}
+            onSelectSuggestion={(option) => {
+              setSearchInput(option.value);
+              setDebouncedSearch(option.value.trim());
+              setPage(1);
+            }}
+            suggestionHeader="Matching Transactions"
+            ariaLabel="Search transactions"
+            clearAriaLabel="Clear search"
+            placeholder="Search vendor name, email, or Stripe ID..."
+          />
 
           <Select
             value={planFilter}
@@ -398,7 +409,63 @@ export function AdminTransactionsView() {
         </div>
       ) : (
         <>
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xs">
+          <div className="space-y-3 md:hidden">
+            {transactions.map((tx) => (
+              <article
+                key={tx.id}
+                className="rounded-2xl border border-border bg-card p-4 shadow-2xs"
+              >
+                <div className="flex items-start justify-between gap-3 border-b border-border/70 pb-3">
+                  <div className="min-w-0 space-y-0.5">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {tx.vendor.businessName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {tx.vendor.name}
+                      {tx.vendor.email ? ` · ${tx.vendor.email}` : ""}
+                    </p>
+                  </div>
+                  <span className="shrink-0 font-heading text-base font-bold text-foreground tabular-nums">
+                    {formatCurrencyAmountFromCents(tx.amount, tx.currency)}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      variant={tx.plan === "premium" ? "default" : "secondary"}
+                      className="gap-1 rounded-full px-2.5 py-0.5 text-xs capitalize"
+                    >
+                      {tx.plan === "premium" ? (
+                        <Crown className="size-3" aria-hidden="true" />
+                      ) : null}
+                      {tx.plan}
+                    </Badge>
+                    <Badge
+                      variant={getStatusVariant(tx.status)}
+                      className="rounded-full px-2.5 py-0.5 text-xs capitalize"
+                    >
+                      {tx.status}
+                    </Badge>
+                  </div>
+                  <span className="text-muted-foreground tabular-nums">
+                    {formatDateTime(tx.createdAt)}
+                  </span>
+                </div>
+
+                <p className="mt-2.5 inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                  <CreditCard className="size-3" aria-hidden="true" />
+                  {tx.stripeSubscriptionId
+                    ? `${tx.stripeSubscriptionId.slice(0, 18)}…`
+                    : tx.stripeSessionId
+                      ? `${tx.stripeSessionId.slice(0, 18)}…`
+                      : tx.id.slice(-8)}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-2xs md:block">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>

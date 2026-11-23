@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils";
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b border-border/70">
-      <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14 lg:px-8 lg:py-22">
-        <div className="space-y-7">
-          <div className="space-y-4">
-            <h1 className="font-heading text-4xl font-bold tracking-[-0.03em] leading-[1.06] text-foreground text-balance sm:text-5xl lg:text-[3.35rem]">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 py-10 sm:gap-10 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14 lg:px-8 lg:py-20">
+        <div className="min-w-0 space-y-6 sm:space-y-7">
+          <div className="space-y-3.5 sm:space-y-4">
+            <h1 className="font-heading text-3xl font-bold tracking-[-0.03em] leading-[1.08] text-foreground text-balance sm:text-5xl lg:text-[3.35rem]">
               Hot, brick-oven pizza from local kitchens to your table.
             </h1>
-            <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-lg">
               Browse curated pizza menus from neighborhood pizzerias, pick your
               delivery date, and follow every order status from oven prep to
               doorstep.
@@ -23,12 +23,12 @@ export function HeroSection() {
 
           <HeroSearch />
 
-          <div className="flex flex-wrap items-center gap-3.5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3.5">
             <Link
               href="/menu"
               className={cn(
                 buttonVariants({ variant: "default", size: "lg" }),
-                "h-12 rounded-xl px-6 text-sm font-semibold shadow-sm",
+                "h-11 w-full rounded-xl px-6 text-sm font-semibold shadow-sm sm:h-12 sm:w-auto",
               )}
             >
               <span>Explore Menu</span>
@@ -38,14 +38,14 @@ export function HeroSection() {
               href="/sign-up?role=vendor"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "h-12 rounded-xl bg-card px-6 text-sm font-semibold",
+                "h-11 w-full rounded-xl bg-card px-6 text-sm font-semibold sm:h-12 sm:w-auto",
               )}
             >
               Become a Vendor
             </Link>
           </div>
 
-          <ul className="grid gap-3 border-t border-border/80 pt-6 text-sm text-muted-foreground sm:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-2.5 border-t border-border/80 pt-5 text-sm text-muted-foreground sm:grid-cols-3 sm:gap-3 sm:pt-6">
             <li className="flex items-center gap-2.5">
               <ShieldCheck
                 className="size-4.5 shrink-0 text-primary"

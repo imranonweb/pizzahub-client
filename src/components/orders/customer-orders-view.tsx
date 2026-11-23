@@ -9,17 +9,18 @@ import {
   MapPin,
   RotateCcw,
   RotateCw,
-  Search,
   Store,
-  X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  type SearchSuggestionOption,
+  SearchSuggestionsInput,
+} from "@/components/ui/search-suggestions-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   type CustomerOrdersListResponse,
@@ -91,6 +92,30 @@ export function CustomerOrdersView() {
 
   const isLive = data?.source === "live";
   const allOrders = data?.orders ?? [];
+
+  const orderSuggestions = useMemo<SearchSuggestionOption[]>(() => {
+    const trimmed = search.trim().toLowerCase();
+    const matched = trimmed
+      ? allOrders.filter((order) => {
+          const dishes = order.items.map((i) => i.itemName).join(" ");
+          return `${order.id} ${order.vendorName} ${order.deliveryAddress} ${dishes}`
+            .toLowerCase()
+            .includes(trimmed);
+        })
+      : allOrders;
+    return matched.slice(0, 6).map((order) => ({
+      id: order.id,
+      label: `${order.vendorName} · #${order.id.slice(-8).toUpperCase()}`,
+      value: order.vendorName || order.id,
+      subtitle:
+        order.items
+          .map((i) => `${i.quantity}× ${i.itemName}`)
+          .slice(0, 2)
+          .join(", ") || order.deliveryAddress,
+      badge: order.status.replaceAll("_", " "),
+      rightText: `$${order.total.toFixed(2)}`,
+    }));
+  }, [allOrders, search]);
 
   const filtered = filterCustomerOrders(allOrders, {
     search,
@@ -193,40 +218,30 @@ export function CustomerOrdersView() {
       ) : null}
 
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            aria-label="Search your orders"
-            placeholder="Search by order ID, vendor kitchen, dish name, or address..."
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            className="h-10 rounded-xl bg-background pr-10 pl-10"
-          />
-          {search ? (
-            <button
-              type="button"
-              aria-label="Clear order search"
-              onClick={() => {
-                setSearch("");
-                setPage(1);
-              }}
-              className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <X className="size-3.5" aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
+        <SearchSuggestionsInput
+          value={search}
+          onValueChange={(nextValue) => {
+            setSearch(nextValue);
+            setPage(1);
+          }}
+          onClear={() => {
+            setSearch("");
+            setPage(1);
+          }}
+          suggestions={orderSuggestions}
+          onSelectSuggestion={(option) => {
+            setSearch(option.value);
+            setPage(1);
+          }}
+          suggestionHeader="Your Orders"
+          ariaLabel="Search your orders"
+          clearAriaLabel="Clear order search"
+          placeholder="Search by order ID, vendor kitchen, dish name, or address..."
+        />
 
         <fieldset className="flex flex-wrap items-center justify-between gap-3 border-0 border-t border-border/70 p-0 pt-3.5">
           <legend className="sr-only">Filter orders by status</legend>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:pb-0">
             {STATUS_TABS.map((tab) => {
               const active = statusFilter === tab.value;
               return (

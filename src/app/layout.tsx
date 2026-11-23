@@ -5,6 +5,7 @@ import { NotificationProvider } from "@/components/providers/notification-provid
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/toast";
+import { getApiBaseUrl } from "@/lib/api-client";
 import "./globals.css";
 
 const bricolageGrotesque = Bricolage_Grotesque({
@@ -35,12 +36,18 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const apiOrigin = getApiBaseUrl();
+
   return (
     <html
       lang="en"
       suppressHydrationWarning
       className={`${bricolageGrotesque.variable} ${figtree.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href={apiOrigin} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={apiOrigin} />
+      </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <SessionProvider>

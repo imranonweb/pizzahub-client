@@ -13,11 +13,9 @@ import {
   Lock,
   RotateCcw,
   RotateCw,
-  Search,
   ShieldCheck,
-  X,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -40,7 +38,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import {
+  type SearchSuggestionOption,
+  SearchSuggestionsInput,
+} from "@/components/ui/search-suggestions-input";
 import {
   Select,
   SelectContent,
@@ -207,6 +208,24 @@ export function AdminUserManagement() {
   const allUsers = data?.users ?? [];
   const counts = data?.counts;
 
+  const userSuggestions = useMemo<SearchSuggestionOption[]>(() => {
+    const trimmed = search.trim().toLowerCase();
+    const matched = trimmed
+      ? allUsers.filter((u) =>
+          `${u.name} ${u.email} ${u.businessName} ${u.role}`
+            .toLowerCase()
+            .includes(trimmed),
+        )
+      : allUsers;
+    return matched.slice(0, 6).map((u) => ({
+      id: u.id,
+      label: u.name,
+      value: u.email || u.name,
+      subtitle: u.businessName ? `${u.email} · ${u.businessName}` : u.email,
+      badge: u.role,
+    }));
+  }, [allUsers, search]);
+
   const filtered = filterAdminUsers(allUsers, {
     search,
     role: roleFilter,
@@ -367,36 +386,26 @@ export function AdminUserManagement() {
 
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              type="search"
-              aria-label="Search platform users"
-              placeholder="Search by name, email, or vendor business name..."
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(1);
-              }}
-              className="h-10 rounded-xl bg-background pr-10 pl-10"
-            />
-            {search ? (
-              <button
-                type="button"
-                aria-label="Clear search query"
-                onClick={() => {
-                  setSearch("");
-                  setPage(1);
-                }}
-                className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X className="size-3.5" aria-hidden="true" />
-              </button>
-            ) : null}
-          </div>
+          <SearchSuggestionsInput
+            value={search}
+            onValueChange={(nextValue) => {
+              setSearch(nextValue);
+              setPage(1);
+            }}
+            onClear={() => {
+              setSearch("");
+              setPage(1);
+            }}
+            suggestions={userSuggestions}
+            onSelectSuggestion={(option) => {
+              setSearch(option.value);
+              setPage(1);
+            }}
+            suggestionHeader="Platform Users"
+            ariaLabel="Search platform users"
+            clearAriaLabel="Clear search query"
+            placeholder="Search by name, email, or vendor business name..."
+          />
 
           <Select
             value={roleFilter}
@@ -428,7 +437,7 @@ export function AdminUserManagement() {
 
         <fieldset className="flex flex-wrap items-center justify-between gap-3 border-0 border-t border-border/70 p-0 pt-3.5">
           <legend className="sr-only">Filter users by account status</legend>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:pb-0">
             {STATUS_TABS.map((tab) => {
               const active = accountStatusFilter === tab.value;
               const count = getTabCount(tab.value);

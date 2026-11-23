@@ -169,6 +169,12 @@ function createAuthInstance() {
       enabled: true,
       minPasswordLength: 6,
     },
+    session: {
+      cookieCache: {
+        enabled: true,
+        maxAge: 30,
+      },
+    },
     socialProviders: getSocialProviders(),
     user: {
       additionalFields: {

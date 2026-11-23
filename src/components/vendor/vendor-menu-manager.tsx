@@ -13,14 +13,12 @@ import {
   Power,
   RotateCcw,
   RotateCw,
-  Search,
   Trash2,
-  X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -34,7 +32,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  type SearchSuggestionOption,
+  SearchSuggestionsInput,
+} from "@/components/ui/search-suggestions-input";
 import {
   Select,
   SelectContent,
@@ -136,6 +137,26 @@ export function VendorMenuManager() {
   const allItems = data?.items ?? [];
   const stats = data?.stats ?? createEmptyVendorMenuStats();
   const isPremium = user.subscriptionPlan === "premium";
+
+  const menuSuggestions = useMemo<SearchSuggestionOption[]>(() => {
+    const trimmed = search.trim().toLowerCase();
+    const matched = trimmed
+      ? allItems.filter((item) =>
+          `${item.itemName} ${item.category} ${item.location} ${item.description}`
+            .toLowerCase()
+            .includes(trimmed),
+        )
+      : allItems;
+    return matched.slice(0, 6).map((item) => ({
+      id: item.id,
+      label: item.itemName,
+      value: item.itemName,
+      subtitle: `${item.location} · ${item.category}`,
+      badge: item.status,
+      rightText: `$${item.price.toFixed(2)}`,
+      imageUrl: item.images[0] || "/images/auth-pizza-hero.jpg",
+    }));
+  }, [allItems, search]);
 
   const filtered = filterVendorMenuItems(allItems, {
     search,
@@ -392,36 +413,26 @@ export function VendorMenuManager() {
 
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              type="search"
-              aria-label="Search your menu items"
-              placeholder="Search by item name, location, or description..."
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(1);
-              }}
-              className="h-10 rounded-xl bg-background pr-10 pl-10"
-            />
-            {search ? (
-              <button
-                type="button"
-                aria-label="Clear search query"
-                onClick={() => {
-                  setSearch("");
-                  setPage(1);
-                }}
-                className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X className="size-3.5" aria-hidden="true" />
-              </button>
-            ) : null}
-          </div>
+          <SearchSuggestionsInput
+            value={search}
+            onValueChange={(nextValue) => {
+              setSearch(nextValue);
+              setPage(1);
+            }}
+            onClear={() => {
+              setSearch("");
+              setPage(1);
+            }}
+            suggestions={menuSuggestions}
+            onSelectSuggestion={(option) => {
+              setSearch(option.value);
+              setPage(1);
+            }}
+            suggestionHeader="Your Pizza Listings"
+            ariaLabel="Search your menu items"
+            clearAriaLabel="Clear search query"
+            placeholder="Search by item name, location, or description..."
+          />
 
           <Select
             value={category}
@@ -453,7 +464,7 @@ export function VendorMenuManager() {
           <legend className="sr-only">
             Filter listings by approval status
           </legend>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:pb-0">
             {STATUS_TABS.map((tab) => {
               const active = statusFilter === tab.value;
               const count = getTabCount(tab.value);
@@ -603,7 +614,7 @@ export function VendorMenuManager() {
                       </div>
 
                       <div className="min-w-0 space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:pb-0">
                           <h2 className="truncate font-heading text-lg font-semibold text-foreground">
                             {item.itemName}
                           </h2>
@@ -632,7 +643,7 @@ export function VendorMenuManager() {
                     </div>
 
                     <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:pb-0">
                         <Button
                           type="button"
                           variant="outline"

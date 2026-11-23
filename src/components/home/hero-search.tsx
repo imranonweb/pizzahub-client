@@ -1,10 +1,20 @@
 "use client";
 
-import { ArrowRight, Search, Sparkles, X } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  type SearchSuggestionOption,
+  SearchSuggestionsInput,
+} from "@/components/ui/search-suggestions-input";
+import {
+  getCachedPublicCatalogItems,
+  MENU_CATEGORIES,
+  type PublicMenuItem,
+  prefetchPublicMenuCatalog,
+  scoreAndFilterPublicMenuItems,
+} from "@/lib/menu-api";
 
 const QUICK_DISCOVERY_TAGS = [
   { label: "Margherita", query: "Margherita" },
@@ -17,6 +27,88 @@ const QUICK_DISCOVERY_TAGS = [
 export function HeroSearch() {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [catalogItems, setCatalogItems] = useState<PublicMenuItem[]>(() =>
+    getCachedPublicCatalogItems(),
+  );
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(false);
+
+  const ensureCatalogLoaded = async () => {
+    if (catalogItems.length > 0 || isLoadingCatalog) {
+      return;
+    }
+    setIsLoadingCatalog(true);
+    try {
+      const items = await prefetchPublicMenuCatalog();
+      if (items.length > 0) {
+        setCatalogItems(items);
+      }
+    } finally {
+      setIsLoadingCatalog(false);
+    }
+  };
+
+  const suggestions = useMemo<SearchSuggestionOption[]>(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      if (catalogItems.length > 0) {
+        return catalogItems.slice(0, 5).map((item) => ({
+          id: `item-${item.id}`,
+          label: item.itemName,
+          value: item.itemName,
+          subtitle: `${item.vendor.businessName} · ${item.category}`,
+          rightText: `$${item.price.toFixed(2)}`,
+          imageUrl: item.images[0] || "/images/auth-pizza-hero.jpg",
+        }));
+      }
+
+      return QUICK_DISCOVERY_TAGS.map((tag) => ({
+        id: `tag-${tag.label}`,
+        label: tag.label,
+        value: tag.query,
+        badge: "Popular",
+      }));
+    }
+
+    const itemMatches = scoreAndFilterPublicMenuItems(catalogItems, trimmed)
+      .slice(0, 5)
+      .map((item) => ({
+        id: `item-${item.id}`,
+        label: item.itemName,
+        value: item.itemName,
+        subtitle: `${item.vendor.businessName} · ${item.location}`,
+        badge: item.category,
+        rightText: `$${item.price.toFixed(2)}`,
+        imageUrl: item.images[0] || "/images/auth-pizza-hero.jpg",
+      }));
+
+    if (itemMatches.length > 0) {
+      return itemMatches;
+    }
+
+    const lowered = trimmed.toLowerCase();
+    const categoryMatches = MENU_CATEGORIES.filter((cat) =>
+      cat.toLowerCase().includes(lowered),
+    ).map((cat) => ({
+      id: `cat-${cat}`,
+      label: cat,
+      value: cat,
+      badge: "Category",
+      subtitle: `Browse all ${cat.toLowerCase()}`,
+    }));
+
+    if (categoryMatches.length > 0) {
+      return categoryMatches;
+    }
+
+    return QUICK_DISCOVERY_TAGS.filter((t) =>
+      t.label.toLowerCase().includes(lowered),
+    ).map((tag) => ({
+      id: `tag-${tag.label}`,
+      label: tag.label,
+      value: tag.query,
+      badge: "Popular",
+    }));
+  }, [catalogItems, query]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -26,6 +118,20 @@ export function HeroSearch() {
     } else {
       router.push("/menu");
     }
+  };
+
+  const handleSelectSuggestion = (option: SearchSuggestionOption) => {
+    if (option.id.startsWith("item-")) {
+      const itemId = option.id.slice("item-".length);
+      router.push(`/menu/${encodeURIComponent(itemId)}`);
+      return;
+    }
+    if (option.id.startsWith("cat-")) {
+      router.push(`/menu?category=${encodeURIComponent(option.value)}`);
+      return;
+    }
+    setQuery(option.value);
+    router.push(`/menu?search=${encodeURIComponent(option.value)}`);
   };
 
   const handleTagClick = (tagQuery: string) => {
@@ -38,30 +144,29 @@ export function HeroSearch() {
         onSubmit={handleSubmit}
         className="relative flex flex-col gap-2.5 sm:flex-row sm:items-center"
       >
-        <div className="relative flex-1">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            aria-label="Search pizza by name"
-            placeholder="Search pizza, topping, or kitchen (e.g. Margherita, Diavola)..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-12 rounded-xl border-border/80 bg-card pr-10 pl-10 text-sm shadow-2xs focus-visible:ring-primary"
-          />
-          {query ? (
-            <button
-              type="button"
-              aria-label="Clear search input"
-              onClick={() => setQuery("")}
-              className="absolute top-1/2 right-3 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <X className="size-3.5" aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
+        <SearchSuggestionsInput
+          value={query}
+          onValueChange={(nextValue) => {
+            setQuery(nextValue);
+            void ensureCatalogLoaded();
+          }}
+          onClear={() => setQuery("")}
+          onFocusPrefetch={() => {
+            void ensureCatalogLoaded();
+          }}
+          suggestions={suggestions}
+          onSelectSuggestion={handleSelectSuggestion}
+          showWhenEmpty={true}
+          isLoadingSuggestions={isLoadingCatalog}
+          suggestionHeader={
+            query.trim() ? "Matching Pizzas & Kitchens" : "Popular Searches"
+          }
+          ariaLabel="Search pizza by name"
+          clearAriaLabel="Clear search input"
+          placeholder="Search pizza, topping, or kitchen (e.g. Margherita, Diavola)..."
+          className="flex-1"
+          inputClassName="h-12 border-border/80 bg-card text-sm shadow-2xs focus-visible:ring-primary"
+        />
 
         <Button
           type="submit"

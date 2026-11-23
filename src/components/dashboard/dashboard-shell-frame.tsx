@@ -301,7 +301,7 @@ export function DashboardShellFrame({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
             <NotificationBell />
             {headerActions}
@@ -310,11 +310,14 @@ export function DashboardShellFrame({
               variant="outline"
               size="sm"
               disabled={isSigningOut}
+              aria-label={isSigningOut ? "Signing out" : "Sign Out"}
               onClick={handleSignOut}
-              className="h-9 gap-1.5 rounded-xl bg-card px-3 font-medium text-muted-foreground hover:text-foreground"
+              className="h-9 gap-1.5 rounded-xl bg-card px-2.5 font-medium text-muted-foreground hover:text-foreground sm:px-3"
             >
               <LogOut className="size-4" aria-hidden="true" />
-              <span>{isSigningOut ? "Signing out..." : "Sign Out"}</span>
+              <span className="hidden sm:inline">
+                {isSigningOut ? "Signing out..." : "Sign Out"}
+              </span>
             </Button>
           </div>
         </header>

@@ -106,11 +106,11 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/92 backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-8">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-4 lg:gap-8">
           <Link
             href="/"
-            className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <PizzaHubBrandMark tone="dark" />
           </Link>
@@ -288,7 +288,7 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex shrink-0 md:hidden items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
           {showCartButton ? (
             <Button

@@ -13,11 +13,14 @@ import {
   X,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  type SearchSuggestionOption,
+  SearchSuggestionsInput,
+} from "@/components/ui/search-suggestions-input";
 import {
   Select,
   SelectContent,
@@ -27,9 +30,13 @@ import {
 } from "@/components/ui/select";
 import {
   fetchPublicMenu,
+  getCachedPublicCatalogItems,
   MENU_CATEGORIES,
   type MenuListResult,
   type MenuSortOption,
+  type PublicMenuItem,
+  prefetchPublicMenuCatalog,
+  scoreAndFilterPublicMenuItems,
 } from "@/lib/menu-api";
 import { cn } from "@/lib/utils";
 import { MenuGridSkeleton } from "./menu-skeletons";
@@ -75,6 +82,9 @@ export function MenuBrowseClient() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [searchInput, setSearchInput] = useState(urlSearch);
   const [result, setResult] = useState<MenuListResult | null>(null);
+  const [catalogForSuggestions, setCatalogForSuggestions] = useState<
+    PublicMenuItem[]
+  >(() => getCachedPublicCatalogItems());
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
@@ -158,7 +168,7 @@ export function MenuBrowseClient() {
 
     const timer = setTimeout(() => {
       updateUrlParams({ search: trimmedInput, page: 1 });
-    }, 260);
+    }, 140);
 
     return () => clearTimeout(timer);
   }, [searchInput, urlSearch, updateUrlParams]);
@@ -181,6 +191,11 @@ export function MenuBrowseClient() {
       .then((data) => {
         if (!cancelled) {
           setResult(data);
+          if (data.items.length > 0) {
+            setCatalogForSuggestions((prev) =>
+              prev.length >= data.items.length ? prev : data.items,
+            );
+          }
         }
       })
       .catch((error: unknown) => {
@@ -223,47 +238,65 @@ export function MenuBrowseClient() {
     result?.pagination.hasNextPage ?? currentPage < totalPages;
   const hasPrevPage = result?.pagination.hasPrevPage ?? currentPage > 1;
 
+  const searchSuggestions = useMemo<SearchSuggestionOption[]>(() => {
+    const sourceItems =
+      catalogForSuggestions.length > 0
+        ? catalogForSuggestions
+        : (result?.items ?? []);
+    const trimmed = searchInput.trim();
+    const matchedItems = trimmed
+      ? scoreAndFilterPublicMenuItems(sourceItems, trimmed)
+      : sourceItems;
+
+    return matchedItems.slice(0, 6).map((item) => ({
+      id: `menu-${item.id}`,
+      label: item.itemName,
+      value: item.itemName,
+      subtitle: `${item.vendor.businessName} · ${item.location}`,
+      badge: item.category,
+      rightText: `$${item.price.toFixed(2)}`,
+      imageUrl: item.images[0] || "/images/auth-pizza-hero.jpg",
+    }));
+  }, [catalogForSuggestions, result?.items, searchInput]);
+
   return (
     <div className="space-y-8">
       <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              ref={searchInputRef}
-              type="search"
-              aria-label="Search pizza menu items by name"
-              placeholder="Search pizzas, toppings, or kitchens (press /)..."
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  setSearchInput("");
-                  updateUrlParams({ search: "", page: 1 });
-                } else if (event.key === "Enter") {
-                  event.preventDefault();
-                  updateUrlParams({ search: searchInput.trim(), page: 1 });
+          <SearchSuggestionsInput
+            inputRef={searchInputRef}
+            value={searchInput}
+            onValueChange={setSearchInput}
+            onClear={() => {
+              setSearchInput("");
+              updateUrlParams({ search: "", page: 1 });
+            }}
+            onFocusPrefetch={() => {
+              void prefetchPublicMenuCatalog().then((items) => {
+                if (items.length > 0) {
+                  setCatalogForSuggestions(items);
                 }
-              }}
-              className="h-10 rounded-xl bg-background pr-10 pl-10"
-            />
-            {searchInput ? (
-              <button
-                type="button"
-                aria-label="Clear search"
-                onClick={() => {
-                  setSearchInput("");
-                  updateUrlParams({ search: "", page: 1 });
-                }}
-                className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X className="size-3.5" aria-hidden="true" />
-              </button>
-            ) : null}
-          </div>
+              });
+            }}
+            suggestions={searchSuggestions}
+            onSelectSuggestion={(option) => {
+              setSearchInput(option.value);
+              updateUrlParams({ search: option.value, page: 1 });
+            }}
+            suggestionHeader="Matching Menu Items"
+            ariaLabel="Search pizza menu items by name"
+            clearAriaLabel="Clear search"
+            placeholder="Search pizzas, toppings, or kitchens (press /)..."
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setSearchInput("");
+                updateUrlParams({ search: "", page: 1 });
+              } else if (event.key === "Enter") {
+                event.preventDefault();
+                updateUrlParams({ search: searchInput.trim(), page: 1 });
+              }
+            }}
+          />
 
           <Select
             value={urlLocation || "all"}
