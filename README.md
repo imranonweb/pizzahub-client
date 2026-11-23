@@ -8,8 +8,8 @@ Customers can discover wood-fired pizzas from local approved kitchens, customize
 
 ## Live Links & Repositories
 
-- **Client Live URL:** _Add your deployed Vercel / Netlify URL here_
-- **Server API URL:** _Add your deployed Express API URL here_
+- **Client Live URL:** https://pizzahub-client-murex.vercel.app
+- **Server API URL:** https://pizzahub-server-bice.vercel.app
 - **Client Repository:** `pizza-hub-client`
 - **Server Repository:** `PizzaHub-server`
 
