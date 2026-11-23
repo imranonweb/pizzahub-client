@@ -1,9 +1,11 @@
 const DEFAULT_API_URL = "http://localhost:5000";
-const DEFAULT_TIMEOUT_MS = 4500;
+const DEFAULT_TIMEOUT_MS = 15000;
 
 export function getApiBaseUrl(): string {
   const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
-  return (configured || DEFAULT_API_URL).replace(/\/+$/, "");
+  return (configured || DEFAULT_API_URL)
+    .replace(/\/+$/, "")
+    .replace(/\/api$/i, "");
 }
 
 export class ApiClientError extends Error {
@@ -66,10 +68,16 @@ export async function apiRequest<T>(
       : null;
 
     if (!response.ok) {
+      const pointsToFrontendOrigin =
+        typeof window !== "undefined" &&
+        getApiBaseUrl() === window.location.origin.replace(/\/+$/, "");
+
       const serverMessage =
         typeof payload?.message === "string"
           ? payload.message
-          : `Request failed with status ${response.status}`;
+          : response.status === 404 && (!isJson || pointsToFrontendOrigin)
+            ? "PizzaHub API endpoint not found (404). Check that NEXT_PUBLIC_API_URL points to your Express server URL, not the Next.js frontend."
+            : `Request failed with status ${response.status}`;
 
       const isRouteNotFound =
         response.status === 404 && serverMessage === "Route not found";
