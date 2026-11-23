@@ -106,7 +106,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
         return;
       }
 
-      await refreshSession();
+      await refreshSession().catch(() => undefined);
 
       const signedInRole = (
         response.data?.user as { role?: unknown } | undefined

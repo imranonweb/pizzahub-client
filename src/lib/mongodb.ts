@@ -13,11 +13,24 @@ const SERVERLESS_MONGO_OPTIONS: MongoClientOptions = {
 interface MongoGlobalCache {
   client?: MongoClient;
   clientPromise?: Promise<MongoClient>;
+  uri?: string;
 }
 
 const globalForMongo = globalThis as typeof globalThis & {
   __pizzaHubMongo?: MongoGlobalCache;
 };
+
+function stripSurroundingQuotes(raw?: string): string {
+  const trimmed = raw?.trim() ?? "";
+  if (
+    trimmed.length >= 2 &&
+    ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'")))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+}
 
 function getCache(): MongoGlobalCache {
   if (!globalForMongo.__pizzaHubMongo) {
@@ -26,36 +39,53 @@ function getCache(): MongoGlobalCache {
   return globalForMongo.__pizzaHubMongo;
 }
 
+export function getMongoUri(): string {
+  const uri =
+    stripSurroundingQuotes(process.env.DB_URI) ||
+    stripSurroundingQuotes(process.env.MONGODB_URI);
+  if (!uri) {
+    throw new Error(
+      "Missing required environment variable DB_URI (or MONGODB_URI). Set DB_URI in your environment to a valid MongoDB connection string.",
+    );
+  }
+  return uri;
+}
+
 export function getDbName(): string {
-  return process.env.DB_NAME?.trim() || DEFAULT_DB_NAME;
+  return stripSurroundingQuotes(process.env.DB_NAME) || DEFAULT_DB_NAME;
+}
+
+export function resetMongoCache(): void {
+  const cache = getCache();
+  cache.client = undefined;
+  cache.clientPromise = undefined;
+  cache.uri = undefined;
 }
 
 export function getMongoClient(): MongoClient {
   const cache = getCache();
+  const uri = getMongoUri();
 
-  if (cache.client) {
+  if (cache.client && cache.uri === uri) {
     return cache.client;
-  }
-
-  const uri = process.env.DB_URI?.trim();
-  if (!uri) {
-    throw new Error(
-      "Missing required environment variable DB_URI. Set DB_URI in your environment to a valid MongoDB connection string.",
-    );
   }
 
   const client = new MongoClient(uri, SERVERLESS_MONGO_OPTIONS);
   cache.client = client;
+  cache.uri = uri;
+  cache.clientPromise = undefined;
   return client;
 }
 
 export function getMongoClientPromise(): Promise<MongoClient> {
   const cache = getCache();
+  const client = getMongoClient();
 
   if (!cache.clientPromise) {
-    const client = getMongoClient();
     cache.clientPromise = client.connect().catch((error: unknown) => {
+      cache.client = undefined;
       cache.clientPromise = undefined;
+      cache.uri = undefined;
       throw error;
     });
   }

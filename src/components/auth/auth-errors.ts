@@ -83,6 +83,13 @@ export function getSafeAuthErrorMessage(
     return "Google sign-in is currently unavailable. Please use email and password or try again shortly.";
   }
 
+  if (
+    code === "AUTH_DATABASE_UNAVAILABLE" ||
+    rawMessage.includes("database connection failed")
+  ) {
+    return "Authentication database is temporarily unavailable. Please try again shortly.";
+  }
+
   if (status === 403 || code === "FORBIDDEN") {
     return "Access denied. Please verify your account status or try again.";
   }
@@ -93,6 +100,15 @@ export function getSafeAuthErrorMessage(
 
   if (status !== undefined && status >= 500) {
     return "We could not reach the authentication service. Please try again in a moment.";
+  }
+
+  if (
+    status === 400 &&
+    error?.message &&
+    error.message.trim().length > 0 &&
+    error.message.trim().length <= 160
+  ) {
+    return error.message.trim();
   }
 
   if (context === "sign-up") {

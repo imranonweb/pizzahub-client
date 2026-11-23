@@ -25,12 +25,24 @@ const PROTECTED_USER_UPDATE_FIELDS = [
 const PASSWORD_COMPLEXITY_ERROR =
   "Password must be at least 6 characters long and contain at least one uppercase letter and one lowercase letter.";
 
+function stripEnvQuotes(raw?: string): string {
+  const trimmed = raw?.trim() ?? "";
+  if (
+    trimmed.length >= 2 &&
+    ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'")))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+}
+
 function normalizeOrigin(url: string): string {
-  return url.trim().replace(/\/+$/, "");
+  return stripEnvQuotes(url).replace(/\/+$/, "");
 }
 
 function normalizeVercelHost(raw?: string): string | undefined {
-  const trimmed = raw?.trim();
+  const trimmed = stripEnvQuotes(raw);
   if (!trimmed) {
     return undefined;
   }
@@ -44,7 +56,7 @@ function normalizeVercelHost(raw?: string): string | undefined {
 }
 
 function getRequiredAuthSecret(): string {
-  const secret = process.env.BETTER_AUTH_SECRET?.trim();
+  const secret = stripEnvQuotes(process.env.BETTER_AUTH_SECRET);
   if (!secret) {
     throw new Error(
       "Missing required environment variable BETTER_AUTH_SECRET. Set BETTER_AUTH_SECRET in your environment before running authentication.",
@@ -55,8 +67,8 @@ function getRequiredAuthSecret(): string {
 
 export function getAuthBaseUrl(): string {
   const configuredUrl =
-    process.env.BETTER_AUTH_URL?.trim() ||
-    process.env.NEXT_PUBLIC_BETTER_AUTH_URL?.trim();
+    stripEnvQuotes(process.env.BETTER_AUTH_URL) ||
+    stripEnvQuotes(process.env.NEXT_PUBLIC_BETTER_AUTH_URL);
 
   if (configuredUrl) {
     return normalizeOrigin(configuredUrl);
@@ -164,6 +176,7 @@ function createAuthInstance() {
     database: mongodbAdapter(db, {
       client,
       usePlural: true,
+      transaction: false,
     }),
     emailAndPassword: {
       enabled: true,

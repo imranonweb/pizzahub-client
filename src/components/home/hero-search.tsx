@@ -15,6 +15,7 @@ import {
   prefetchPublicMenuCatalog,
   scoreAndFilterPublicMenuItems,
 } from "@/lib/menu-api";
+import { cn } from "@/lib/utils";
 
 const QUICK_DISCOVERY_TAGS = [
   { label: "Margherita", query: "Margherita" },
@@ -24,13 +25,19 @@ const QUICK_DISCOVERY_TAGS = [
   { label: "Garlic Knots", query: "Garlic" },
 ] as const;
 
-export function HeroSearch() {
+interface HeroSearchProps {
+  tone?: "light" | "dark";
+}
+
+export function HeroSearch({ tone = "light" }: HeroSearchProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [catalogItems, setCatalogItems] = useState<PublicMenuItem[]>(() =>
     getCachedPublicCatalogItems(),
   );
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(false);
+
+  const isDark = tone === "dark";
 
   const ensureCatalogLoaded = async () => {
     if (catalogItems.length > 0 || isLoadingCatalog) {
@@ -165,22 +172,40 @@ export function HeroSearch() {
           clearAriaLabel="Clear search input"
           placeholder="Search pizza, topping, or kitchen (e.g. Margherita, Diavola)..."
           className="flex-1"
-          inputClassName="h-12 border-border/80 bg-card text-sm shadow-2xs focus-visible:ring-primary"
+          inputClassName={cn(
+            "h-12 text-sm shadow-2xs focus-visible:ring-primary",
+            isDark
+              ? "border-[#faf6f0]/20 bg-[#faf6f0] text-[#1c130f] placeholder:text-[#6f6259] dark:bg-[#231915] dark:text-[#faf6f0] dark:placeholder:text-[#b5a79b]"
+              : "border-border/80 bg-card",
+          )}
         />
 
         <Button
           type="submit"
           size="lg"
-          className="h-12 shrink-0 rounded-xl px-6 font-semibold shadow-xs"
+          className="h-12 shrink-0 rounded-xl px-6 font-semibold shadow-sm"
         >
           <span>Find Pizza</span>
           <ArrowRight className="size-4" aria-hidden="true" />
         </Button>
       </form>
 
-      <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1 font-medium text-foreground/80">
-          <Sparkles className="size-3 text-primary" aria-hidden="true" />
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-1.5 text-xs",
+          isDark ? "text-[#d2c7bc]" : "text-muted-foreground",
+        )}
+      >
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 font-medium",
+            isDark ? "text-[#f2eae1]" : "text-foreground/80",
+          )}
+        >
+          <Sparkles
+            className={cn("size-3", isDark ? "text-[#f26d4f]" : "text-primary")}
+            aria-hidden="true"
+          />
           Popular:
         </span>
         {QUICK_DISCOVERY_TAGS.map((tag) => (
@@ -188,7 +213,12 @@ export function HeroSearch() {
             key={tag.label}
             type="button"
             onClick={() => handleTagClick(tag.query)}
-            className="rounded-full border border-border/70 bg-card/60 px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className={cn(
+              "rounded-full border px-2.5 py-0.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+              isDark
+                ? "border-[#faf6f0]/20 bg-[#faf6f0]/6 text-[#e4dbd1] hover:border-[#faf6f0]/45 hover:bg-[#faf6f0]/14 hover:text-[#faf6f0]"
+                : "border-border/70 bg-card/60 text-muted-foreground hover:border-primary/40 hover:bg-accent/50 hover:text-foreground",
+            )}
           >
             {tag.label}
           </button>

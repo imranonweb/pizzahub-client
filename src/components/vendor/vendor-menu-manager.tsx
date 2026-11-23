@@ -614,7 +614,7 @@ export function VendorMenuManager() {
                       </div>
 
                       <div className="min-w-0 space-y-1.5">
-                        <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:pb-0">
+                        <div className="flex flex-wrap items-center gap-2">
                           <h2 className="truncate font-heading text-lg font-semibold text-foreground">
                             {item.itemName}
                           </h2>
@@ -643,7 +643,7 @@ export function VendorMenuManager() {
                     </div>
 
                     <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:pb-0">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"

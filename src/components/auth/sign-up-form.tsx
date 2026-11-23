@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,12 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
     requestedRole === "vendor" ? "vendor" : "customer";
 
   const [role, setRole] = useState<PublicRegistrationRole>(initialRole);
+
+  useEffect(() => {
+    if (requestedRole === "vendor" || requestedRole === "customer") {
+      setRole(requestedRole);
+    }
+  }, [requestedRole]);
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
@@ -169,7 +175,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
         return;
       }
 
-      await refreshSession();
+      await refreshSession().catch(() => undefined);
 
       const destination = getDashboardPathForRole(role);
       toast.add({

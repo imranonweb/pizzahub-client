@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -37,6 +37,7 @@ import {
   getTodayIsoDate,
   validateCheckoutForm,
 } from "@/lib/order-rules";
+import { fetchCustomerContactProfile } from "@/lib/profile-api";
 import { cn } from "@/lib/utils";
 import { OrderConfirmationCard } from "./order-confirmation-card";
 
@@ -74,6 +75,26 @@ export function CheckoutClient({
     title: string;
     message: string;
   } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchCustomerContactProfile()
+      .then((res) => {
+        if (cancelled || res.source !== "live" || !res.profile) return;
+        const saved = res.profile;
+        setValues((prev) => ({
+          ...prev,
+          deliveryAddress: prev.deliveryAddress || saved.deliveryAddress,
+          contactPhone: prev.contactPhone || saved.contactPhone,
+        }));
+      })
+      .catch(() => {
+        // Non-blocking prefill
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const updateField = <K extends CheckoutFormField>(
     field: K,
@@ -232,6 +253,21 @@ export function CheckoutClient({
         title: "Order placed",
         description: result.message,
         type: "success",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred while placing your order.";
+      setSubmitNotice({
+        tone: "error",
+        title: "Could not place order",
+        message,
+      });
+      toast.add({
+        title: "Order failed",
+        description: message,
+        type: "error",
       });
     } finally {
       submittingRef.current = false;
