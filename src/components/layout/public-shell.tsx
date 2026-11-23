@@ -1,4 +1,5 @@
 import { type ReactNode, Suspense } from "react";
+import { ScrollToTopButton } from "@/components/ui/scroll-to-top-button";
 import { Footer } from "./footer";
 import { Navbar } from "./navbar";
 
@@ -19,6 +20,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
       </Suspense>
       <main className="flex-1">{children}</main>
       <Footer />
+      <ScrollToTopButton />
     </div>
   );
 }

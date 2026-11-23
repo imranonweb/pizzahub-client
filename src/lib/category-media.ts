@@ -102,9 +102,9 @@ export const CATEGORY_MEDIA_PRESETS: readonly CategoryMediaPreset[] = [
     slug: "sides-appetizers",
     shortLabel: "Herb Garlic Knots",
     tagline: "Cast-iron garlic knots, pecorino & warm marinara dip",
-    image: "/images/pizza-sides-garlic-knots.jpg",
+    image: "/images/pizza-oven-spread.jpg",
     imageAlt:
-      "Freshly baked wood-fired artisan garlic knots in a cast-iron skillet with marinara dipping sauce",
+      "Wood-fired artisan pizza and oven-baked starters served fresh from the brick oven",
     demoItem: {
       itemName: "Cast-Iron Herb Garlic Knots & Marinara",
       category: "Sides & Appetizers",
@@ -112,7 +112,7 @@ export const CATEGORY_MEDIA_PRESETS: readonly CategoryMediaPreset[] = [
       location: "Little Italy Corner",
       description:
         "Six hand-twisted sourdough knots baked golden in our wood-fired oven, brushed with roasted garlic-herb butter, aged Parmigiano-Reggiano, and served with warm San Marzano marinara.",
-      images: ["/images/pizza-sides-garlic-knots.jpg"],
+      images: ["/images/pizza-oven-spread.jpg"],
     },
   },
   {

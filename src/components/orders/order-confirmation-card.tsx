@@ -12,6 +12,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { CustomerOrder } from "@/lib/order-rules";
 import { cn } from "@/lib/utils";
+import { CopyOrderButton } from "./copy-order-button";
 import { OrderStatusBadge } from "./order-status-badge";
 
 export function OrderConfirmationCard({ order }: { order: CustomerOrder }) {
@@ -32,12 +33,13 @@ export function OrderConfirmationCard({ order }: { order: CustomerOrder }) {
             >
               Order confirmed
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Order reference{" "}
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>Order reference</span>
               <span className="font-mono font-semibold text-foreground">
                 #{order.id}
               </span>
-            </p>
+              <CopyOrderButton orderId={order.id} />
+            </div>
           </div>
         </div>
 

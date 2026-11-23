@@ -35,6 +35,7 @@ import {
 } from "@/lib/order-api";
 import { canCustomerCancelOrder } from "@/lib/order-rules";
 import { cn } from "@/lib/utils";
+import { CopyOrderButton } from "./copy-order-button";
 import { OrderStatusBadge } from "./order-status-badge";
 import { OrderTimeline } from "./order-timeline";
 
@@ -256,6 +257,7 @@ export function CustomerOrderDetailView({ orderId }: { orderId: string }) {
             <h1 className="font-heading text-2xl font-bold tracking-[-0.02em] text-foreground sm:text-3xl">
               Order #{order.id}
             </h1>
+            <CopyOrderButton orderId={order.id} />
             <OrderStatusBadge status={order.status} />
           </div>
           <p className="text-sm text-muted-foreground">

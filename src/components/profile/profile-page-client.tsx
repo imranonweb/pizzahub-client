@@ -22,17 +22,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { getDashboardPathForRole } from "@/lib/auth-routes";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { ContactAddressCard } from "./contact-address-card";
 import { ProfileEditForm } from "./profile-edit-form";
 import type { AuthenticatedProfileData } from "./profile-types";
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "PH";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
 
 function formatMemberSince(iso: string | null): string {
   if (!iso) return "Unavailable";

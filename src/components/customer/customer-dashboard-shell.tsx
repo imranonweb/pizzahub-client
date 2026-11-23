@@ -40,7 +40,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import type { CustomerSessionProfile } from "./customer-types";
 
 const CustomerProfileContext = createContext<CustomerSessionProfile | null>(
@@ -108,13 +108,6 @@ const STOREFRONT_LINKS = [
     icon: ArrowLeft,
   },
 ] as const;
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "CU";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
 
 function CustomerSidebarContent({
   user,

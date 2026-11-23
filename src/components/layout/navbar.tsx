@@ -41,18 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { toast } from "@/components/ui/toast";
 import { getDashboardPathForRole } from "@/lib/auth-routes";
-import { cn } from "@/lib/utils";
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return "PH";
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
+import { cn, getInitials } from "@/lib/utils";
 
 function formatRoleLabel(role: string): string {
   return role.charAt(0).toUpperCase() + role.slice(1);

@@ -11,7 +11,6 @@ import {
   Sparkles,
   Store,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
@@ -28,6 +27,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { PizzaImage } from "@/components/ui/pizza-image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildSignInRedirectUrl } from "@/lib/auth-routes";
 import { MAX_CART_ITEM_QUANTITY } from "@/lib/cart-rules";
@@ -232,7 +232,7 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start">
         <div className="space-y-3">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-muted shadow-lg ring-1 ring-border/70">
-            <Image
+            <PizzaImage
               src={activeImage}
               alt={item.itemName}
               fill
@@ -260,7 +260,7 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
                         : "border-transparent opacity-75 hover:opacity-100",
                     )}
                   >
-                    <Image
+                    <PizzaImage
                       src={imgUrl}
                       alt=""
                       fill

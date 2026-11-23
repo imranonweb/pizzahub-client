@@ -1,9 +1,9 @@
 import { MapPin, Sparkles } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { PizzaImage } from "@/components/ui/pizza-image";
 import type { PublicMenuItem } from "@/lib/menu-api";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,7 @@ export function PizzaCard({ item, headingAs = "h2" }: PizzaCardProps) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
-        <Image
+        <PizzaImage
           src={coverImage}
           alt={item.itemName}
           fill
