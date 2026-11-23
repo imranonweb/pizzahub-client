@@ -27,6 +27,7 @@ import {
   fetchVendorSubscription,
   formatCurrencyAmountFromCents,
   type VendorSubscriptionSummaryResponse,
+  verifyVendorCheckoutSession,
 } from "@/lib/subscription-api";
 import {
   FREE_PLAN_ACTIVE_ITEM_LIMIT,
@@ -70,10 +71,17 @@ export function VendorSubscriptionView() {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const [menuRes, subRes] = await Promise.all([
+      const [menuRes, initialSubRes] = await Promise.all([
         fetchVendorMenuItems(),
         fetchVendorSubscription(),
       ]);
+      let subRes = initialSubRes;
+      if (subRes.source === "live" && subRes.subscription?.plan !== "premium") {
+        const verified = await verifyVendorCheckoutSession();
+        if (verified.reconciled) {
+          subRes = await fetchVendorSubscription();
+        }
+      }
       setMenuData(menuRes);
       setSubData(subRes);
       if (subRes.source === "unavailable" && subRes.notice) {

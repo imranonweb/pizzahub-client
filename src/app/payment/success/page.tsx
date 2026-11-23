@@ -4,6 +4,7 @@ import { PublicShell } from "@/components/layout/public-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaymentSuccessView } from "@/components/vendor/payment-success-view";
 import { requireRole } from "@/lib/session";
+import { reconcileVendorStripeCheckout } from "@/lib/stripe-reconcile";
 
 export const metadata: Metadata = {
   title: "Subscription Checkout Confirmation | PizzaHub",
@@ -16,10 +17,15 @@ async function PaymentSuccessGate({
 }: {
   searchParams: Promise<{ session_id?: string }>;
 }) {
-  await requireRole(["vendor"], "/payment/success");
+  const authSession = await requireRole(["vendor"], "/payment/success");
   const params = await searchParams;
   const sessionId =
     typeof params.session_id === "string" ? params.session_id : undefined;
+
+  await reconcileVendorStripeCheckout({
+    vendorId: authSession.user.id,
+    sessionId,
+  });
 
   return <PaymentSuccessView sessionId={sessionId} />;
 }

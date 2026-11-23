@@ -93,6 +93,33 @@ function getClientOrigin(): string | undefined {
   return undefined;
 }
 
+export async function verifyVendorCheckoutSession(
+  sessionId?: string,
+): Promise<{ reconciled: boolean; plan?: "free" | "premium" }> {
+  try {
+    const res = await fetch("/api/subscription/verify-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sessionId }),
+    });
+    if (!res.ok) {
+      return { reconciled: false };
+    }
+    const data = (await res.json()) as {
+      reconciled?: boolean;
+      plan?: "free" | "premium";
+    };
+    return {
+      reconciled: data.reconciled === true,
+      plan: data.plan,
+    };
+  } catch {
+    return { reconciled: false };
+  }
+}
+
 export async function fetchVendorSubscription(): Promise<VendorSubscriptionSummaryResponse> {
   const token = await getAuthToken();
   if (!token) {

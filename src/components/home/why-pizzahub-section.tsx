@@ -1,6 +1,8 @@
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Flame, UtensilsCrossed } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { PIZZERIA_SHOWCASE_PHOTOS } from "@/lib/category-media";
 import { cn } from "@/lib/utils";
 
 const CUSTOMER_BENEFITS = [
@@ -22,7 +24,62 @@ export function WhyPizzaHubSection() {
       aria-labelledby="why-pizzahub-heading"
       className="border-t border-border/70 bg-secondary/35"
     >
-      <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+      <div className="mx-auto w-full max-w-6xl space-y-12 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        {/* Authentic Wood-Fired Kitchens & Pizzeria Atmosphere Visual Showcase */}
+        <div className="space-y-6">
+          <div className="max-w-2xl space-y-2">
+            <h2 className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground sm:text-3xl">
+              From glowing brick-oven kitchens to neighborhood tables
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Partnering with authentic wood-fired trattorias and artisan pizza
+              kitchens — inside their 900°F brick-oven prep rooms and out on
+              their neighborhood dining terraces.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {PIZZERIA_SHOWCASE_PHOTOS.map((scene, idx) => (
+              <article
+                key={scene.id}
+                className="group overflow-hidden rounded-3xl border border-border bg-card shadow-xs"
+              >
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#1a110d]">
+                  <Image
+                    src={scene.image}
+                    alt={scene.imageAlt}
+                    fill
+                    sizes="(min-width: 1024px) 48vw, 100vw"
+                    className="object-cover object-center motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-amber-200 backdrop-blur-xs">
+                      {idx === 0 ? (
+                        <Flame className="size-3.5" aria-hidden="true" />
+                      ) : (
+                        <UtensilsCrossed
+                          className="size-3.5"
+                          aria-hidden="true"
+                        />
+                      )}
+                      {scene.locationTag}
+                    </span>
+                    <h3 className="mt-2 font-heading text-xl font-bold tracking-tight text-white">
+                      {scene.title}
+                    </h3>
+                  </div>
+                </div>
+                <div className="p-5 sm:p-6">
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {scene.caption}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
           <div className="flex flex-col justify-between gap-6 rounded-3xl border border-border bg-card p-7 sm:p-9">
             <div className="space-y-4">

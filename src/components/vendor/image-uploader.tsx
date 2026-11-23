@@ -3,24 +3,37 @@
 import {
   AlertCircle,
   ArrowUpLeft,
+  Check,
   ImagePlus,
+  Link2,
   Loader2,
+  Plus,
   RotateCcw,
+  Sparkles,
   Trash2,
   UploadCloud,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import { type DragEvent, useId, useRef, useState } from "react";
+import {
+  type DragEvent,
+  type KeyboardEvent,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/components/ui/toast";
+import { CATEGORY_MEDIA_PRESETS } from "@/lib/category-media";
 import { cn } from "@/lib/utils";
 import { uploadMenuImage } from "@/lib/vendor-menu-api";
 import {
   formatBytes,
+  isValidMenuImageUrl,
   MAX_IMAGE_SIZE_BYTES,
   MAX_MENU_IMAGES,
   validateImageFile,
@@ -56,6 +69,7 @@ export function ImageUploader({
   invalid?: boolean;
 }) {
   const inputId = useId();
+  const urlInputId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const uploadedByFingerprintRef = useRef<Map<string, string>>(new Map());
   const inFlightFingerprintsRef = useRef<Set<string>>(new Set());
@@ -64,6 +78,8 @@ export function ImageUploader({
 
   const [tasks, setTasks] = useState<UploadTask[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [pastedUrl, setPastedUrl] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
 
   const syncUploadingState = (nextTasks: UploadTask[]) => {
     onUploadingChange?.(nextTasks.some((t) => t.status === "uploading"));
@@ -76,6 +92,79 @@ export function ImageUploader({
     const updated = [...latestUrlsRef.current, url].slice(0, MAX_MENU_IMAGES);
     latestUrlsRef.current = updated;
     onChange(updated);
+  };
+
+  const handleAddDirectUrl = () => {
+    if (disabled) return;
+    const candidate = pastedUrl.trim();
+    if (!candidate) {
+      setUrlError(
+        "Paste an https:// image link or /images/... path to attach.",
+      );
+      return;
+    }
+
+    if (!isValidMenuImageUrl(candidate)) {
+      setUrlError(
+        "Enter a valid https:// image URL (e.g. https://i.ibb.co/... or https://images.unsplash.com/...) or /images/... path.",
+      );
+      return;
+    }
+
+    if (latestUrlsRef.current.includes(candidate)) {
+      setUrlError("This image link is already attached to your listing.");
+      return;
+    }
+
+    if (latestUrlsRef.current.length >= MAX_MENU_IMAGES) {
+      setUrlError(
+        `Maximum ${MAX_MENU_IMAGES} photos reached. Remove one before adding another.`,
+      );
+      return;
+    }
+
+    setUrlError(null);
+    commitUrl(candidate);
+    setPastedUrl("");
+    toast.add({
+      title: "Image link added",
+      description: "Direct photo URL attached to your pizza listing.",
+      type: "success",
+    });
+  };
+
+  const handleUrlKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAddDirectUrl();
+    }
+  };
+
+  const handleToggleDemoPresetImage = (demoUrl: string, label: string) => {
+    if (disabled) return;
+    if (latestUrlsRef.current.includes(demoUrl)) {
+      const next = latestUrlsRef.current.filter((u) => u !== demoUrl);
+      latestUrlsRef.current = next;
+      onChange(next);
+      return;
+    }
+
+    if (latestUrlsRef.current.length >= MAX_MENU_IMAGES) {
+      toast.add({
+        title: `Maximum ${MAX_MENU_IMAGES} images reached`,
+        description: "Remove an existing photo before selecting another.",
+        type: "warning",
+      });
+      return;
+    }
+
+    setUrlError(null);
+    commitUrl(demoUrl);
+    toast.add({
+      title: `${label} photo attached`,
+      description: "Demo category image added to your listing.",
+      type: "success",
+    });
   };
 
   const runUploadTask = async (task: UploadTask) => {
@@ -248,8 +337,122 @@ export function ImageUploader({
     onChange([urlToPromote, ...rest]);
   };
 
+  const limitReached = value.length >= MAX_MENU_IMAGES;
+
   return (
     <div className="space-y-4">
+      {/* Option 1: Direct Image URL Paste Bar */}
+      <div className="rounded-2xl border border-border bg-muted/20 p-3.5">
+        <label
+          htmlFor={urlInputId}
+          className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-foreground"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <Link2 className="size-3.5 text-primary" aria-hidden="true" />
+            Paste Direct Image Link (https:// or /images/...)
+          </span>
+          <span className="font-mono text-[11px] font-normal text-muted-foreground tabular-nums">
+            {value.length} / {MAX_MENU_IMAGES} attached
+          </span>
+        </label>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            id={urlInputId}
+            type="url"
+            value={pastedUrl}
+            disabled={disabled || limitReached}
+            onKeyDown={handleUrlKeyDown}
+            onChange={(event) => {
+              setPastedUrl(event.target.value);
+              if (urlError) setUrlError(null);
+            }}
+            placeholder="https://i.ibb.co/... or https://images.unsplash.com/..."
+            className="h-9 flex-1 rounded-xl bg-background px-3 text-xs"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || limitReached || !pastedUrl.trim()}
+            onClick={handleAddDirectUrl}
+            className="h-9 shrink-0 rounded-xl bg-card px-3.5 text-xs font-semibold"
+          >
+            <Plus className="size-3.5" aria-hidden="true" />
+            Add Image Link
+          </Button>
+        </div>
+
+        {urlError ? (
+          <p
+            role="alert"
+            className="mt-1.5 text-xs font-medium text-destructive"
+          >
+            {urlError}
+          </p>
+        ) : null}
+      </div>
+
+      {/* Option 2: 1-Click Curated Category Demo Photos */}
+      <div className="rounded-2xl border border-border bg-card p-3.5">
+        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
+            <Sparkles className="size-3.5 text-primary" aria-hidden="true" />
+            1-Click Demo Category Photos
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            Click any photo to attach or remove
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {CATEGORY_MEDIA_PRESETS.map((preset) => {
+            const isSelected = value.includes(preset.image);
+            return (
+              <button
+                key={preset.slug}
+                type="button"
+                disabled={disabled || (!isSelected && limitReached)}
+                onClick={() =>
+                  handleToggleDemoPresetImage(preset.image, preset.shortLabel)
+                }
+                className={cn(
+                  "group relative flex items-center gap-2.5 rounded-xl border p-1.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+                  isSelected
+                    ? "border-primary bg-primary/8 ring-1 ring-primary/30"
+                    : "border-border bg-background hover:border-primary/40 hover:bg-accent/40",
+                )}
+              >
+                <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+                  <Image
+                    src={preset.image}
+                    alt={preset.imageAlt}
+                    fill
+                    unoptimized
+                    sizes="40px"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[11px] font-semibold text-foreground">
+                    {preset.shortLabel}
+                  </p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {preset.category}
+                  </p>
+                </div>
+                {isSelected ? (
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="size-3" aria-hidden="true" />
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Option 3: File Upload Dropzone (ImgBB) */}
       <section
         aria-label="Menu photo upload dropzone"
         onDragOver={(event) => {
@@ -259,7 +462,7 @@ export function ImageUploader({
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         className={cn(
-          "relative flex flex-col items-center justify-center rounded-2xl border border-dashed px-5 py-7 text-center transition-colors",
+          "relative flex flex-col items-center justify-center rounded-2xl border border-dashed px-5 py-6 text-center transition-colors",
           isDragging
             ? "border-primary bg-accent/60"
             : invalid
@@ -286,23 +489,23 @@ export function ImageUploader({
           className="sr-only"
         />
 
-        <div className="mb-3 flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <div className="mb-2.5 flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <UploadCloud className="size-5" aria-hidden="true" />
         </div>
         <p className="text-sm font-medium text-foreground">
-          Drop pizza photos here, or{" "}
+          Or drop device photos here, or{" "}
           <button
             type="button"
-            disabled={disabled || value.length >= MAX_MENU_IMAGES}
+            disabled={disabled || limitReached}
             onClick={() => inputRef.current?.click()}
             className="font-semibold text-primary underline underline-offset-4 hover:text-primary/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           >
-            browse files
+            browse files to upload via ImgBB
           </button>
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           JPG, PNG, or WebP up to {formatBytes(MAX_IMAGE_SIZE_BYTES)} each (max{" "}
-          {MAX_MENU_IMAGES} photos). Uploads securely through PizzaHub.
+          {MAX_MENU_IMAGES} photos).
         </p>
       </section>
 
@@ -428,7 +631,7 @@ export function ImageUploader({
               className="flex aspect-[4/3] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-muted/20 p-3 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ImagePlus className="size-5 text-primary" aria-hidden="true" />
-              <span>Add another</span>
+              <span>Upload another</span>
             </button>
           ) : null}
         </div>

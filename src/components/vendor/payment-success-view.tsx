@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   fetchVendorSubscription,
   type VendorSubscriptionSummaryResponse,
+  verifyVendorCheckoutSession,
 } from "@/lib/subscription-api";
 import { getSubscriptionStatusDetails } from "@/lib/subscription-plans";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ export function PaymentSuccessView({ sessionId }: { sessionId?: string }) {
       }
 
       try {
+        await verifyVendorCheckoutSession(sessionId);
         const res = await fetchVendorSubscription();
         setSummary(res);
         await refreshSession();
@@ -50,7 +52,7 @@ export function PaymentSuccessView({ sessionId }: { sessionId?: string }) {
         setIsRefreshing(false);
       }
     },
-    [refreshSession],
+    [refreshSession, sessionId],
   );
 
   useEffect(() => {

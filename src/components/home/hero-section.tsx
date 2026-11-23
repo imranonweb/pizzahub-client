@@ -70,7 +70,7 @@ export function HeroSection() {
           </ul>
         </div>
 
-        <div className="relative">
+        <div className="relative space-y-3">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-[#1f1410] shadow-xl ring-1 ring-border/70">
             <Image
               src="/images/pizza-diavola.jpg"
@@ -80,6 +80,36 @@ export function HeroSection() {
               sizes="(min-width: 1024px) 46vw, 100vw"
               className="object-cover object-center"
             />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border/80 bg-[#1f1410]">
+              <Image
+                src="/images/pizza-oven-spread.jpg"
+                alt="Wood-fired brick oven glowing inside an authentic pizzeria kitchen"
+                fill
+                sizes="(min-width: 1024px) 15vw, 32vw"
+                className="object-cover"
+              />
+            </div>
+            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border/80 bg-[#1f1410]">
+              <Image
+                src="/images/pizza-vegetarian.jpg"
+                alt="Mediterranean vegetarian Neapolitan pizza on a warm oak peel"
+                fill
+                sizes="(min-width: 1024px) 15vw, 32vw"
+                className="object-cover"
+              />
+            </div>
+            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border/80 bg-[#1f1410]">
+              <Image
+                src="/images/pizza-specialty-truffle.jpg"
+                alt="Gourmet white truffle and wild mushroom artisan pizza with burrata"
+                fill
+                sizes="(min-width: 1024px) 15vw, 32vw"
+                className="object-cover"
+              />
+            </div>
           </div>
         </div>
       </div>
