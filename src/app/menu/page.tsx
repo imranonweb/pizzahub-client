@@ -13,17 +13,21 @@ export const metadata: Metadata = {
 export default function BrowseMenuPage() {
   return (
     <PublicShell>
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <header className="max-w-2xl space-y-2.5">
-          <h1 className="font-heading text-3xl font-bold tracking-[-0.025em] text-foreground sm:text-4xl">
-            Browse the Pizza Menu
-          </h1>
-          <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Explore approved wood-fired pizzas, sides, and beverages from
-            neighborhood kitchens. Filter by category, location, or price.
-          </p>
-        </header>
+      <div className="border-b border-border/70 bg-secondary/40">
+        <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+          <header className="max-w-2xl space-y-2.5">
+            <h1 className="font-heading text-3xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-4xl">
+              Browse the Pizza Menu
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Explore approved wood-fired pizzas, sides, and beverages from
+              neighborhood kitchens. Filter by category, location, or price.
+            </p>
+          </header>
+        </div>
+      </div>
 
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         <Suspense fallback={<MenuGridSkeleton />}>
           <MenuBrowseClient />
         </Suspense>

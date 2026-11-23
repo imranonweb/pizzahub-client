@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Sparkles, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import {
   type KeyboardEventHandler,
   type RefObject,
@@ -185,13 +185,10 @@ export function SearchSuggestionsInput({
           id={listboxId}
           role="listbox"
           aria-label={suggestionHeader}
-          className="absolute top-full right-0 left-0 z-50 mt-1.5 max-h-80 overflow-y-auto rounded-2xl border border-border bg-popover p-1.5 shadow-xl"
+          className="absolute top-full right-0 left-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-2xl border border-border/90 bg-popover p-1.5 shadow-[0_12px_36px_-10px_rgba(22,15,12,0.22),0_4px_12px_-4px_rgba(22,15,12,0.1)] ring-1 ring-foreground/5"
         >
-          <div className="flex items-center justify-between px-2.5 py-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-            <span className="inline-flex items-center gap-1">
-              <Sparkles className="size-3 text-primary" aria-hidden="true" />
-              {suggestionHeader}
-            </span>
+          <div className="flex items-center justify-between px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+            <span>{suggestionHeader}</span>
             {suggestions.length > 0 ? (
               <span className="tabular-nums">{suggestions.length} found</span>
             ) : null}

@@ -7,7 +7,7 @@ export function PizzaHubBrandMark({
 
   return (
     <span className={`inline-flex items-center gap-2.5 ${textColor}`}>
-      <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+      <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_2px_6px_rgba(22,15,12,0.18)] ring-1 ring-black/5">
         <svg
           viewBox="0 0 24 24"
           className="size-5"
@@ -25,7 +25,7 @@ export function PizzaHubBrandMark({
           <circle cx="14.5" cy="16.4" r="1.15" fill="currentColor" />
         </svg>
       </span>
-      <span className="font-heading text-xl font-bold tracking-[-0.03em]">
+      <span className="font-heading text-xl font-bold tracking-[-0.035em]">
         PizzaHub
       </span>
     </span>

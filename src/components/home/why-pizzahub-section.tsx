@@ -25,11 +25,10 @@ export function WhyPizzaHubSection() {
       aria-labelledby="why-pizzahub-heading"
       className="border-t border-border/70 bg-secondary/35"
     >
-      <div className="mx-auto w-full max-w-6xl space-y-12 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-        {/* Authentic Wood-Fired Kitchens & Pizzeria Atmosphere Visual Showcase */}
-        <div className="space-y-6">
+      <div className="mx-auto w-full max-w-6xl space-y-14 px-4 py-18 sm:px-6 lg:px-8 lg:py-22">
+        <div className="space-y-7">
           <MotionReveal className="max-w-2xl space-y-2">
-            <h2 className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground sm:text-3xl">
+            <h2 className="font-heading text-2xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-[2rem]">
               From glowing brick-oven kitchens to neighborhood tables
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -46,18 +45,18 @@ export function WhyPizzaHubSection() {
                 delay={idx * 0.06}
                 className="h-full"
               >
-                <article className="group h-full overflow-hidden rounded-3xl border border-border bg-card shadow-xs">
+                <article className="surface-card group flex h-full flex-col overflow-hidden rounded-3xl border border-border/90 bg-card">
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#1a110d]">
                     <Image
                       src={scene.image}
                       alt={scene.imageAlt}
                       fill
-                      sizes="(min-width: 1024px) 48vw, 100vw"
-                      className="object-cover object-center motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.03]"
+                      sizes="(min-width: 1024px) 31vw, 100vw"
+                      className="object-cover object-center motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out motion-safe:group-hover:scale-[1.035]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4 text-white">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-amber-200 backdrop-blur-xs">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/22 to-transparent" />
+                    <div className="absolute right-4 bottom-4 left-4 text-white">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#160f0c]/75 px-3 py-1 text-xs font-medium text-[#f6d6ad] backdrop-blur-xs">
                         {idx === 0 ? (
                           <Flame className="size-3.5" aria-hidden="true" />
                         ) : (
@@ -68,12 +67,12 @@ export function WhyPizzaHubSection() {
                         )}
                         {scene.locationTag}
                       </span>
-                      <h3 className="mt-2 font-heading text-xl font-bold tracking-tight text-white">
+                      <h3 className="mt-2 font-heading text-xl font-bold tracking-tight text-[#faf6f0]">
                         {scene.title}
                       </h3>
                     </div>
                   </div>
-                  <div className="p-5 sm:p-6">
+                  <div className="flex-1 p-5 sm:p-6">
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       {scene.caption}
                     </p>
@@ -85,11 +84,11 @@ export function WhyPizzaHubSection() {
         </div>
 
         <MotionReveal className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-          <div className="flex flex-col justify-between gap-6 rounded-3xl border border-border bg-card p-7 sm:p-9">
+          <div className="surface-card flex flex-col justify-between gap-7 rounded-3xl border border-border/90 bg-card p-7 sm:p-9">
             <div className="space-y-4">
               <h2
                 id="why-pizzahub-heading"
-                className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground sm:text-3xl"
+                className="font-heading text-2xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-[1.85rem]"
               >
                 Why PizzaHub for hungry diners
               </h2>
@@ -126,12 +125,12 @@ export function WhyPizzaHubSection() {
             </div>
           </div>
 
-          <div className="flex flex-col justify-between gap-6 rounded-3xl bg-[#1d130f] p-7 text-white sm:p-9">
+          <div className="flex flex-col justify-between gap-7 rounded-3xl border border-[#3a2820] bg-[#1a110d] p-7 text-[#faf6f0] shadow-[0_18px_40px_-20px_rgba(22,15,12,0.55)] sm:p-9">
             <div className="space-y-4">
-              <h2 className="font-heading text-2xl font-bold tracking-[-0.025em] text-white sm:text-3xl">
+              <h2 className="font-heading text-2xl font-bold tracking-[-0.03em] text-[#faf6f0] text-balance sm:text-[1.85rem]">
                 Built for local pizzerias too
               </h2>
-              <p className="text-sm leading-relaxed text-white/80 sm:text-base">
+              <p className="text-sm leading-relaxed text-[#d7cbc0] sm:text-base">
                 Create a restaurant profile, publish wood-fired specialties, and
                 stay in control of incoming customer requests at your own pace.
               </p>
@@ -140,7 +139,7 @@ export function WhyPizzaHubSection() {
                 {VENDOR_BENEFITS.map((benefit) => (
                   <li
                     key={benefit}
-                    className="flex items-start gap-2.5 text-sm text-white/90"
+                    className="flex items-start gap-2.5 text-sm text-[#efe7df]"
                   >
                     <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Check className="size-3.5" aria-hidden="true" />
@@ -156,7 +155,7 @@ export function WhyPizzaHubSection() {
                 href="/sign-up?role=vendor"
                 className={cn(
                   buttonVariants({ variant: "default", size: "lg" }),
-                  "h-11 rounded-xl px-5 text-sm font-semibold shadow-sm",
+                  "h-11 rounded-xl px-5 text-sm font-semibold",
                 )}
               >
                 <span>Register as a Vendor</span>
@@ -164,7 +163,7 @@ export function WhyPizzaHubSection() {
               </Link>
               <Link
                 href="/sign-in"
-                className="rounded-xl px-3 py-2 text-sm font-medium text-white/85 underline-offset-4 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                className="rounded-xl px-3 py-2 text-sm font-medium text-[#e4dbd1] underline-offset-4 hover:text-[#faf6f0] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f26d4f]"
               >
                 Vendor Sign In
               </Link>

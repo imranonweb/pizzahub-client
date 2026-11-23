@@ -29,7 +29,7 @@ export function AuthShell({
 }: AuthShellProps) {
   return (
     <div className="min-h-dvh grid lg:grid-cols-[minmax(0,1.02fr)_minmax(0,1fr)] bg-background text-foreground">
-      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#1a110e] p-10 xl:p-12">
+      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#160f0c] p-10 xl:p-12">
         <Image
           src="/images/auth-pizza-hero.jpg"
           alt="Wood-fired Neapolitan Margherita pizza fresh from a brick oven"
@@ -40,27 +40,27 @@ export function AuthShell({
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/15 to-black/85"
+          className="absolute inset-0 bg-[linear-gradient(180deg,rgba(22,15,12,0.72)_0%,rgba(22,15,12,0.18)_42%,rgba(22,15,12,0.88)_100%)]"
         />
 
         <div className="relative z-10 flex items-center justify-between">
           <Link
             href="/"
-            className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+            className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f26d4f]"
           >
             <PizzaHubBrandMark tone="light" />
           </Link>
         </div>
 
         <div className="relative z-10 max-w-md space-y-4">
-          <h2 className="font-heading text-3xl xl:text-4xl font-semibold tracking-[-0.03em] leading-[1.12] text-white text-balance">
+          <h2 className="font-heading text-3xl xl:text-4xl font-bold tracking-[-0.03em] leading-[1.1] text-[#faf6f0] text-balance">
             {heroHeadline}
           </h2>
-          <p className="text-base leading-relaxed text-white/85">
+          <p className="text-base leading-relaxed text-[#e4dbd1]">
             {heroSubheadline}
           </p>
-          <div className="h-px w-full bg-white/20" />
-          <p className="text-xs tracking-wide text-white/75">
+          <div className="h-px w-full bg-[#faf6f0]/18" />
+          <p className="text-xs tracking-wide text-[#cfc4b8]">
             Local brick-oven pizzerias, curated menus, and real-time order
             updates.
           </p>

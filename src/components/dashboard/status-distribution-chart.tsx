@@ -27,12 +27,12 @@ export function StatusDistributionChart({
     <section
       aria-label={title}
       className={cn(
-        "rounded-2xl border border-border bg-card p-5 shadow-2xs sm:p-6",
+        "surface-card rounded-2xl border border-border/90 bg-card p-5 sm:p-6",
         className,
       )}
     >
       <div className="mb-4 space-y-0.5">
-        <h2 className="font-heading text-base font-semibold text-foreground sm:text-lg">
+        <h2 className="font-heading text-base font-semibold tracking-[-0.015em] text-foreground sm:text-lg">
           {title}
         </h2>
         {description ? (
@@ -52,7 +52,7 @@ export function StatusDistributionChart({
           <div
             role="img"
             aria-label={`${title}: ${segments.map((s) => `${s.label} ${s.value}`).join(", ")}`}
-            className="flex h-3.5 w-full overflow-hidden rounded-full bg-muted"
+            className="flex h-3 w-full gap-0.5 overflow-hidden rounded-full bg-muted p-0.5"
           >
             {segments.map((seg) => {
               const pct =
@@ -63,7 +63,7 @@ export function StatusDistributionChart({
                   key={seg.label}
                   style={{ width: `${pct}%` }}
                   className={cn(
-                    "h-full transition-all duration-300",
+                    "h-full rounded-full transition-all duration-300",
                     seg.colorClass,
                   )}
                 />

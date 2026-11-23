@@ -453,10 +453,10 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
             {item.description}
           </p>
 
-          <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+          <div className="surface-card rounded-2xl border border-border/90 bg-card p-5 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-accent/80 text-primary">
                   <Store className="size-5" aria-hidden="true" />
                 </span>
                 <div>
@@ -475,7 +475,7 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+          <div className="surface-card rounded-2xl border border-border/90 bg-card p-5 space-y-4">
             {sessionLoading ? (
               <div className="space-y-3" aria-hidden="true">
                 <Skeleton className="h-5 w-44 rounded-md" />

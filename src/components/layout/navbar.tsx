@@ -105,9 +105,9 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/92 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/94 shadow-[0_1px_0_rgba(22,15,12,0.03)] backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-4 lg:gap-8">
+        <div className="flex min-w-0 items-center gap-5 lg:gap-9">
           <Link
             href="/"
             className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -127,13 +127,19 @@ export function Navbar() {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "relative rounded-lg px-3.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     active
-                      ? "bg-accent text-foreground font-semibold"
-                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                      ? "font-semibold text-foreground"
+                      : "font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground",
                   )}
                 >
                   {item.label}
+                  {active ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-3.5 -bottom-[11px] h-0.5 rounded-full bg-primary"
+                    />
+                  ) : null}
                 </Link>
               );
             })}

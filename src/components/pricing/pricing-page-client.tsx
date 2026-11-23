@@ -6,16 +6,14 @@ import {
   CheckCircle2,
   ChevronDown,
   Crown,
-  HelpCircle,
   ShieldAlert,
-  Sparkles,
   Store,
   UtensilsCrossed,
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -91,53 +89,22 @@ export function PricingPageClient() {
   };
 
   return (
-    <div className="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-      {/* Background radial accent */}
-      <div
-        className="pointer-events-none absolute top-12 left-1/2 -z-10 h-96 w-full -translate-x-1/2 rounded-full bg-primary/5 blur-3xl"
-        aria-hidden="true"
-      />
-
+    <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-18">
       {/* Hero Section */}
       <div className="mx-auto max-w-3xl text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-semibold text-primary"
-        >
-          <Sparkles className="size-3.5" aria-hidden="true" />
-          <span>Vendor Kitchen Partner Plans</span>
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.05 }}
-          className="mt-4 font-heading text-3xl font-extrabold tracking-[-0.03em] text-foreground sm:text-4xl lg:text-5xl"
-        >
+        <h1 className="font-heading text-3xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-4xl lg:text-5xl">
           Simple, honest pricing for independent pizzerias
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.1 }}
-          className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg"
-        >
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
           Start completely free with up to {FREE_PLAN_ACTIVE_ITEM_LIMIT} active
           menu listings. Upgrade to PizzaHub Premium anytime via Stripe Checkout
           for unlimited dishes, priority discovery placement, and our Verified
           Kitchen badge.
-        </motion.p>
+        </p>
 
         {isNonVendorAuthenticated ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, delay: 0.15 }}
-            className="mt-6"
-          >
+          <div className="mt-6">
             <Alert className="rounded-2xl border-border bg-card text-left sm:text-center">
               <ShieldAlert className="size-4 text-primary" aria-hidden="true" />
               <AlertTitle className="font-semibold text-foreground">
@@ -150,7 +117,7 @@ export function PricingPageClient() {
                 kitchens.
               </AlertDescription>
             </Alert>
-          </motion.div>
+          </div>
         ) : null}
       </div>
 
@@ -161,11 +128,11 @@ export function PricingPageClient() {
       >
         {/* FREE PLAN CARD */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
-            "relative flex flex-col justify-between rounded-3xl border border-border bg-card p-6 shadow-2xs transition-all duration-200 sm:p-8",
+            "surface-card relative flex flex-col justify-between rounded-3xl border border-border/90 bg-card p-7 sm:p-9",
             isFreeVendor && "ring-2 ring-primary/40",
           )}
         >
@@ -307,17 +274,14 @@ export function PricingPageClient() {
 
         {/* PREMIUM PLAN CARD */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className={cn(
-            "relative flex flex-col justify-between rounded-3xl border-2 border-primary/40 bg-card p-6 shadow-md sm:p-8",
-            "ring-1 ring-primary/20",
-          )}
+          transition={{ duration: 0.36, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+          className="relative flex flex-col justify-between rounded-3xl border border-[#3a2820] bg-[#1a110d] p-7 text-[#faf6f0] shadow-[0_24px_48px_-22px_rgba(22,15,12,0.58)] sm:p-9"
         >
           {/* Most popular badge */}
           <div className="absolute -top-3.5 right-8">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-sm">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
               <Crown className="size-3" aria-hidden="true" />
               Most Popular
             </span>
@@ -325,8 +289,8 @@ export function PricingPageClient() {
 
           <div>
             <div className="flex items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                <Crown className="size-3.5" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#faf6f0]/15 bg-[#faf6f0]/8 px-3 py-1 text-xs font-semibold text-[#f6d6ad]">
+                <Crown className="size-3.5 text-[#f26d4f]" aria-hidden="true" />
                 PizzaHub Premium
               </span>
               {isPremiumVendor ? (
@@ -336,42 +300,42 @@ export function PricingPageClient() {
               ) : null}
             </div>
 
-            <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-foreground">
+            <h2 className="mt-4 font-heading text-2xl font-bold tracking-tight text-[#faf6f0]">
               Premium Plan
             </h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-1.5 text-sm leading-relaxed text-[#d7cbc0]">
               Designed for high-volume pizzerias, multiple styles, and kitchens
               ready to maximize delivery reach.
             </p>
 
-            <div className="mt-6 flex flex-col border-b border-border/70 pb-6">
+            <div className="mt-6 flex flex-col border-b border-[#faf6f0]/14 pb-6">
               <div className="flex items-baseline gap-1.5">
-                <span className="font-heading text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+                <span className="font-heading text-4xl font-bold tracking-tight tabular-nums text-[#faf6f0] sm:text-5xl">
                   ${premiumPrice}
                 </span>
-                <span className="text-sm font-medium text-muted-foreground">
+                <span className="text-sm font-medium text-[#d7cbc0]">
                   / month
                 </span>
-                <span className="ml-2 text-xs font-medium text-muted-foreground">
+                <span className="ml-2 text-xs font-medium text-[#cfc4b8]">
                   · Billed monthly via Stripe
                 </span>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-[#b5a99c]">
                 Cancel anytime · Secure Stripe Checkout
               </p>
             </div>
 
             <div className="mt-6 space-y-4">
-              <p className="text-xs font-bold tracking-wider text-foreground uppercase">
+              <p className="text-xs font-bold tracking-wider text-[#f6d6ad] uppercase">
                 Everything in Free, plus:
               </p>
-              <ul className="space-y-3 text-sm text-foreground">
+              <ul className="space-y-3 text-sm text-[#efe7df]">
                 <li className="flex items-start gap-3">
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <Check className="size-3.5" aria-hidden="true" />
                   </span>
                   <span>
-                    <strong className="font-semibold text-foreground">
+                    <strong className="font-semibold text-[#faf6f0]">
                       Unlimited active approved menu listings
                     </strong>{" "}
                     live on /menu
@@ -382,7 +346,7 @@ export function PricingPageClient() {
                     <Check className="size-3.5" aria-hidden="true" />
                   </span>
                   <span>
-                    <strong className="font-semibold text-foreground">
+                    <strong className="font-semibold text-[#faf6f0]">
                       Verified Premium Kitchen badge
                     </strong>{" "}
                     displayed on your pizza cards
@@ -423,11 +387,11 @@ export function PricingPageClient() {
             </div>
           </div>
 
-          <div className="mt-8 border-t border-border/70 pt-6">
+          <div className="mt-8 border-t border-[#faf6f0]/14 pt-6">
             {!isAuthenticated ? (
               <Button
                 render={<Link href="/sign-up?role=vendor" />}
-                className="h-11 w-full rounded-xl font-semibold shadow-xs"
+                className="h-11 w-full rounded-xl font-semibold"
               >
                 <Crown className="size-4" aria-hidden="true" />
                 Join as Vendor to Upgrade
@@ -445,7 +409,7 @@ export function PricingPageClient() {
               <Button
                 type="button"
                 onClick={() => setUpgradeDialogOpen(true)}
-                className="h-11 w-full rounded-xl font-semibold shadow-xs"
+                className="h-11 w-full rounded-xl font-semibold"
               >
                 <Crown className="size-4" aria-hidden="true" />
                 {cancelAtPeriodEnd
@@ -456,7 +420,7 @@ export function PricingPageClient() {
               <Button
                 variant="outline"
                 disabled
-                className="h-11 w-full rounded-xl bg-muted text-muted-foreground"
+                className="h-11 w-full rounded-xl border-[#faf6f0]/20 bg-[#faf6f0]/8 text-[#cfc4b8]"
               >
                 Vendor Accounts Only
               </Button>
@@ -506,8 +470,8 @@ export function PricingPageClient() {
               </thead>
               <tbody className="divide-y divide-border/70">
                 {PLAN_COMPARISON_CATEGORIES.map((category) => (
-                  <tr key={category.category} className="contents">
-                    <tr className="bg-muted/20">
+                  <Fragment key={category.category}>
+                    <tr className="bg-muted/30">
                       <th
                         colSpan={3}
                         scope="colgroup"
@@ -574,7 +538,7 @@ export function PricingPageClient() {
                         </td>
                       </tr>
                     ))}
-                  </tr>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -585,13 +549,9 @@ export function PricingPageClient() {
       {/* Vendor FAQ Section */}
       <section aria-labelledby="faq-heading" className="mt-20 space-y-8">
         <div className="text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
-            <HelpCircle className="size-3.5 text-primary" aria-hidden="true" />
-            <span>Got Questions?</span>
-          </div>
           <h2
             id="faq-heading"
-            className="mt-3 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+            className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground sm:text-3xl"
           >
             Frequently Asked Questions for Kitchens
           </h2>

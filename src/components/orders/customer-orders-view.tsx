@@ -262,7 +262,7 @@ export function CustomerOrdersView() {
         </Alert>
       ) : null}
 
-      <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+      <div className="surface-card space-y-4 rounded-2xl border border-border/90 bg-card p-4 sm:p-5">
         <SearchSuggestionsInput
           value={search}
           onValueChange={(nextValue) => {
@@ -402,7 +402,7 @@ export function CustomerOrdersView() {
                     delay: index * 0.04,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-2xs sm:flex-row sm:items-center"
+                  className="surface-card flex flex-col justify-between gap-4 rounded-2xl border border-border/90 bg-card p-5 hover:border-primary/30 sm:flex-row sm:items-center"
                 >
                   <div className="flex min-w-0 items-start gap-4">
                     <div className="relative size-18 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-muted sm:size-20">

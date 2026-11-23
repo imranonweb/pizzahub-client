@@ -4,27 +4,27 @@ import { PizzaHubBrandMark } from "@/components/brand/pizzahub-logo";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-card/60">
-      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.15fr]">
+    <footer className="border-t border-[#2f221c] bg-[#160f0c] text-[#faf6f0]">
+      <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.55fr_1fr_1fr_1.15fr]">
           <div className="space-y-4">
             <Link
               href="/"
-              className="inline-flex rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f26d4f]"
             >
-              <PizzaHubBrandMark tone="dark" />
+              <PizzaHubBrandMark tone="light" />
             </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+            <p className="max-w-xs text-sm leading-relaxed text-[#cfc4b8]">
               Connecting neighborhood pizza lovers with independent brick-oven
               kitchens for simple ordering and transparent delivery tracking.
             </p>
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2.5 pt-1">
               <a
                 href="https://x.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="PizzaHub on X"
-                className="flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex size-9 items-center justify-center rounded-xl border border-[#faf6f0]/14 bg-[#faf6f0]/5 text-[#d9cfc4] transition-colors hover:border-[#faf6f0]/35 hover:bg-[#faf6f0]/12 hover:text-[#faf6f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f26d4f]"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -40,7 +40,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="PizzaHub on Instagram"
-                className="flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex size-9 items-center justify-center rounded-xl border border-[#faf6f0]/14 bg-[#faf6f0]/5 text-[#d9cfc4] transition-colors hover:border-[#faf6f0]/35 hover:bg-[#faf6f0]/12 hover:text-[#faf6f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f26d4f]"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -63,7 +63,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="PizzaHub on Facebook"
-                className="flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex size-9 items-center justify-center rounded-xl border border-[#faf6f0]/14 bg-[#faf6f0]/5 text-[#d9cfc4] transition-colors hover:border-[#faf6f0]/35 hover:bg-[#faf6f0]/12 hover:text-[#faf6f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f26d4f]"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -82,13 +82,15 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Explore</h3>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
+          <div className="space-y-3.5">
+            <h3 className="font-heading text-sm font-semibold tracking-tight text-[#faf6f0]">
+              Explore
+            </h3>
+            <ul className="space-y-2.5 text-sm text-[#cfc4b8]">
               <li>
                 <Link
                   href="/"
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   Home
                 </Link>
@@ -96,7 +98,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/menu"
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   Browse Menu
                 </Link>
@@ -104,7 +106,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/sign-in"
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   Sign In
                 </Link>
@@ -112,7 +114,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/sign-up"
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   Create Account
                 </Link>
@@ -120,15 +122,15 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">
+          <div className="space-y-3.5">
+            <h3 className="font-heading text-sm font-semibold tracking-tight text-[#faf6f0]">
               Partner & Account
             </h3>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
+            <ul className="space-y-2.5 text-sm text-[#cfc4b8]">
               <li>
                 <Link
                   href="/pricing"
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   Vendor Pricing & Plans
                 </Link>
@@ -136,7 +138,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/sign-up?role=vendor"
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   Become a Vendor
                 </Link>
@@ -145,7 +147,7 @@ export function Footer() {
                 <Link
                   href="/dashboard"
                   prefetch={false}
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   My Dashboard
                 </Link>
@@ -154,7 +156,7 @@ export function Footer() {
                 <Link
                   href="/profile"
                   prefetch={false}
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   Profile Settings
                 </Link>
@@ -162,24 +164,26 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Contact</h3>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
+          <div className="space-y-3.5">
+            <h3 className="font-heading text-sm font-semibold tracking-tight text-[#faf6f0]">
+              Contact
+            </h3>
+            <ul className="space-y-3 text-sm text-[#cfc4b8]">
+              <li className="flex items-start gap-2.5">
                 <Mail
-                  className="mt-0.5 size-4 shrink-0 text-primary"
+                  className="mt-0.5 size-4 shrink-0 text-[#f26d4f]"
                   aria-hidden="true"
                 />
                 <a
                   href="mailto:support@pizzahub.app"
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-[#faf6f0]"
                 >
                   support@pizzahub.app
                 </a>
               </li>
-              <li className="flex items-start gap-2">
+              <li className="flex items-start gap-2.5">
                 <MapPin
-                  className="mt-0.5 size-4 shrink-0 text-primary"
+                  className="mt-0.5 size-4 shrink-0 text-[#f26d4f]"
                   aria-hidden="true"
                 />
                 <span>Serving neighborhood pizzerias & local kitchens</span>
@@ -188,7 +192,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
+        <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-[#faf6f0]/12 pt-6 text-xs text-[#b5a99c] sm:flex-row sm:items-center">
           <p>© 2026 PizzaHub. All rights reserved.</p>
           <p>Hot & fresh pizza ordering and delivery platform.</p>
         </div>

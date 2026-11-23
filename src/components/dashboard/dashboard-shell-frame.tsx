@@ -95,9 +95,9 @@ function DashboardSidebarContent({
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                  "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                   active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs"
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_1px_2px_rgba(22,15,12,0.12)]"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
@@ -121,7 +121,7 @@ function DashboardSidebarContent({
         <Separator />
 
         <div className="space-y-1">
-          <p className="px-3 pb-1 text-xs font-medium text-muted-foreground">
+          <p className="px-3 pb-1 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
             Storefront
           </p>
           {storefrontLinks.map((item) => {
@@ -142,7 +142,7 @@ function DashboardSidebarContent({
       </div>
 
       <div className="shrink-0 space-y-2.5 border-t border-sidebar-border p-3.5">
-        <div className="rounded-2xl border border-sidebar-border bg-card p-3">
+        <div className="rounded-xl bg-sidebar-accent/55 p-3">
           <div className="flex items-center gap-3">
             <Avatar size="default">
               {image ? <AvatarImage src={image} alt={displayName} /> : null}
@@ -257,7 +257,7 @@ export function DashboardShellFrame({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border/80 bg-background/94 px-4 shadow-[0_1px_0_rgba(22,15,12,0.03)] backdrop-blur-md sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="lg:hidden">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

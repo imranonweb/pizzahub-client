@@ -11,7 +11,6 @@ import {
   Store,
   XCircle,
 } from "lucide-react";
-import { motion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
@@ -205,25 +204,18 @@ export function CustomerOverview() {
                 className="h-32 rounded-2xl border border-border"
               />
             ))
-          : summaryCards.map((card, index) => {
+          : summaryCards.map((card) => {
               const Icon = card.icon;
               return (
-                <motion.div
+                <div
                   key={card.label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.16,
-                    delay: index * 0.02,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className="flex flex-col justify-between rounded-2xl border border-border bg-card p-5 shadow-2xs"
+                  className="surface-card flex flex-col justify-between rounded-2xl border border-border/90 bg-card p-5"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium text-muted-foreground">
                       {card.label}
                     </span>
-                    <span className="flex size-8 items-center justify-center rounded-xl bg-muted text-primary">
+                    <span className="flex size-8 items-center justify-center rounded-xl border border-primary/12 bg-accent/70 text-primary">
                       <Icon className="size-4" aria-hidden="true" />
                     </span>
                   </div>
@@ -235,7 +227,7 @@ export function CustomerOverview() {
                       {card.caption}
                     </p>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
       </section>
@@ -271,7 +263,7 @@ export function CustomerOverview() {
       <div className="grid gap-6 lg:grid-cols-12">
         <section
           aria-labelledby="cart-snapshot-heading"
-          className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-6 lg:col-span-5"
+          className="surface-card flex flex-col justify-between gap-4 rounded-2xl border border-border/90 bg-card p-6 lg:col-span-5"
         >
           <div className="space-y-2">
             <h2
@@ -332,7 +324,7 @@ export function CustomerOverview() {
 
         <section
           aria-labelledby="recent-orders-heading"
-          className="rounded-2xl border border-border bg-card p-6 lg:col-span-7"
+          className="surface-card rounded-2xl border border-border/90 bg-card p-6 lg:col-span-7"
         >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-4">
             <div>

@@ -59,13 +59,13 @@ export function FeaturedPizzasSection() {
   return (
     <section
       aria-labelledby="featured-pizzas-heading"
-      className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+      className="mx-auto w-full max-w-6xl px-4 py-18 sm:px-6 lg:px-8 lg:py-22"
     >
-      <MotionReveal className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+      <MotionReveal className="mb-11 flex flex-col items-start justify-between gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end">
         <div className="space-y-2">
           <h2
             id="featured-pizzas-heading"
-            className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground sm:text-3xl"
+            className="font-heading text-2xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-[2rem]"
           >
             Featured from local ovens
           </h2>
@@ -79,10 +79,10 @@ export function FeaturedPizzasSection() {
           href="/menu"
           className={cn(
             buttonVariants({ variant: "outline", size: "default" }),
-            "h-10 rounded-xl bg-card px-4 text-sm font-semibold",
+            "h-10 shrink-0 rounded-xl bg-card px-4 text-sm font-semibold",
           )}
         >
-          <span>View Menu</span>
+          <span>View Full Menu</span>
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
       </MotionReveal>

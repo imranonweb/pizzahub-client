@@ -9,13 +9,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/components/providers/cart-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { PizzaImage } from "@/components/ui/pizza-image";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -133,11 +133,10 @@ export function CartDrawer() {
                       className="flex gap-3.5 rounded-2xl border border-border bg-background p-3"
                     >
                       <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
-                        <Image
+                        <PizzaImage
                           src={item.image}
                           alt={item.itemName}
                           fill
-                          unoptimized
                           sizes="80px"
                           className="object-cover"
                         />

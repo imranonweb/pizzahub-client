@@ -29,12 +29,12 @@ export function HowItWorksSection() {
   return (
     <section
       aria-labelledby="how-it-works-heading"
-      className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+      className="mx-auto w-full max-w-6xl px-4 py-18 sm:px-6 lg:px-8 lg:py-22"
     >
       <MotionReveal className="mb-12 max-w-xl space-y-2">
         <h2
           id="how-it-works-heading"
-          className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground sm:text-3xl"
+          className="font-heading text-2xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-[2rem]"
         >
           How PizzaHub works
         </h2>
@@ -44,28 +44,25 @@ export function HowItWorksSection() {
         </p>
       </MotionReveal>
 
-      <ol className="grid gap-8 md:grid-cols-3 md:gap-10">
+      <ol className="grid gap-10 md:grid-cols-3 md:gap-12">
         {STEPS.map((item, idx) => {
           const Icon = item.icon;
           return (
             <li
               key={item.step}
-              className="relative flex flex-col gap-3.5 border-t border-border pt-6"
+              className="relative flex flex-col border-t border-border pt-7"
             >
-              <MotionReveal
-                delay={idx * 0.06}
-                className="flex flex-col gap-3.5"
-              >
+              <MotionReveal delay={idx * 0.06} className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <span className="flex size-11 items-center justify-center rounded-xl bg-accent text-primary">
+                  <span className="flex size-11 items-center justify-center rounded-xl border border-primary/15 bg-accent/80 text-primary shadow-2xs">
                     <Icon className="size-5" aria-hidden="true" />
                   </span>
-                  <span className="font-mono text-xs font-semibold text-muted-foreground">
-                    Step {item.step}
+                  <span className="text-xs font-semibold tracking-wide text-muted-foreground tabular-nums">
+                    Step {item.step} of {STEPS.length}
                   </span>
                 </div>
 
-                <h3 className="font-heading text-lg font-semibold text-foreground">
+                <h3 className="font-heading text-lg font-semibold tracking-[-0.015em] text-foreground">
                   {item.title}
                 </h3>
 

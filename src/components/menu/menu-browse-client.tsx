@@ -261,7 +261,7 @@ export function MenuBrowseClient() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+      <div className="surface-card space-y-4 rounded-2xl border border-border/90 bg-card p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <SearchSuggestionsInput
             inputRef={searchInputRef}
