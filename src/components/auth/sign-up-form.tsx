@@ -21,7 +21,10 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/toast";
 import type { PublicRegistrationRole } from "@/lib/auth";
 import { signUp } from "@/lib/auth-client";
-import { getDashboardPathForRole } from "@/lib/auth-routes";
+import {
+  getDashboardPathForRole,
+  sanitizeCallbackUrl,
+} from "@/lib/auth-routes";
 import {
   getSafeAuthErrorMessage,
   isValidEmail,
@@ -68,6 +71,10 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
   const { refreshSession } = useAuthSession();
 
   const requestedRole = searchParams.get("role");
+  const explicitCallback = sanitizeCallbackUrl(
+    searchParams.get("callbackUrl"),
+    "",
+  );
   const initialRole: PublicRegistrationRole =
     requestedRole === "vendor" ? "vendor" : "customer";
 
@@ -195,7 +202,10 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
 
       await refreshSession().catch(() => undefined);
 
-      const destination = getDashboardPathForRole(role);
+      const destination =
+        role === "customer" && explicitCallback
+          ? explicitCallback
+          : getDashboardPathForRole(role);
       toast.add({
         title: "Account created",
         description:

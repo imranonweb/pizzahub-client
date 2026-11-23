@@ -10,6 +10,14 @@ export const metadata: Metadata = {
     "View real-time order lifecycle milestones, delivery details, and ordered items on PizzaHub.",
 };
 
+function safeDecodeParam(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 async function OrderDetailGuard({
   params,
 }: {
@@ -21,7 +29,7 @@ async function OrderDetailGuard({
     `/dashboard/customer/orders/${encodeURIComponent(id)}`,
   );
 
-  return <CustomerOrderDetailView orderId={decodeURIComponent(id)} />;
+  return <CustomerOrderDetailView orderId={safeDecodeParam(id)} />;
 }
 
 export default function CustomerOrderDetailPage({

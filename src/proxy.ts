@@ -1,12 +1,13 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
+import { getAuth, resetAuthInstance } from "@/lib/auth";
 import {
   buildSignInRedirectUrl,
   getDashboardPathForRole,
   getRequiredRoleForPath,
   isValidPizzaHubRole,
 } from "@/lib/auth-routes";
+import { getMongoClientPromise, resetMongoCache } from "@/lib/mongodb";
 
 export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
@@ -21,12 +22,21 @@ export async function proxy(request: NextRequest) {
   let sessionResult: Awaited<
     ReturnType<ReturnType<typeof getAuth>["api"]["getSession"]>
   > = null;
-  try {
-    sessionResult = await getAuth().api.getSession({
-      headers: request.headers,
-    });
-  } catch {
-    sessionResult = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await getMongoClientPromise();
+      sessionResult = await getAuth().api.getSession({
+        headers: request.headers,
+      });
+      break;
+    } catch {
+      if (attempt === 0) {
+        resetMongoCache();
+        resetAuthInstance();
+        continue;
+      }
+      sessionResult = null;
+    }
   }
 
   if (!sessionResult?.session || !sessionResult?.user) {

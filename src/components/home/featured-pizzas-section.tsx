@@ -59,13 +59,13 @@ export function FeaturedPizzasSection() {
   return (
     <section
       aria-labelledby="featured-pizzas-heading"
-      className="mx-auto w-full max-w-6xl px-4 py-18 sm:px-6 lg:px-8 lg:py-22"
+      className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
     >
-      <MotionReveal className="mb-11 flex flex-col items-start justify-between gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end">
-        <div className="space-y-2">
+      <MotionReveal className="mb-9 flex flex-col items-start justify-between gap-4 border-b border-border/70 pb-5 sm:mb-10 sm:flex-row sm:items-end">
+        <div className="space-y-1.5">
           <h2
             id="featured-pizzas-heading"
-            className="font-heading text-2xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-[2rem]"
+            className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground text-balance sm:text-3xl"
           >
             Featured from local ovens
           </h2>

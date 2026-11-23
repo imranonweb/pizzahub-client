@@ -512,14 +512,16 @@ export async function fetchPublicMenu(
 
 export async function fetchPublicMenuItemById(
   rawId: string,
+  options?: { forceRefresh?: boolean },
 ): Promise<MenuItemDetailResult> {
   const id = rawId.trim();
   if (!id || !OBJECT_ID_HEX_REGEX.test(id)) {
     return { state: "not-found", source: "live", isInvalidId: true };
   }
 
+  const forceRefresh = options?.forceRefresh === true;
   const isBrowser = typeof window !== "undefined";
-  if (isBrowser) {
+  if (isBrowser && !forceRefresh) {
     const cached = clientDetailCache.get(id);
     if (cached && isFreshCache(cached.fetchedAt)) {
       return cached.result;

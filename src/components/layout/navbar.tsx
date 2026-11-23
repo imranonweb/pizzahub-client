@@ -106,47 +106,41 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/94 shadow-[0_1px_0_rgba(22,15,12,0.03)] backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-5 lg:gap-9">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 md:grid md:grid-cols-[1fr_auto_1fr] lg:px-8">
+        <div className="flex min-w-0 items-center justify-self-start">
           <Link
             href="/"
             className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <PizzaHubBrandMark tone="dark" />
           </Link>
-
-          <nav
-            aria-label="Primary navigation"
-            className="hidden md:flex items-center gap-1"
-          >
-            {navItems.map((item) => {
-              const active = isActiveLink(item.href, item.matchExact);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative rounded-lg px-3.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    active
-                      ? "font-semibold text-foreground"
-                      : "font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-                  )}
-                >
-                  {item.label}
-                  {active ? (
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-x-3.5 -bottom-[11px] h-0.5 rounded-full bg-primary"
-                    />
-                  ) : null}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
 
-        <div className="hidden md:flex items-center gap-2.5">
+        <nav
+          aria-label="Primary navigation"
+          className="hidden items-center justify-center gap-1 justify-self-center md:flex"
+        >
+          {navItems.map((item) => {
+            const active = isActiveLink(item.href, item.matchExact);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-sm whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  active
+                    ? "bg-secondary font-semibold text-foreground ring-1 ring-border/80"
+                    : "font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="hidden items-center justify-end gap-2 justify-self-end md:flex">
           <ThemeToggle />
           {showCartButton ? (
             <Button
@@ -158,7 +152,7 @@ export function Navbar() {
               className="h-9 gap-2 rounded-xl bg-card px-3 font-medium"
             >
               <ShoppingBag className="size-4 text-primary" aria-hidden="true" />
-              <span>Cart</span>
+              <span className="hidden lg:inline">Cart</span>
               {isHydrated && summary.itemCount > 0 ? (
                 <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums">
                   {summary.itemCount}
@@ -166,6 +160,10 @@ export function Navbar() {
               ) : null}
             </Button>
           ) : null}
+          <span
+            aria-hidden="true"
+            className="mx-0.5 hidden h-5 w-px bg-border/80 lg:block"
+          />
           {isLoading ? (
             <div className="flex items-center gap-2" aria-hidden="true">
               <Skeleton className="h-9 w-20 rounded-xl" />

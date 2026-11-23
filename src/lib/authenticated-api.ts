@@ -7,11 +7,10 @@ export const TOKEN_UNAVAILABLE_NOTICE =
 /**
  * Resolves Bearer Authorization headers using the coalesced Better Auth JWT helper.
  */
-export async function getBearerHeaders(): Promise<Record<
-  string,
-  string
-> | null> {
-  const token = await getAuthToken();
+export async function getBearerHeaders(options?: {
+  forceRefresh?: boolean;
+}): Promise<Record<string, string> | null> {
+  const token = await getAuthToken(options);
   if (!token) {
     return null;
   }

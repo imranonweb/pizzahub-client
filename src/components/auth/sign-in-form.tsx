@@ -286,7 +286,11 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
       <p className="text-center text-sm text-muted-foreground">
         New to PizzaHub?{" "}
         <Link
-          href="/sign-up"
+          href={
+            explicitCallback
+              ? `/sign-up?callbackUrl=${encodeURIComponent(explicitCallback)}`
+              : "/sign-up"
+          }
           className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
         >
           Create an account

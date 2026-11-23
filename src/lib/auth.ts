@@ -373,11 +373,22 @@ export type Auth = ReturnType<typeof createAuthInstance>;
 
 const globalForAuth = globalThis as typeof globalThis & {
   __pizzaHubAuth?: Auth;
+  __pizzaHubAuthClient?: ReturnType<typeof getMongoClient>;
 };
 
+export function resetAuthInstance(): void {
+  globalForAuth.__pizzaHubAuth = undefined;
+  globalForAuth.__pizzaHubAuthClient = undefined;
+}
+
 export function getAuth(): Auth {
-  if (!globalForAuth.__pizzaHubAuth) {
+  const currentClient = getMongoClient();
+  if (
+    !globalForAuth.__pizzaHubAuth ||
+    globalForAuth.__pizzaHubAuthClient !== currentClient
+  ) {
     globalForAuth.__pizzaHubAuth = createAuthInstance();
+    globalForAuth.__pizzaHubAuthClient = currentClient;
   }
   return globalForAuth.__pizzaHubAuth;
 }

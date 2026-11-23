@@ -25,10 +25,10 @@ export function WhyPizzaHubSection() {
       aria-labelledby="why-pizzahub-heading"
       className="border-t border-border/70 bg-secondary/35"
     >
-      <div className="mx-auto w-full max-w-6xl space-y-14 px-4 py-18 sm:px-6 lg:px-8 lg:py-22">
+      <div className="mx-auto w-full max-w-6xl space-y-12 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="space-y-7">
-          <MotionReveal className="max-w-2xl space-y-2">
-            <h2 className="font-heading text-2xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-[2rem]">
+          <MotionReveal className="max-w-2xl space-y-1.5">
+            <h2 className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground text-balance sm:text-3xl">
               From glowing brick-oven kitchens to neighborhood tables
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">

@@ -6,16 +6,22 @@ import {
   MapPin,
   Phone,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { PizzaImage } from "@/components/ui/pizza-image";
 import { Separator } from "@/components/ui/separator";
 import type { CustomerOrder } from "@/lib/order-rules";
 import { cn } from "@/lib/utils";
 import { CopyOrderButton } from "./copy-order-button";
 import { OrderStatusBadge } from "./order-status-badge";
 
-export function OrderConfirmationCard({ order }: { order: CustomerOrder }) {
+export function OrderConfirmationCard({
+  order,
+  additionalOrders = [],
+}: {
+  order: CustomerOrder;
+  additionalOrders?: readonly CustomerOrder[];
+}) {
   return (
     <section
       aria-labelledby="order-confirmed-heading"
@@ -91,11 +97,10 @@ export function OrderConfirmationCard({ order }: { order: CustomerOrder }) {
             >
               <div className="flex min-w-0 items-center gap-3">
                 <div className="relative size-12 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
-                  <Image
+                  <PizzaImage
                     src={item.image}
                     alt={item.itemName}
                     fill
-                    unoptimized
                     sizes="48px"
                     className="object-cover"
                   />
@@ -130,6 +135,43 @@ export function OrderConfirmationCard({ order }: { order: CustomerOrder }) {
           <span className="tabular-nums">${order.total.toFixed(2)}</span>
         </div>
       </div>
+
+      {additionalOrders.length > 0 ? (
+        <div className="space-y-2.5 rounded-2xl border border-border bg-background p-4">
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            Additional Kitchen Orders Placed
+          </p>
+          <ul className="divide-y divide-border/70">
+            {additionalOrders.map((extraOrder) => (
+              <li
+                key={extraOrder.id}
+                className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground">
+                    {extraOrder.vendorName} ·{" "}
+                    <span className="font-mono text-xs">#{extraOrder.id}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground tabular-nums">
+                    {extraOrder.items.length}{" "}
+                    {extraOrder.items.length === 1 ? "item" : "items"} · $
+                    {extraOrder.total.toFixed(2)}
+                  </p>
+                </div>
+                <Link
+                  href={`/dashboard/customer/orders/${encodeURIComponent(extraOrder.id)}`}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "h-8 rounded-lg px-3 text-xs",
+                  )}
+                >
+                  Track
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
         <Link

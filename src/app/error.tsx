@@ -2,7 +2,8 @@
 
 import { AlertTriangle, Home, RotateCw } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { startTransition, useEffect } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -13,10 +14,19 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     // Surface unexpected errors cleanly during development
     console.error("PizzaHub route error:", error);
   }, [error]);
+
+  const handleRetry = () => {
+    startTransition(() => {
+      router.refresh();
+      reset();
+    });
+  };
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 py-16 text-center text-foreground">
@@ -42,7 +52,7 @@ export default function GlobalError({
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Button
             type="button"
-            onClick={() => reset()}
+            onClick={handleRetry}
             className="h-10 rounded-xl px-5 font-semibold"
           >
             <RotateCw className="size-4" aria-hidden="true" />

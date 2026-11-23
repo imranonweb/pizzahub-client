@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/components/providers/cart-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -29,6 +30,7 @@ import { MAX_CART_ITEM_QUANTITY } from "@/lib/cart-rules";
 import { cn } from "@/lib/utils";
 
 export function CartDrawer() {
+  const router = useRouter();
   const {
     items,
     summary,
@@ -250,29 +252,31 @@ export function CartDrawer() {
                 Checking account...
               </Button>
             ) : !isAuthenticated ? (
-              <Link
-                href="/sign-in?callbackUrl=%2Fcheckout"
-                onClick={closeDrawer}
-                className={cn(
-                  buttonVariants({ variant: "default", size: "lg" }),
-                  "h-11 w-full rounded-xl font-semibold",
-                )}
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => {
+                  closeDrawer();
+                  router.push("/sign-in?callbackUrl=%2Fcheckout");
+                }}
+                className="h-11 w-full rounded-xl font-semibold"
               >
-                Sign in to Checkout
+                <span>Sign in to Checkout</span>
                 <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
+              </Button>
             ) : role === "customer" ? (
-              <Link
-                href="/checkout"
-                onClick={closeDrawer}
-                className={cn(
-                  buttonVariants({ variant: "default", size: "lg" }),
-                  "h-11 w-full rounded-xl font-semibold",
-                )}
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => {
+                  closeDrawer();
+                  router.push("/checkout");
+                }}
+                className="h-11 w-full rounded-xl font-semibold"
               >
-                Proceed to Checkout
+                <span>Proceed to Checkout</span>
                 <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
+              </Button>
             ) : (
               <Alert className="rounded-xl bg-card p-3">
                 <Info className="size-4 text-primary" aria-hidden="true" />

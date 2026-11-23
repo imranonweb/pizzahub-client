@@ -16,13 +16,13 @@ function normalizeOriginUrl(rawUrl?: string): string | undefined {
 }
 
 export function getAuthClientBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return window.location.origin.replace(/\/+$/, "");
+  }
+
   const envUrl = normalizeOriginUrl(process.env.NEXT_PUBLIC_BETTER_AUTH_URL);
   if (envUrl) {
     return envUrl;
-  }
-
-  if (typeof window !== "undefined") {
-    return window.location.origin.replace(/\/+$/, "");
   }
 
   const vercelOrigin =

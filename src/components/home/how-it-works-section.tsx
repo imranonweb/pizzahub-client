@@ -29,12 +29,12 @@ export function HowItWorksSection() {
   return (
     <section
       aria-labelledby="how-it-works-heading"
-      className="mx-auto w-full max-w-6xl px-4 py-18 sm:px-6 lg:px-8 lg:py-22"
+      className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
     >
-      <MotionReveal className="mb-12 max-w-xl space-y-2">
+      <MotionReveal className="mb-10 max-w-xl space-y-1.5">
         <h2
           id="how-it-works-heading"
-          className="font-heading text-2xl font-bold tracking-[-0.03em] text-foreground text-balance sm:text-[2rem]"
+          className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground text-balance sm:text-3xl"
         >
           How PizzaHub works
         </h2>

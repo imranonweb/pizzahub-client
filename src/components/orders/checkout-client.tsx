@@ -12,14 +12,15 @@ import {
   ShoppingBag,
   Trash2,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PizzaImage } from "@/components/ui/pizza-image";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,9 +68,8 @@ export function CheckoutClient({
   });
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [confirmedOrder, setConfirmedOrder] = useState<CustomerOrder | null>(
-    null,
-  );
+  const [confirmedOrders, setConfirmedOrders] = useState<CustomerOrder[]>([]);
+  const [unavailableIds, setUnavailableIds] = useState<string[]>([]);
   const [submitNotice, setSubmitNotice] = useState<{
     tone: "error" | "info";
     title: string;
@@ -112,10 +112,13 @@ export function CheckoutClient({
     }
   };
 
-  if (confirmedOrder) {
+  if (confirmedOrders.length > 0 && confirmedOrders[0]) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
-        <OrderConfirmationCard order={confirmedOrder} />
+        <OrderConfirmationCard
+          order={confirmedOrders[0]}
+          additionalOrders={confirmedOrders.slice(1)}
+        />
       </div>
     );
   }
@@ -158,6 +161,19 @@ export function CheckoutClient({
     );
   }
 
+  const handleRemoveUnavailable = () => {
+    for (const id of unavailableIds) {
+      removeItem(id);
+    }
+    setUnavailableIds([]);
+    setSubmitNotice(null);
+    toast.add({
+      title: "Cart updated",
+      description: "Removed unavailable items from your cart.",
+      type: "info",
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submittingRef.current) return;
@@ -170,12 +186,27 @@ export function CheckoutClient({
         title: "Check delivery details",
         message: "Fix the highlighted fields before placing your order.",
       });
+      const firstInvalidField = formValidation.errors.deliveryDate
+        ? `${formId}-date`
+        : formValidation.errors.deliveryAddress
+          ? `${formId}-address`
+          : formValidation.errors.contactPhone
+            ? `${formId}-phone`
+            : formValidation.errors.orderNotes
+              ? `${formId}-notes`
+              : null;
+      if (firstInvalidField) {
+        const el = document.getElementById(firstInvalidField);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        el?.focus();
+      }
       return;
     }
 
     submittingRef.current = true;
     setIsSubmitting(true);
     setSubmitNotice(null);
+    setUnavailableIds([]);
 
     try {
       const serverCheck = await validateCartItemsAgainstServer(
@@ -189,6 +220,12 @@ export function CheckoutClient({
           serverCheck.priceUpdates
         ) {
           syncItemPrices(serverCheck.priceUpdates);
+        }
+        if (
+          serverCheck.reason === "item-unavailable" &&
+          serverCheck.unavailableIds
+        ) {
+          setUnavailableIds(serverCheck.unavailableIds);
         }
 
         const isUnavailable = serverCheck.reason === "backend-unavailable";
@@ -225,7 +262,14 @@ export function CheckoutClient({
         orderNotes: formValidation.sanitized.orderNotes,
       });
 
-      if (!result.ok || !result.order) {
+      const placedOrders =
+        result.ok && result.orders && result.orders.length > 0
+          ? result.orders
+          : result.ok && result.order
+            ? [result.order]
+            : [];
+
+      if (!result.ok || placedOrders.length === 0) {
         const isUnavailable =
           !result.ok && result.reason === "backend-unavailable";
         const message = !result.ok
@@ -248,7 +292,7 @@ export function CheckoutClient({
       }
 
       clearCart();
-      setConfirmedOrder(result.order);
+      setConfirmedOrders(placedOrders);
       toast.add({
         title: "Order placed",
         description: result.message,
@@ -514,7 +558,22 @@ export function CheckoutClient({
                   <AlertCircle className="size-4" aria-hidden="true" />
                 )}
                 <AlertTitle>{submitNotice.title}</AlertTitle>
-                <AlertDescription>{submitNotice.message}</AlertDescription>
+                <AlertDescription className="space-y-3">
+                  <p>{submitNotice.message}</p>
+                  {unavailableIds.length > 0 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveUnavailable}
+                      className="h-8 rounded-lg bg-background text-foreground"
+                    >
+                      Remove unavailable{" "}
+                      {unavailableIds.length === 1 ? "item" : "items"} (
+                      {unavailableIds.length})
+                    </Button>
+                  ) : null}
+                </AlertDescription>
               </Alert>
             ) : null}
 
@@ -538,7 +597,7 @@ export function CheckoutClient({
 
         <aside
           aria-labelledby="checkout-summary-heading"
-          className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-2xs sm:p-6 lg:col-span-5"
+          className="surface-card space-y-4 rounded-2xl border border-border/90 bg-card p-5 sm:p-6 lg:sticky lg:top-24 lg:col-span-5"
         >
           <div className="flex items-center justify-between gap-2 border-b border-border/70 pb-3.5">
             <h2
@@ -556,17 +615,24 @@ export function CheckoutClient({
             {items.map((item) => {
               const lineTotal =
                 Math.round(item.unitPrice * item.quantity * 100) / 100;
+              const isItemUnavailable = unavailableIds.includes(
+                item.menuItemId,
+              );
               return (
                 <div
                   key={item.menuItemId}
-                  className="flex gap-3 rounded-xl border border-border/80 bg-background p-3"
+                  className={cn(
+                    "flex gap-3 rounded-xl border bg-background p-3",
+                    isItemUnavailable
+                      ? "border-destructive/60 bg-destructive/5"
+                      : "border-border/80",
+                  )}
                 >
                   <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-                    <Image
+                    <PizzaImage
                       src={item.image}
                       alt={item.itemName}
                       fill
-                      unoptimized
                       sizes="64px"
                       className="object-cover"
                     />
@@ -574,9 +640,19 @@ export function CheckoutClient({
                   <div className="min-w-0 flex-1 space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">
-                          {item.itemName}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {item.itemName}
+                          </p>
+                          {isItemUnavailable ? (
+                            <Badge
+                              variant="destructive"
+                              className="rounded-full px-2 py-0 text-[10px]"
+                            >
+                              Unavailable
+                            </Badge>
+                          ) : null}
+                        </div>
                         <p className="truncate text-xs text-muted-foreground">
                           {item.vendorName}
                         </p>
@@ -587,7 +663,12 @@ export function CheckoutClient({
                         size="icon-sm"
                         disabled={isSubmitting}
                         aria-label={`Remove ${item.itemName}`}
-                        onClick={() => removeItem(item.menuItemId)}
+                        onClick={() => {
+                          removeItem(item.menuItemId);
+                          setUnavailableIds((prev) =>
+                            prev.filter((id) => id !== item.menuItemId),
+                          );
+                        }}
                         className="size-7 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash2 className="size-3.5" aria-hidden="true" />

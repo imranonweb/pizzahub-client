@@ -1,4 +1,5 @@
 import { ApiClientError, apiRequest } from "./api-client";
+import { clearAuthTokenCache } from "./auth-client";
 import {
   getBearerHeaders,
   resolveApiUnavailableNotice,
@@ -23,6 +24,7 @@ export type OrderMutationResult<T = CustomerOrder> =
   | {
       ok: true;
       order?: T;
+      orders?: T[];
       message: string;
     }
   | {
@@ -216,7 +218,7 @@ function classifyOrderError(error: unknown): {
       };
     }
 
-    if (error.status === 400 || error.status === 422) {
+    if (error.status === 400 || error.status === 409 || error.status === 422) {
       return {
         reason: "validation",
         message: error.message,
@@ -252,7 +254,9 @@ export async function validateCartItemsAgainstServer(
     const results = await Promise.all(
       items.map(async (item) => ({
         cartItem: item,
-        detail: await fetchPublicMenuItemById(item.menuItemId),
+        detail: await fetchPublicMenuItemById(item.menuItemId, {
+          forceRefresh: true,
+        }),
       })),
     );
 
@@ -337,18 +341,31 @@ export async function createCustomerOrder(input: {
   contactPhone: string;
   orderNotes?: string;
 }): Promise<OrderMutationResult<CustomerOrder>> {
-  const authHeaders = await getBearerHeaders();
-  if (!authHeaders) {
-    return {
-      ok: false,
-      reason: "unauthorized",
-      message: "Your session expired. Sign in again to place your order.",
-    };
-  }
+  const payloadBody = JSON.stringify({
+    items: input.items,
+    deliveryAddress: input.deliveryAddress,
+    contactPhone: input.contactPhone,
+    ...(input.deliveryDate?.trim()
+      ? { deliveryDate: input.deliveryDate.trim() }
+      : {}),
+    ...(input.orderNotes?.trim()
+      ? { orderNotes: input.orderNotes.trim() }
+      : {}),
+  });
 
-  try {
+  const submitWithHeaders = async (forceRefresh: boolean) => {
+    const authHeaders = await getBearerHeaders({ forceRefresh });
+    if (!authHeaders) {
+      return {
+        ok: false as const,
+        reason: "unauthorized" as const,
+        message: "Your session expired. Sign in again to place your order.",
+      };
+    }
+
     const response = await apiRequest<{
       order?: Record<string, unknown>;
+      orders?: Record<string, unknown>[];
       data?: Record<string, unknown>;
       message?: string;
     }>("/api/orders", {
@@ -357,26 +374,41 @@ export async function createCustomerOrder(input: {
         ...authHeaders,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        items: input.items,
-        deliveryAddress: input.deliveryAddress,
-        contactPhone: input.contactPhone,
-        ...(input.deliveryDate?.trim()
-          ? { deliveryDate: input.deliveryDate.trim() }
-          : {}),
-        ...(input.orderNotes?.trim()
-          ? { orderNotes: input.orderNotes.trim() }
-          : {}),
-      }),
+      body: payloadBody,
     });
 
-    const rawOrder = response.order ?? response.data;
+    const rawOrders = Array.isArray(response.orders)
+      ? response.orders
+      : response.order
+        ? [response.order]
+        : response.data
+          ? [response.data]
+          : [];
+
+    const normalizedOrders = rawOrders.map(normalizeCustomerOrder);
     return {
-      ok: true,
-      order: rawOrder ? normalizeCustomerOrder(rawOrder) : undefined,
+      ok: true as const,
+      order: normalizedOrders[0],
+      orders: normalizedOrders,
       message: response.message || "Order placed successfully.",
     };
+  };
+
+  try {
+    return await submitWithHeaders(false);
   } catch (error) {
+    if (error instanceof ApiClientError && error.status === 401) {
+      clearAuthTokenCache();
+      try {
+        return await submitWithHeaders(true);
+      } catch (retryError) {
+        return {
+          ok: false,
+          ...classifyOrderError(retryError),
+        };
+      }
+    }
+
     return {
       ok: false,
       ...classifyOrderError(error),
@@ -480,16 +512,16 @@ export async function cancelCustomerOrder(
     };
   }
 
-  const authHeaders = await getBearerHeaders();
-  if (!authHeaders) {
-    return {
-      ok: false,
-      reason: "unauthorized",
-      message: "Your session expired. Sign in again to cancel an order.",
-    };
-  }
+  const cancelWithHeaders = async (forceRefresh: boolean) => {
+    const authHeaders = await getBearerHeaders({ forceRefresh });
+    if (!authHeaders) {
+      return {
+        ok: false as const,
+        reason: "unauthorized" as const,
+        message: "Your session expired. Sign in again to cancel an order.",
+      };
+    }
 
-  try {
     const response = await apiRequest<{
       order?: Record<string, unknown>;
       data?: Record<string, unknown>;
@@ -505,11 +537,27 @@ export async function cancelCustomerOrder(
 
     const rawOrder = response.order ?? response.data;
     return {
-      ok: true,
+      ok: true as const,
       order: rawOrder ? normalizeCustomerOrder(rawOrder) : undefined,
       message: response.message || "Order cancelled successfully.",
     };
+  };
+
+  try {
+    return await cancelWithHeaders(false);
   } catch (error) {
+    if (error instanceof ApiClientError && error.status === 401) {
+      clearAuthTokenCache();
+      try {
+        return await cancelWithHeaders(true);
+      } catch (retryError) {
+        return {
+          ok: false,
+          ...classifyOrderError(retryError),
+        };
+      }
+    }
+
     return {
       ok: false,
       ...classifyOrderError(error),

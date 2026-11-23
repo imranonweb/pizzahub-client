@@ -2,12 +2,18 @@ import { getSessionCookie } from "better-auth/cookies";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { getAuth, type PizzaHubRole, type SubscriptionPlan } from "./auth";
+import {
+  getAuth,
+  type PizzaHubRole,
+  resetAuthInstance,
+  type SubscriptionPlan,
+} from "./auth";
 import {
   buildSignInRedirectUrl,
   getDashboardPathForRole,
   isValidPizzaHubRole,
 } from "./auth-routes";
+import { getMongoClientPromise, resetMongoCache } from "./mongodb";
 
 export interface ServerAuthUser {
   id: string;
@@ -32,12 +38,48 @@ export interface ServerAuthSession {
   user: ServerAuthUser;
 }
 
+function toValidDate(raw: unknown): Date | null {
+  if (raw instanceof Date) {
+    return Number.isNaN(raw.getTime()) ? null : raw;
+  }
+  if (typeof raw === "string" || typeof raw === "number") {
+    const trimmed = typeof raw === "string" ? raw.trim() : raw;
+    if (trimmed === "") {
+      return null;
+    }
+    const parsed = new Date(trimmed);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+}
+
+async function fetchSessionWithRetry(requestHeaders: Headers) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await getMongoClientPromise();
+      return await getAuth().api.getSession({
+        headers: requestHeaders,
+      });
+    } catch (error) {
+      if (attempt === 0) {
+        resetMongoCache();
+        resetAuthInstance();
+        continue;
+      }
+      console.error(
+        "[PizzaHub Session] Failed to resolve server session:",
+        error,
+      );
+      return null;
+    }
+  }
+  return null;
+}
+
 export const getServerSession = cache(
   async (): Promise<ServerAuthSession | null> => {
     const requestHeaders = await headers();
-    const rawSession = await getAuth().api.getSession({
-      headers: requestHeaders,
-    });
+    const rawSession = await fetchSessionWithRetry(requestHeaders);
 
     if (!rawSession?.session || !rawSession?.user) {
       return null;
@@ -60,25 +102,17 @@ export const getServerSession = cache(
     const subscriptionPlan: SubscriptionPlan =
       userRecord.subscriptionPlan === "premium" ? "premium" : "free";
 
-    const subscriptionExpiresAt =
-      userRecord.subscriptionExpiresAt instanceof Date
-        ? userRecord.subscriptionExpiresAt
-        : typeof userRecord.subscriptionExpiresAt === "string"
-          ? new Date(userRecord.subscriptionExpiresAt)
-          : null;
-
-    const createdAt =
-      userRecord.createdAt instanceof Date
-        ? userRecord.createdAt
-        : typeof userRecord.createdAt === "string"
-          ? new Date(userRecord.createdAt)
-          : null;
+    const subscriptionExpiresAt = toValidDate(userRecord.subscriptionExpiresAt);
+    const createdAt = toValidDate(userRecord.createdAt);
+    const sessionExpiresAt =
+      toValidDate(rawSession.session.expiresAt) ??
+      new Date(Date.now() + 60_000);
 
     return {
       session: {
         id: rawSession.session.id,
         userId: rawSession.session.userId,
-        expiresAt: new Date(rawSession.session.expiresAt),
+        expiresAt: sessionExpiresAt,
       },
       user: {
         id: userRecord.id,
