@@ -6,28 +6,45 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
+  Loader2,
   MapPin,
   RotateCcw,
   RotateCw,
   Store,
+  XCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PizzaImage } from "@/components/ui/pizza-image";
 import {
   type SearchSuggestionOption,
   SearchSuggestionsInput,
 } from "@/components/ui/search-suggestions-input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import {
   type CustomerOrdersListResponse,
+  cancelCustomerOrder,
   fetchCustomerOrders,
 } from "@/lib/order-api";
 import {
+  type CustomerOrder,
   type CustomerOrderStatusFilter,
+  canCustomerCancelOrder,
   filterCustomerOrders,
 } from "@/lib/order-rules";
 import { cn } from "@/lib/utils";
@@ -68,6 +85,34 @@ export function CustomerOrdersView() {
   const [statusFilter, setStatusFilter] =
     useState<CustomerOrderStatusFilter>("all");
   const [page, setPage] = useState(1);
+  const [cancelTarget, setCancelTarget] = useState<CustomerOrder | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleConfirmCancel = async () => {
+    if (!cancelTarget || isCancelling) return;
+    setIsCancelling(true);
+    try {
+      const result = await cancelCustomerOrder(cancelTarget.id);
+      if (!result.ok) {
+        toast.add({
+          title: "Cancellation failed",
+          description: result.message,
+          type: "error",
+        });
+        return;
+      }
+
+      toast.add({
+        title: "Order cancelled",
+        description: `Order #${cancelTarget.id} has been cancelled.`,
+        type: "success",
+      });
+      setCancelTarget(null);
+      await loadOrders();
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const loadOrders = useCallback(async () => {
     setIsLoading(true);
@@ -343,74 +388,111 @@ export function CustomerOrdersView() {
       ) : (
         <>
           <div className="space-y-4">
-            {filtered.orders.map((order, index) => (
-              <motion.article
-                key={order.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.2,
-                  delay: index * 0.04,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-2xs sm:flex-row sm:items-center"
-              >
-                <div className="min-w-0 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="font-mono text-sm font-semibold text-foreground">
-                      Order #{order.id}
-                    </span>
-                    <OrderStatusBadge status={order.status} />
+            {filtered.orders.map((order, index) => {
+              const leadItem = order.items[0];
+              const cancelCheck = canCustomerCancelOrder(order.status);
+
+              return (
+                <motion.article
+                  key={order.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.2,
+                    delay: index * 0.04,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-2xs sm:flex-row sm:items-center"
+                >
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div className="relative size-18 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-muted sm:size-20">
+                      <PizzaImage
+                        src={leadItem?.image || "/images/auth-pizza-hero.jpg"}
+                        alt={leadItem?.itemName || "Ordered pizza"}
+                        fill
+                        sizes="80px"
+                        className="object-cover object-center"
+                      />
+                    </div>
+
+                    <div className="min-w-0 space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-sm font-semibold text-foreground">
+                          Order #{order.id}
+                        </span>
+                        <OrderStatusBadge status={order.status} />
+                      </div>
+
+                      <p className="line-clamp-1 text-sm font-semibold text-foreground">
+                        {order.items
+                          .map((i) => `${i.quantity}× ${i.itemName}`)
+                          .join(", ") || "Pizza Order"}
+                      </p>
+
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {order.vendorName}
+                        {order.vendorLocation ? (
+                          <span className="ml-2 inline-flex items-center gap-1 font-normal">
+                            <MapPin
+                              className="size-3 text-primary"
+                              aria-hidden="true"
+                            />
+                            {order.vendorLocation}
+                          </span>
+                        ) : null}
+                      </p>
+
+                      {order.deliveryAddress ? (
+                        <p className="line-clamp-1 text-xs text-muted-foreground">
+                          Deliver to: {order.deliveryAddress}
+                        </p>
+                      ) : null}
+
+                      <p className="text-xs text-muted-foreground">
+                        Requested {formatOrderDate(order.createdAt)}
+                        {order.deliveryDate
+                          ? ` · Delivery: ${order.deliveryDate}`
+                          : ""}{" "}
+                        · Cash on Delivery
+                      </p>
+                    </div>
                   </div>
 
-                  <p className="text-sm font-medium text-foreground">
-                    {order.vendorName}
-                    {order.vendorLocation ? (
-                      <span className="ml-2 inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
-                        <MapPin
-                          className="size-3 text-primary"
-                          aria-hidden="true"
-                        />
-                        {order.vendorLocation}
-                      </span>
-                    ) : null}
-                  </p>
-
-                  <p className="line-clamp-1 text-xs text-muted-foreground">
-                    {order.items
-                      .map((i) => `${i.quantity}× ${i.itemName}`)
-                      .join(", ")}
-                  </p>
-
-                  <p className="text-xs text-muted-foreground">
-                    Placed {formatOrderDate(order.createdAt)}
-                    {order.deliveryDate
-                      ? ` · Delivery: ${order.deliveryDate}`
-                      : ""}{" "}
-                    · Cash on Delivery
-                  </p>
-                </div>
-
-                <div className="flex shrink-0 items-center justify-between gap-4 border-t border-border/70 pt-3 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
-                  <span className="font-heading text-lg font-bold text-foreground tabular-nums">
-                    ${order.total.toFixed(2)}
-                  </span>
-                  <Button
-                    render={
-                      <Link
-                        href={`/dashboard/customer/orders/${encodeURIComponent(order.id)}`}
-                      />
-                    }
-                    variant="outline"
-                    size="sm"
-                    className="h-9 rounded-xl bg-background px-3.5"
-                  >
-                    <span>Order Details</span>
-                    <ArrowRight className="size-3.5" aria-hidden="true" />
-                  </Button>
-                </div>
-              </motion.article>
-            ))}
+                  <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-3 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+                    <span className="font-heading text-lg font-bold text-foreground tabular-nums">
+                      ${order.total.toFixed(2)}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {cancelCheck.allowed ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCancelTarget(order)}
+                          className="h-9 rounded-xl border-destructive/35 bg-background px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <XCircle className="size-3.5" aria-hidden="true" />
+                          <span>Cancel</span>
+                        </Button>
+                      ) : null}
+                      <Button
+                        render={
+                          <Link
+                            href={`/dashboard/customer/orders/${encodeURIComponent(order.id)}`}
+                          />
+                        }
+                        variant="outline"
+                        size="sm"
+                        className="h-9 rounded-xl bg-background px-3.5"
+                      >
+                        <span>Order Details</span>
+                        <ArrowRight className="size-3.5" aria-hidden="true" />
+                      </Button>
+                    </div>
+                  </div>
+                </motion.article>
+              );
+            })}
           </div>
 
           {filtered.totalPages > 1 ? (
@@ -457,6 +539,47 @@ export function CustomerOrdersView() {
           ) : null}
         </>
       )}
+
+      <AlertDialog
+        open={Boolean(cancelTarget)}
+        onOpenChange={(open) => {
+          if (!open && !isCancelling) {
+            setCancelTarget(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this pending order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Order #{cancelTarget?.id} from {cancelTarget?.vendorName} will be
+              marked as Cancelled and the vendor kitchen will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>
+              Keep Order
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isCancelling}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleConfirmCancel();
+              }}
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  <span>Cancelling…</span>
+                </>
+              ) : (
+                <span>Yes, Cancel Order</span>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

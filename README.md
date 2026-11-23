@@ -1,8 +1,8 @@
 # PizzaHub — Hot & Fresh Pizza Ordering & Delivery Platform (Client)
 
-PizzaHub is a full-stack, multi-role pizza marketplace and delivery platform built with **Next.js (App Router)**, **React 19**, **Tailwind CSS v4**, **Better Auth**, and **Stripe**, connected to the PizzaHub **Express.js + MongoDB** REST API.
+PizzaHub is a full-stack, multi-role pizza marketplace and delivery platform built with **Next.js (App Router)**, **React 19**, **Tailwind CSS v4**, **Better Auth**, **Motion**, and **Stripe**, connected to the PizzaHub **Express.js + MongoDB** REST API.
 
-Customers can discover wood-fired pizzas from local approved kitchens, customize orders with a delivery date, and track preparation status in real time. Vendors manage their menus (with Free tier 3-item active slot limits and Stripe-powered Premium upgrades) and fulfill incoming orders. Administrators moderate menu submissions, manage user accounts, and audit platform transactions.
+Customers can discover wood-fired pizzas from local approved kitchens, place Cash-on-Delivery orders with a delivery date and special instructions directly from the item details page or via cart checkout, and track preparation status in real time. Vendors manage their menus (with Free tier 3-item active slot limits and Stripe-powered Premium upgrades) and fulfill incoming orders. Administrators moderate menu submissions, manage user accounts, and audit platform transactions.
 
 ---
 
@@ -10,28 +10,31 @@ Customers can discover wood-fired pizzas from local approved kitchens, customize
 
 - **Client Live URL:** https://pizzahub-client-murex.vercel.app
 - **Server API URL:** https://pizzahub-server-bice.vercel.app
-- **Client Repository:** `pizza-hub-client`
-- **Server Repository:** `PizzaHub-server`
+- **Client Repository:** https://github.com/imranonweb/pizzahub-client
+- **Server Repository:** `PizzaHub-server` (add your GitHub server repository URL here before final submission)
 
 ---
 
 ## Key Features
 
 ### Public Storefront & Discovery
-- **Homepage:** Branded hero with live menu search bar, quick category chips, featured menu grid (6 live approved pizzas fetched from `GET /api/menu?sort=featured&limit=6`), how-it-works guide, vendor call-to-action, and footer.
-- **Browse Menu (`/menu`):** Debounced keyword search, exact category filter, dynamic vendor location filter, price sorting (`featured`, `price-asc`, `price-desc`, `newest`), active filter pills, URL-synchronized query state, and server-side pagination.
-- **Pizza Details (`/menu/[id]`):** Validated 24-character MongoDB ObjectId routing, photo gallery, ingredients, vendor storefront metadata, quantity selector, and Add-to-Cart action.
+- **Homepage (`/`):** Editorial wood-fired hero banner with live autocomplete menu search and `Explore Pizza Menu` CTA, Featured Menu Items grid (6 live approved pizzas fetched from `GET /api/menu?sort=featured&limit=6`), all 6 PizzaHub categories (`Classic Pizzas`, `Vegetarian Pizzas`, `Meat Lovers`, `Specialty / Gourmet Pizzas`, `Sides & Appetizers`, `Beverages & Desserts`), How It Works guide, Wood-Fired Kitchen Showcase, Vendor CTA, smooth `motion/react` section reveals, and branded footer with X (Twitter), Instagram, and Facebook links.
+- **Browse Menu (`/menu`):** Publicly accessible responsive card grid with live search suggestions, debounced keyword search, exact category filter, dynamic vendor location filter, price sorting (`featured`, `price-asc`, `price-desc`, `newest`), active filter pills, URL-synchronized query state, and server-side pagination.
 - **Vendor Pricing (`/pricing`):** Transparent Free vs. Premium vendor plan comparison synced with `GET /api/vendor/subscription/plans`.
+- **Authentication (`/sign-in` & `/sign-up`):** Role-aware Sign Up (Full Name, Email, optional Profile Image URL, Password with policy validation, Account Role: Customer / Vendor, and Vendor Business Name), Google OAuth sign-in, and safe redirect preservation (`callbackUrl`).
+
+### Private Item Details & Ordering (`/menu/[id]`)
+- **Private Route Protection:** Protected in both `src/proxy.ts` (`/menu/:path+`) and `requireAuth` inside the page server component — logged-out users clicking `View Details` are redirected to `/sign-in?callbackUrl=/menu/[id]` and returned after signing in.
+- **Direct Order Form & Cart Support:** Validated 24-character MongoDB ObjectId routing, photo gallery, vendor kitchen info, quantity selector, **Order Now** direct order dialog (auto-detecting Customer, Vendor, and Selected Menu Item with Delivery Date, Delivery Address, Contact Phone prefilled from `/api/profile`, and Additional Message / Special Instructions — Cash on Delivery), plus multi-item Add-to-Cart & `/checkout` support.
 
 ### Customer Experience (`/dashboard/customer`)
-- **Dashboard Overview:** Live **Total, Pending, Accepted, and Rejected** order stat cards, interactive **Order Status Breakdown** visual chart, current cart snapshot, and recent order feed.
-- **Persistent Cart & Checkout (`/checkout`):** Slide-over cart drawer persisted in local storage, single-vendor order validation, delivery address, contact phone, **delivery date picker** (`YYYY-MM-DD`, non-past validation), and order notes.
-- **Order History & Tracking (`/dashboard/customer/orders` & `/dashboard/customer/orders/[id]`):** Filterable order history, cancellation action for pending orders (`PATCH /api/orders/:id/cancel`), and an interactive **Order Status Timeline** (`Pending → Accepted → Preparing → Ready → Out for Delivery → Delivered`).
+- **Dashboard Overview:** Live **Total, Pending, Accepted, and Rejected** order stat cards, interactive **Order Status Breakdown** chart, current cart snapshot, and recent order feed.
+- **My Orders & Tracking (`/dashboard/customer/orders` & `/dashboard/customer/orders/[id]`):** Order cards displaying dish thumbnail image, item names, vendor info, delivery address, delivery date, request date, and order status — with live search suggestions, status filtering, one-click **Cancel Order** confirmation dialog for pending orders (`PATCH /api/orders/:id/cancel`), and an interactive **Order Status Timeline** (`Pending → Accepted → Preparing → Ready → Out for Delivery → Delivered`).
 - **Profile & Security (`/profile` & `/dashboard/customer/settings`):** Avatar/name updates, saved contact phone & delivery address (`GET/PATCH /api/profile`), and password management.
 
 ### Vendor Experience (`/dashboard/vendor`)
 - **Vendor Overview:** Live KPI cards for **Total Menu Items, Active Items, Pending Approvals, Rejected Items, Pending Customer Orders, and Accepted Orders**, Free plan slot progress bar, and two visual distribution charts (**Menu Status Breakdown** & **Incoming Order Status**).
-- **Menu Manager (`/dashboard/vendor/menu` & `/dashboard/vendor/add`):** Full CRUD for pizza listings, ImgBB photo uploads (`/api/upload/image`), active/inactive status toggle enforcing the Free plan limit (max 3 active approved items), and admin rejection feedback display.
+- **Menu Manager (`/dashboard/vendor/menu` & `/dashboard/vendor/add`):** Full CRUD for pizza listings, ImgBB photo uploads (`/api/upload/image`), active/inactive status toggle enforcing the Free plan limit (max 3 active approved items), search suggestions, and admin rejection feedback display.
 - **Incoming Orders (`/dashboard/vendor/orders`):** View customer orders with delivery dates and transition statuses (`Accept`, `Reject`, `Start Preparing`, `Mark Ready`) via `PATCH /api/vendor/orders/:id/status`.
 - **Subscriptions & Stripe Checkout (`/dashboard/vendor/subscription`):** View live plan status, upgrade via Stripe Hosted Checkout (`POST /api/vendor/subscription/checkout`), open Stripe Billing Portal (`POST /api/vendor/subscription/portal`), and return cleanly through `/payment/success` and `/payment/cancel`.
 - **Vendor Profile Settings (`/dashboard/vendor/profile`):** Manage kitchen/restaurant name (`businessName`), contact phone, kitchen address (`PATCH /api/profile`), personal avatar/name, and account password.
@@ -39,14 +42,14 @@ Customers can discover wood-fired pizzas from local approved kitchens, customize
 ### Admin Experience (`/dashboard/admin`)
 - **Admin Overview:** Live platform KPIs (**Total Users, Vendors, Customers, Total Menu Items, Pending Approvals, Total Transactions & Paid Revenue**) plus **Account Distribution** and **Menu Moderation Breakdown** charts.
 - **Menu Moderation (`/dashboard/admin/menu`):** Inspect submissions and **Approve**, **Reject** (with reason), **Deactivate**, or **Delete** menu listings (`PATCH /api/admin/menu/:id/status`, `DELETE /api/admin/menu/:id`).
-- **User Management (`/dashboard/admin/users`):** Search and filter all accounts and toggle **Block / Unblock** status (`PATCH /api/admin/users/:id/block`, with self-lockout safeguards).
-- **Platform Transactions (`/dashboard/admin/transactions`):** Strictly read-only subscription payment ledger (`GET /api/admin/transactions`) with search, status/plan/sort filters, revenue summary, and server-side pagination.
+- **User Management (`/dashboard/admin/users`):** Search with suggestions, filter all accounts, view details, and toggle **Block / Unblock** status (`PATCH /api/admin/users/:id/block`, with self-lockout safeguards).
+- **Platform Transactions (`/dashboard/admin/transactions`):** Strictly read-only subscription payment ledger (`GET /api/admin/transactions`) with search suggestions, status/plan/sort filters, responsive table + mobile cards, revenue summary, and server-side pagination.
 
 ### Cross-Cutting & Optional Features
 - **Live Notification Center (`/notifications` & Navbar Bell):** Role-aware notification popover and full inbox backed by `/api/notifications`, unread badge polling, individual mark-as-read, and mark-all-read mutations.
 - **Optional Feature #2 — Dark / Light Mode Toggle:** Accessible theme switcher in the public navbar and all three dashboard shells (persisted in `localStorage`, respects `prefers-color-scheme`, uses custom warm charcoal `.dark` theme tokens).
 - **Optional Feature #3 — Order Status Timeline:** Visual step-by-step order progress tracker displaying timestamps and kitchen notes for every status transition.
-- **Custom Error & Loading UX:** Branded `not-found.tsx` (404), `error.tsx` boundary with retry action, and `loading.tsx` route loader.
+- **Custom Error & Loading UX:** Branded `not-found.tsx` (404), `error.tsx` and `dashboard/error.tsx` boundaries with retry actions, and `loading.tsx` route loader.
 
 ---
 
@@ -65,16 +68,16 @@ Customers can discover wood-fired pizzas from local approved kitchens, customize
 
 ### Challenge 1 — Server-Side Search, Multi-Filter & Price Sorting
 The menu catalog (`/menu`) synchronizes `search`, `category`, `location`, `sort`, and `page` directly with URL search parameters and queries the Express backend at `GET /api/menu`:
-- Debounces search typing (300ms) before issuing network requests and aborts stale fetches.
+- Debounces search typing (`140ms`) with live autocomplete suggestions, request cancellation, and a 45-second in-memory catalog cache with deduplication for instant repeat queries.
 - Supports `sort=featured`, `sort=price-asc`, `sort=price-desc`, and `sort=newest` directly on MongoDB queries.
 - Displays live active filter pills with one-click clear actions and server-driven pagination metadata (`page`, `totalPages`, `hasNextPage`, `hasPrevPage`).
 
 ### Challenge 2 — Better Auth JWT (EdDSA JWKS) Verification Across Client & Express Server
 Authentication uses **Better Auth** mounted on Next.js (`/api/auth/[...all]`) with the `jwt()` plugin:
-1. Users authenticate via Email/Password or Google OAuth, receiving an HTTP-only Better Auth session cookie.
-2. When calling protected Express endpoints (`/api/orders`, `/api/vendor/*`, `/api/admin/*`, `/api/notifications`, `/api/profile`), the client requests a short-lived EdDSA JWT via `authClient.token()` and attaches `Authorization: Bearer <token>`.
+1. Users authenticate via Email/Password or Google OAuth, receiving an HTTP-only Better Auth session cookie with short-lived cookie caching.
+2. When calling protected Express endpoints (`/api/orders`, `/api/vendor/*`, `/api/admin/*`, `/api/notifications`, `/api/profile`), the client requests and caches a short-lived EdDSA JWT via `authClient.token()` (with automatic in-flight coalescing and cache invalidation on sign-out) and attaches `Authorization: Bearer <token>`.
 3. The Express backend verifies the token signature cryptographically against Better Auth's public JWKS endpoint (`${BETTER_AUTH_URL}/api/auth/jwks`) using `jose`, checks `user.isBlocked` in MongoDB, and enforces role-based guards (`customer`, `vendor`, `admin`).
-4. Next.js route protection (`src/proxy.ts`) + server layouts enforce role isolation and redirect unauthorized users cleanly.
+4. Next.js route protection (`src/proxy.ts`) + server component guards (`requireAuth` / `requireRole`) protect `/menu/[id]`, `/checkout`, `/profile`, `/payment/*`, and all role dashboards (`/dashboard/customer/*`, `/dashboard/vendor/*`, `/dashboard/admin/*`).
 
 ---
 

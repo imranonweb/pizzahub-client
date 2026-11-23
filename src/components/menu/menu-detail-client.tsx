@@ -3,6 +3,10 @@
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  CheckCircle2,
+  Loader2,
   MapPin,
   Minus,
   Plus,
@@ -10,9 +14,10 @@ import {
   ShoppingBag,
   Sparkles,
   Store,
+  UtensilsCrossed,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { useCart } from "@/components/providers/cart-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
@@ -27,14 +32,34 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PizzaImage } from "@/components/ui/pizza-image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import { buildSignInRedirectUrl } from "@/lib/auth-routes";
 import { MAX_CART_ITEM_QUANTITY } from "@/lib/cart-rules";
 import {
   fetchPublicMenuItemById,
   type MenuItemDetailResult,
 } from "@/lib/menu-api";
+import { createCustomerOrder } from "@/lib/order-api";
+import {
+  type CheckoutFormErrors,
+  type CustomerOrder,
+  getTodayIsoDate,
+  validateCheckoutForm,
+} from "@/lib/order-rules";
+import { fetchCustomerContactProfile } from "@/lib/profile-api";
 import { cn } from "@/lib/utils";
 import { MenuDetailSkeleton } from "./menu-skeletons";
 
@@ -57,6 +82,49 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [reloadNonce, setReloadNonce] = useState(0);
+
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState(() => getTodayIsoDate());
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [orderNotes, setOrderNotes] = useState("");
+  const [orderFieldErrors, setOrderFieldErrors] = useState<CheckoutFormErrors>(
+    {},
+  );
+  const [orderSubmitError, setOrderSubmitError] = useState<string | null>(null);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [placedOrder, setPlacedOrder] = useState<CustomerOrder | null>(null);
+  const [profilePrefilled, setProfilePrefilled] = useState(false);
+
+  useEffect(() => {
+    if (!orderDialogOpen || profilePrefilled || !isAuthenticated) {
+      return;
+    }
+    if (role !== "customer") {
+      return;
+    }
+    let cancelled = false;
+    fetchCustomerContactProfile()
+      .then((res) => {
+        if (cancelled || res.source !== "live" || !res.profile) return;
+        if (res.profile.deliveryAddress) {
+          setDeliveryAddress((prev) =>
+            prev.trim() ? prev : res.profile?.deliveryAddress || "",
+          );
+        }
+        if (res.profile.contactPhone) {
+          setContactPhone((prev) =>
+            prev.trim() ? prev : res.profile?.contactPhone || "",
+          );
+        }
+        setProfilePrefilled(true);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orderDialogOpen, profilePrefilled, isAuthenticated, role]);
 
   useEffect(() => {
     let cancelled = false;
@@ -195,6 +263,80 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
   const activeImage = images[selectedImageIndex] ?? images[0];
   const isPremiumVendor = item.vendor.subscriptionPlan === "premium";
   const signInRedirect = buildSignInRedirectUrl(`/menu/${item.id}`);
+  const todayDate = getTodayIsoDate();
+  const orderTotal = Math.round(item.price * selectedQuantity * 100) / 100;
+
+  const openDirectOrderDialog = () => {
+    setOrderFieldErrors({});
+    setOrderSubmitError(null);
+    setPlacedOrder(null);
+    setDeliveryDate((prev) => (prev >= todayDate ? prev : todayDate));
+    setOrderDialogOpen(true);
+  };
+
+  const handleDirectOrderSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isPlacingOrder) return;
+
+    setOrderSubmitError(null);
+    const validation = validateCheckoutForm({
+      deliveryDate,
+      deliveryAddress,
+      contactPhone,
+      orderNotes,
+    });
+
+    if (!validation.valid || !validation.sanitized) {
+      setOrderFieldErrors(validation.errors);
+      return;
+    }
+
+    setOrderFieldErrors({});
+    setIsPlacingOrder(true);
+
+    try {
+      const result = await createCustomerOrder({
+        items: [{ menuItemId: item.id, quantity: selectedQuantity }],
+        deliveryDate: validation.sanitized.deliveryDate,
+        deliveryAddress: validation.sanitized.deliveryAddress,
+        contactPhone: validation.sanitized.contactPhone,
+        orderNotes: validation.sanitized.orderNotes,
+      });
+
+      if (!result.ok) {
+        setOrderSubmitError(result.message);
+        toast.add({
+          title: "Could not place order",
+          description: result.message,
+          type: "error",
+        });
+        return;
+      }
+
+      if (result.order) {
+        setPlacedOrder(result.order);
+      }
+      setOrderNotes("");
+      toast.add({
+        title: "Order placed!",
+        description: `${selectedQuantity}× ${item.itemName} sent to ${item.vendor.businessName}.`,
+        type: "success",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to place your order right now.";
+      setOrderSubmitError(message);
+      toast.add({
+        title: "Could not place order",
+        description: message,
+        type: "error",
+      });
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
@@ -386,27 +528,47 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2.5">
-                      <AddToCartButton
-                        item={item}
-                        quantity={selectedQuantity}
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        onClick={openDrawer}
-                        className="h-11 rounded-xl bg-background px-4 font-medium"
-                      >
-                        <ShoppingBag className="size-4" aria-hidden="true" />
-                        <span>
-                          Cart{" "}
-                          {summary.itemCount > 0
-                            ? `(${summary.itemCount})`
-                            : ""}
-                        </span>
-                      </Button>
+                    <div className="space-y-2.5">
+                      {isAuthenticated && role === "customer" ? (
+                        <Button
+                          type="button"
+                          size="lg"
+                          onClick={openDirectOrderDialog}
+                          className="h-11 w-full rounded-xl font-semibold shadow-xs"
+                        >
+                          <UtensilsCrossed
+                            className="size-4"
+                            aria-hidden="true"
+                          />
+                          <span>
+                            Order Now — ${orderTotal.toFixed(2)} (Cash on
+                            Delivery)
+                          </span>
+                        </Button>
+                      ) : null}
+
+                      <div className="flex flex-wrap gap-2.5">
+                        <AddToCartButton
+                          item={item}
+                          quantity={selectedQuantity}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          onClick={openDrawer}
+                          className="h-11 rounded-xl bg-background px-4 font-medium"
+                        >
+                          <ShoppingBag className="size-4" aria-hidden="true" />
+                          <span>
+                            Cart{" "}
+                            {summary.itemCount > 0
+                              ? `(${summary.itemCount})`
+                              : ""}
+                          </span>
+                        </Button>
+                      </div>
                     </div>
 
                     {!isAuthenticated ? (
@@ -466,6 +628,289 @@ export function MenuDetailClient({ itemId }: MenuDetailClientProps) {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={orderDialogOpen}
+        onOpenChange={(open) => {
+          if (!isPlacingOrder) {
+            setOrderDialogOpen(open);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl p-6 sm:max-w-lg">
+          {placedOrder ? (
+            <div className="space-y-5 py-2 text-center">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-600/12 text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="size-6" aria-hidden="true" />
+              </div>
+              <div className="space-y-1.5">
+                <DialogTitle className="font-heading text-xl font-bold text-foreground">
+                  Order Request Sent!
+                </DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  Your order{" "}
+                  <span className="font-mono font-semibold text-foreground">
+                    #{placedOrder.id}
+                  </span>{" "}
+                  is now <strong className="text-foreground">Pending</strong>{" "}
+                  review by {item.vendor.businessName}.
+                </DialogDescription>
+              </div>
+
+              <div className="rounded-xl border border-border bg-muted/40 p-4 text-left text-xs text-muted-foreground space-y-1.5">
+                <p>
+                  <strong className="text-foreground">Dish:</strong>{" "}
+                  {selectedQuantity}× {item.itemName} ($
+                  {placedOrder.total.toFixed(2)})
+                </p>
+                {placedOrder.deliveryDate ? (
+                  <p>
+                    <strong className="text-foreground">Delivery Date:</strong>{" "}
+                    {placedOrder.deliveryDate}
+                  </p>
+                ) : null}
+                <p>
+                  <strong className="text-foreground">Address:</strong>{" "}
+                  {placedOrder.deliveryAddress}
+                </p>
+                <p>
+                  <strong className="text-foreground">Payment:</strong> Cash on
+                  Delivery
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-center">
+                <Link
+                  href={`/dashboard/customer/orders/${encodeURIComponent(placedOrder.id)}`}
+                  className={cn(
+                    buttonVariants({ variant: "default" }),
+                    "h-10 rounded-xl px-4 font-semibold",
+                  )}
+                >
+                  <span>Track Order Status</span>
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/dashboard/customer/orders"
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "h-10 rounded-xl bg-background px-4",
+                  )}
+                >
+                  View My Orders
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form
+              noValidate
+              onSubmit={handleDirectOrderSubmit}
+              className="space-y-4"
+            >
+              <DialogHeader>
+                <DialogTitle className="font-heading text-xl font-bold text-foreground">
+                  Place Direct Pizza Order
+                </DialogTitle>
+                <DialogDescription>
+                  Confirm your delivery schedule and address. Cash on Delivery —
+                  no card required.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="rounded-xl border border-border bg-muted/40 p-3.5 text-xs space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Customer</span>
+                  <span className="font-medium text-foreground truncate">
+                    {user?.name} ({user?.email})
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Vendor Kitchen</span>
+                  <span className="font-medium text-foreground truncate">
+                    {item.vendor.businessName} · {item.location}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 border-t border-border/70 pt-1.5">
+                  <span className="text-muted-foreground">Selected Item</span>
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {selectedQuantity}× {item.itemName} · $
+                    {orderTotal.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {orderSubmitError ? (
+                <Alert variant="destructive" className="rounded-xl">
+                  <AlertCircle className="size-4" aria-hidden="true" />
+                  <AlertTitle>Order could not be submitted</AlertTitle>
+                  <AlertDescription>{orderSubmitError}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <div className="grid gap-3.5 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="direct-order-date"
+                    className="inline-flex items-center gap-1.5"
+                  >
+                    <CalendarDays
+                      className="size-3.5 text-primary"
+                      aria-hidden="true"
+                    />
+                    Delivery Date
+                  </Label>
+                  <Input
+                    id="direct-order-date"
+                    type="date"
+                    min={todayDate}
+                    value={deliveryDate}
+                    onChange={(event) => {
+                      setDeliveryDate(event.target.value);
+                      if (orderFieldErrors.deliveryDate) {
+                        setOrderFieldErrors((prev) => ({
+                          ...prev,
+                          deliveryDate: undefined,
+                        }));
+                      }
+                    }}
+                    disabled={isPlacingOrder}
+                    aria-invalid={Boolean(orderFieldErrors.deliveryDate)}
+                    className="h-10 rounded-xl bg-background"
+                    required
+                  />
+                  {orderFieldErrors.deliveryDate ? (
+                    <p role="alert" className="text-xs text-destructive">
+                      {orderFieldErrors.deliveryDate}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="direct-order-phone">Contact Phone</Label>
+                  <Input
+                    id="direct-order-phone"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="+1 (555) 234-5678"
+                    value={contactPhone}
+                    onChange={(event) => {
+                      setContactPhone(event.target.value);
+                      if (orderFieldErrors.contactPhone) {
+                        setOrderFieldErrors((prev) => ({
+                          ...prev,
+                          contactPhone: undefined,
+                        }));
+                      }
+                    }}
+                    disabled={isPlacingOrder}
+                    aria-invalid={Boolean(orderFieldErrors.contactPhone)}
+                    className="h-10 rounded-xl bg-background"
+                    required
+                  />
+                  {orderFieldErrors.contactPhone ? (
+                    <p role="alert" className="text-xs text-destructive">
+                      {orderFieldErrors.contactPhone}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="direct-order-address">Delivery Address</Label>
+                <Input
+                  id="direct-order-address"
+                  type="text"
+                  autoComplete="street-address"
+                  placeholder="742 Evergreen Terrace, Apt 4B, Downtown"
+                  value={deliveryAddress}
+                  onChange={(event) => {
+                    setDeliveryAddress(event.target.value);
+                    if (orderFieldErrors.deliveryAddress) {
+                      setOrderFieldErrors((prev) => ({
+                        ...prev,
+                        deliveryAddress: undefined,
+                      }));
+                    }
+                  }}
+                  disabled={isPlacingOrder}
+                  aria-invalid={Boolean(orderFieldErrors.deliveryAddress)}
+                  className="h-10 rounded-xl bg-background"
+                  required
+                />
+                {orderFieldErrors.deliveryAddress ? (
+                  <p role="alert" className="text-xs text-destructive">
+                    {orderFieldErrors.deliveryAddress}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="direct-order-notes">
+                    Additional Message / Special Instructions
+                  </Label>
+                  <span className="text-xs text-muted-foreground">
+                    Optional
+                  </span>
+                </div>
+                <Textarea
+                  id="direct-order-notes"
+                  rows={3}
+                  maxLength={300}
+                  placeholder="Extra basil, light char, ring buzzer #4 on arrival..."
+                  value={orderNotes}
+                  onChange={(event) => {
+                    setOrderNotes(event.target.value);
+                    if (orderFieldErrors.orderNotes) {
+                      setOrderFieldErrors((prev) => ({
+                        ...prev,
+                        orderNotes: undefined,
+                      }));
+                    }
+                  }}
+                  disabled={isPlacingOrder}
+                  aria-invalid={Boolean(orderFieldErrors.orderNotes)}
+                  className="rounded-xl bg-background"
+                />
+                {orderFieldErrors.orderNotes ? (
+                  <p role="alert" className="text-xs text-destructive">
+                    {orderFieldErrors.orderNotes}
+                  </p>
+                ) : null}
+              </div>
+
+              <DialogFooter className="-mx-6 -mb-6 mt-2 rounded-b-2xl px-6 py-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isPlacingOrder}
+                  onClick={() => setOrderDialogOpen(false)}
+                  className="rounded-xl bg-background"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isPlacingOrder}
+                  className="rounded-xl font-semibold"
+                >
+                  {isPlacingOrder ? (
+                    <>
+                      <Loader2
+                        className="size-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                      <span>Placing order…</span>
+                    </>
+                  ) : (
+                    <span>Confirm Order (${orderTotal.toFixed(2)})</span>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

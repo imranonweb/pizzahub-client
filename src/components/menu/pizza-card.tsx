@@ -60,6 +60,7 @@ export function PizzaCard({ item, headingAs = "h2" }: PizzaCardProps) {
           <Heading className="font-heading text-lg font-semibold leading-snug text-foreground">
             <Link
               href={`/menu/${encodeURIComponent(item.id)}`}
+              prefetch={false}
               className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               {item.itemName}
@@ -108,6 +109,7 @@ export function PizzaCard({ item, headingAs = "h2" }: PizzaCardProps) {
           <div className="flex items-center gap-2">
             <Link
               href={`/menu/${encodeURIComponent(item.id)}`}
+              prefetch={false}
               className={cn(
                 buttonVariants({ variant: "outline", size: "default" }),
                 "h-10 flex-1 rounded-xl font-medium group-hover:border-primary/40 group-hover:bg-accent/60",

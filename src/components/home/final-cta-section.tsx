@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { MotionReveal } from "@/components/home/motion-reveal";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -9,7 +10,7 @@ export function FinalCtaSection() {
       aria-labelledby="final-cta-heading"
       className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
     >
-      <div className="flex flex-col items-start justify-between gap-6 rounded-3xl border border-border bg-accent/65 p-8 sm:p-10 lg:flex-row lg:items-center">
+      <MotionReveal className="flex flex-col items-start justify-between gap-6 rounded-3xl border border-border bg-accent/65 p-8 sm:p-10 lg:flex-row lg:items-center">
         <div className="max-w-xl space-y-2">
           <h2
             id="final-cta-heading"
@@ -44,7 +45,7 @@ export function FinalCtaSection() {
             Create Account
           </Link>
         </div>
-      </div>
+      </MotionReveal>
     </section>
   );
 }

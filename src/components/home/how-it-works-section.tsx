@@ -1,4 +1,5 @@
 import { CalendarCheck2, Search, Truck } from "lucide-react";
+import { MotionReveal } from "@/components/home/motion-reveal";
 
 const STEPS = [
   {
@@ -30,7 +31,7 @@ export function HowItWorksSection() {
       aria-labelledby="how-it-works-heading"
       className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
     >
-      <div className="mb-12 max-w-xl space-y-2">
+      <MotionReveal className="mb-12 max-w-xl space-y-2">
         <h2
           id="how-it-works-heading"
           className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground sm:text-3xl"
@@ -41,32 +42,37 @@ export function HowItWorksSection() {
           Three straightforward steps from discovering a nearby oven to
           following your delivery.
         </p>
-      </div>
+      </MotionReveal>
 
       <ol className="grid gap-8 md:grid-cols-3 md:gap-10">
-        {STEPS.map((item) => {
+        {STEPS.map((item, idx) => {
           const Icon = item.icon;
           return (
             <li
               key={item.step}
               className="relative flex flex-col gap-3.5 border-t border-border pt-6"
             >
-              <div className="flex items-center justify-between">
-                <span className="flex size-11 items-center justify-center rounded-xl bg-accent text-primary">
-                  <Icon className="size-5" aria-hidden="true" />
-                </span>
-                <span className="font-mono text-xs font-semibold text-muted-foreground">
-                  Step {item.step}
-                </span>
-              </div>
+              <MotionReveal
+                delay={idx * 0.06}
+                className="flex flex-col gap-3.5"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex size-11 items-center justify-center rounded-xl bg-accent text-primary">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </span>
+                  <span className="font-mono text-xs font-semibold text-muted-foreground">
+                    Step {item.step}
+                  </span>
+                </div>
 
-              <h3 className="font-heading text-lg font-semibold text-foreground">
-                {item.title}
-              </h3>
+                <h3 className="font-heading text-lg font-semibold text-foreground">
+                  {item.title}
+                </h3>
 
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {item.description}
-              </p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {item.description}
+                </p>
+              </MotionReveal>
             </li>
           );
         })}

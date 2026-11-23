@@ -3,6 +3,7 @@
 import { AlertCircle, ArrowRight, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { MotionReveal } from "@/components/home/motion-reveal";
 import { MenuGridSkeleton } from "@/components/menu/menu-skeletons";
 import { PizzaCard } from "@/components/menu/pizza-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -60,7 +61,7 @@ export function FeaturedPizzasSection() {
       aria-labelledby="featured-pizzas-heading"
       className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
     >
-      <div className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+      <MotionReveal className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div className="space-y-2">
           <h2
             id="featured-pizzas-heading"
@@ -84,7 +85,7 @@ export function FeaturedPizzasSection() {
           <span>View Menu</span>
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
-      </div>
+      </MotionReveal>
 
       {isLoading ? (
         <MenuGridSkeleton count={FEATURED_ITEMS_LIMIT} />
@@ -140,8 +141,10 @@ export function FeaturedPizzasSection() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {result.items.map((item) => (
-            <PizzaCard key={item.id} item={item} headingAs="h3" />
+          {result.items.map((item, idx) => (
+            <MotionReveal key={item.id} delay={idx * 0.04} className="h-full">
+              <PizzaCard item={item} headingAs="h3" />
+            </MotionReveal>
           ))}
         </div>
       )}

@@ -55,7 +55,7 @@ export function HeroSection() {
                   "h-12 w-full rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-black/25 hover:bg-primary/90 sm:w-auto",
                 )}
               >
-                <span>Explore Menu</span>
+                <span>Explore Pizza Menu</span>
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
               <Link

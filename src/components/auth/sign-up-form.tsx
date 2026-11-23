@@ -37,6 +37,7 @@ interface SignUpFieldErrors {
   name?: string;
   businessName?: string;
   email?: string;
+  profileImage?: string;
   password?: string;
   confirmPassword?: string;
 }
@@ -80,6 +81,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
+  const [profileImage, setProfileImage] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -111,6 +113,20 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
       errors.email = "Email address is required.";
     } else if (!isValidEmail(email)) {
       errors.email = "Please enter a valid email address.";
+    }
+
+    const trimmedProfileImage = profileImage.trim();
+    if (trimmedProfileImage) {
+      if (trimmedProfileImage.length > 500) {
+        errors.profileImage =
+          "Profile image URL must be 500 characters or fewer.";
+      } else if (
+        !/^https?:\/\/\S+$/i.test(trimmedProfileImage) &&
+        !trimmedProfileImage.startsWith("/")
+      ) {
+        errors.profileImage =
+          "Enter a valid http(s) image URL or leave blank to skip.";
+      }
     }
 
     if (!password) {
@@ -155,12 +171,14 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
     setIsSubmitting(true);
 
     try {
+      const trimmedProfileImage = profileImage.trim();
       const response = await signUp.email({
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
         role,
         businessName: role === "vendor" ? businessName.trim() : "",
+        ...(trimmedProfileImage ? { image: trimmedProfileImage } : {}),
       });
 
       if (response.error) {
@@ -386,6 +404,49 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
               className="text-xs font-medium text-destructive"
             >
               {fieldErrors.email}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="sign-up-profile-image">Profile image URL</Label>
+            <span className="text-xs text-muted-foreground">Optional</span>
+          </div>
+          <Input
+            id="sign-up-profile-image"
+            name="profileImage"
+            type="url"
+            autoComplete="photo"
+            spellCheck={false}
+            enterKeyHint="next"
+            placeholder="https://example.com/avatar.jpg (leave blank to skip)"
+            value={profileImage}
+            onChange={(event) => {
+              setProfileImage(event.target.value);
+              if (fieldErrors.profileImage) {
+                setFieldErrors((prev) => ({
+                  ...prev,
+                  profileImage: undefined,
+                }));
+              }
+            }}
+            disabled={isBusy}
+            aria-invalid={Boolean(fieldErrors.profileImage)}
+            aria-describedby={
+              fieldErrors.profileImage
+                ? "sign-up-profile-image-error"
+                : undefined
+            }
+            className="h-11 rounded-xl bg-card px-3.5 shadow-2xs"
+          />
+          {fieldErrors.profileImage ? (
+            <p
+              id="sign-up-profile-image-error"
+              role="alert"
+              className="text-xs font-medium text-destructive"
+            >
+              {fieldErrors.profileImage}
             </p>
           ) : null}
         </div>
