@@ -18,6 +18,7 @@ import {
   DashboardShellFrame,
   type DashboardStorefrontLink,
 } from "@/components/dashboard/dashboard-shell-frame";
+import { useLanguage } from "@/components/providers/language-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,58 +34,6 @@ export function useAdminProfile(): AdminSessionProfile {
   return ctx;
 }
 
-const ADMIN_NAV_ITEMS: readonly DashboardNavItem[] = [
-  {
-    href: "/dashboard/admin",
-    label: "Overview",
-    icon: LayoutDashboard,
-    exact: true,
-  },
-  {
-    href: "/dashboard/admin/menu",
-    label: "Menu Moderation",
-    icon: ClipboardCheck,
-    exact: false,
-  },
-  {
-    href: "/dashboard/admin/users",
-    label: "User Management",
-    icon: Users,
-    exact: false,
-  },
-  {
-    href: "/dashboard/admin/transactions",
-    label: "Transactions",
-    icon: ReceiptText,
-    exact: false,
-  },
-  {
-    href: "/dashboard/admin/profile",
-    label: "Profile",
-    icon: UserCircle,
-    exact: false,
-  },
-  {
-    href: "/notifications",
-    label: "Notifications",
-    icon: Bell,
-    exact: false,
-  },
-];
-
-const STOREFRONT_LINKS: readonly DashboardStorefrontLink[] = [
-  {
-    href: "/menu",
-    label: "Storefront",
-    icon: Store,
-  },
-  {
-    href: "/",
-    label: "Back to Home",
-    icon: ArrowLeft,
-  },
-];
-
 export function AdminDashboardShell({
   user,
   children,
@@ -92,6 +41,7 @@ export function AdminDashboardShell({
   user: AdminSessionProfile;
   children: ReactNode;
 }) {
+  const { t } = useLanguage();
   const { user: sessionUser } = useAuthSession();
 
   const syncedUser = useMemo<AdminSessionProfile>(
@@ -108,6 +58,64 @@ export function AdminDashboardShell({
     [sessionUser, user],
   );
 
+  const navItems = useMemo<readonly DashboardNavItem[]>(
+    () => [
+      {
+        href: "/dashboard/admin",
+        label: t.dashboard.overview,
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      {
+        href: "/dashboard/admin/menu",
+        label: t.dashboard.menuModeration,
+        icon: ClipboardCheck,
+        exact: false,
+      },
+      {
+        href: "/dashboard/admin/users",
+        label: t.dashboard.userManagement,
+        icon: Users,
+        exact: false,
+      },
+      {
+        href: "/dashboard/admin/transactions",
+        label: t.dashboard.transactions,
+        icon: ReceiptText,
+        exact: false,
+      },
+      {
+        href: "/dashboard/admin/profile",
+        label: t.dashboard.profile,
+        icon: UserCircle,
+        exact: false,
+      },
+      {
+        href: "/notifications",
+        label: t.nav.notifications,
+        icon: Bell,
+        exact: false,
+      },
+    ],
+    [t],
+  );
+
+  const storefrontLinks = useMemo<readonly DashboardStorefrontLink[]>(
+    () => [
+      {
+        href: "/menu",
+        label: t.dashboard.storefrontSection,
+        icon: Store,
+      },
+      {
+        href: "/",
+        label: t.dashboard.backToHome,
+        icon: ArrowLeft,
+      },
+    ],
+    [t],
+  );
+
   return (
     <AdminProfileContext.Provider value={syncedUser}>
       <DashboardShellFrame
@@ -115,26 +123,26 @@ export function AdminDashboardShell({
         drawerTitle="Admin Navigation"
         drawerDescription="Navigate PizzaHub admin moderation and user management views."
         openMenuAriaLabel="Open admin navigation menu"
-        headerTitle="PizzaHub Admin"
-        navItems={ADMIN_NAV_ITEMS}
-        storefrontLinks={STOREFRONT_LINKS}
+        headerTitle={t.dashboard.adminPortal}
+        navItems={navItems}
+        storefrontLinks={storefrontLinks}
         displayName={syncedUser.name}
         email={syncedUser.email}
         image={syncedUser.image}
         roleBadge={
           <Badge className="gap-1 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
             <ShieldCheck className="size-3" aria-hidden="true" />
-            Administrator
+            {t.dashboard.administrator}
           </Badge>
         }
         headerActions={
           <Button
             render={<Link href="/dashboard/admin/menu" />}
             size="sm"
-            className="hidden h-9 rounded-xl px-3 font-medium sm:inline-flex"
+            className="hidden h-9 rounded-full px-3.5 font-medium sm:inline-flex"
           >
             <ClipboardCheck className="size-4" aria-hidden="true" />
-            Moderation
+            {t.dashboard.moderationShort}
           </Button>
         }
       >

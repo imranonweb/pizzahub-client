@@ -28,15 +28,7 @@ export default function SignUpPage() {
   );
 
   return (
-    <AuthShell
-      title="Create your account"
-      description="Join PizzaHub to discover wood-fired pies nearby or publish your restaurant menu."
-      heroHeadline="One table for hungry neighbors and independent pizzerias."
-      heroSubheadline="Register in seconds as a Customer or Vendor—fresh crust, transparent orders, zero guesswork."
-      switchPrompt="Already registered?"
-      switchLabel="Sign in"
-      switchHref="/sign-in"
-    >
+    <AuthShell mode="sign-up" switchHref="/sign-in">
       <Suspense fallback={<SignUpFormFallback />}>
         <SignUpForm googleEnabled={googleEnabled} />
       </Suspense>

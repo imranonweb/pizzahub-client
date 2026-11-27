@@ -16,6 +16,7 @@ import {
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/search-suggestions-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { translateOrderStatus } from "@/lib/i18n/translations";
 import {
   type CustomerOrdersListResponse,
   cancelCustomerOrder,
@@ -51,15 +53,6 @@ import { cn } from "@/lib/utils";
 import { OrderStatusBadge } from "./order-status-badge";
 
 const PAGE_SIZE = 6;
-
-const STATUS_TABS: { value: CustomerOrderStatusFilter; label: string }[] = [
-  { value: "all", label: "All orders" },
-  { value: "active", label: "In progress" },
-  { value: "pending", label: "Pending" },
-  { value: "delivered", label: "Delivered" },
-  { value: "rejected", label: "Rejected" },
-  { value: "cancelled", label: "Cancelled" },
-];
 
 function formatOrderDate(iso: string): string {
   const parsed = new Date(iso);
@@ -77,7 +70,25 @@ function formatOrderDate(iso: string): string {
 }
 
 export function CustomerOrdersView() {
+  const { locale, t } = useLanguage();
   const [data, setData] = useState<CustomerOrdersListResponse | null>(null);
+  const statusTabs: { value: CustomerOrderStatusFilter; label: string }[] = [
+    { value: "all", label: t.dashboard.allOrders },
+    { value: "active", label: t.dashboard.inProgress },
+    { value: "pending", label: translateOrderStatus("pending", locale).label },
+    {
+      value: "delivered",
+      label: translateOrderStatus("delivered", locale).label,
+    },
+    {
+      value: "rejected",
+      label: translateOrderStatus("rejected", locale).label,
+    },
+    {
+      value: "cancelled",
+      label: translateOrderStatus("cancelled", locale).label,
+    },
+  ];
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -183,7 +194,7 @@ export function CustomerOrdersView() {
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="font-heading text-2xl font-bold tracking-[-0.02em] text-foreground sm:text-3xl">
-              My Orders
+              {t.dashboard.myOrders}
             </h1>
             <Badge
               variant="secondary"
@@ -211,14 +222,14 @@ export function CustomerOrdersView() {
               className={cn("size-4", isLoading && "animate-spin")}
               aria-hidden="true"
             />
-            Refresh
+            {t.dashboard.refresh}
           </Button>
           <Button
             render={<Link href="/menu" />}
             className="h-10 rounded-xl px-4 font-semibold"
           >
             <Store className="size-4" aria-hidden="true" />
-            Order More
+            {t.dashboard.orderMore}
           </Button>
         </div>
       </div>
@@ -287,7 +298,7 @@ export function CustomerOrdersView() {
         <fieldset className="flex flex-wrap items-center justify-between gap-3 border-0 border-t border-border/70 p-0 pt-3.5">
           <legend className="sr-only">Filter orders by status</legend>
           <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:pb-0">
-            {STATUS_TABS.map((tab) => {
+            {statusTabs.map((tab) => {
               const active = statusFilter === tab.value;
               return (
                 <button
@@ -472,7 +483,7 @@ export function CustomerOrdersView() {
                           className="h-9 rounded-xl border-destructive/35 bg-background px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
                         >
                           <XCircle className="size-3.5" aria-hidden="true" />
-                          <span>Cancel</span>
+                          <span>{t.dashboard.cancelOrder}</span>
                         </Button>
                       ) : null}
                       <Button
@@ -485,7 +496,7 @@ export function CustomerOrdersView() {
                         size="sm"
                         className="h-9 rounded-xl bg-background px-3.5"
                       >
-                        <span>Order Details</span>
+                        <span>{t.dashboard.orderDetails}</span>
                         <ArrowRight className="size-3.5" aria-hidden="true" />
                       </Button>
                     </div>

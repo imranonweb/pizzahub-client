@@ -3,6 +3,7 @@
 import { Check, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
+import { useLanguage } from "@/components/providers/language-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
@@ -22,6 +23,7 @@ export function AddToCartButton({
   className?: string;
 }) {
   const { addItem, openDrawer } = useCart();
+  const { t } = useLanguage();
   const { user, role, isAuthenticated } = useAuthSession();
   const [recentlyAdded, setRecentlyAdded] = useState(false);
 
@@ -65,11 +67,11 @@ export function AddToCartButton({
     setTimeout(() => setRecentlyAdded(false), 1400);
 
     toast.add({
-      title: "Added to cart",
+      title: t.menu.addedToastTitle,
       description: `${quantity} × ${item.itemName}`,
       type: "success",
       actionProps: {
-        children: "View cart",
+        children: t.menu.viewCartAction,
         onClick: () => openDrawer(),
       },
     });
@@ -78,7 +80,7 @@ export function AddToCartButton({
   return (
     <Button
       type="button"
-      variant={compact ? "default" : "default"}
+      variant="default"
       size={compact ? "default" : "lg"}
       disabled={!eligibility.allowed}
       onClick={handleAdd}
@@ -92,12 +94,12 @@ export function AddToCartButton({
       {recentlyAdded ? (
         <>
           <Check className="size-4" aria-hidden="true" />
-          <span>Added</span>
+          <span>{t.menu.added}</span>
         </>
       ) : (
         <>
           <ShoppingBag className="size-4" aria-hidden="true" />
-          <span>{compact ? "Add" : "Add to Cart"}</span>
+          <span>{compact ? t.menu.addCompact : t.menu.addToCart}</span>
         </>
       )}
     </Button>

@@ -226,7 +226,7 @@ export function ContactAddressCard() {
                 name="contactPhone"
                 type="tel"
                 autoComplete="tel"
-                placeholder="e.g. +1 555-234-5678"
+                placeholder="e.g. +880 1712-345678"
                 value={values.contactPhone}
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.contactPhone)}
@@ -262,7 +262,7 @@ export function ContactAddressCard() {
                 name="deliveryAddress"
                 rows={3}
                 maxLength={240}
-                placeholder="Street address, apartment/suite, and neighborhood"
+                placeholder="House 24, Road 9/A, Dhanmondi, Dhaka 1209"
                 value={values.deliveryAddress}
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.deliveryAddress)}

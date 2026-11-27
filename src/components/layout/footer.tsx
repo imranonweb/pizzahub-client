@@ -1,12 +1,17 @@
-import { Mail, MapPin } from "lucide-react";
+"use client";
+
+import { Clock, Mail, MapPin } from "lucide-react";
 import Link from "next/link";
 import { PizzaHubBrandMark } from "@/components/brand/pizzahub-logo";
+import { useLanguage } from "@/components/providers/language-provider";
 
 export function Footer() {
+  const { t } = useLanguage();
+
   return (
-    <footer className="border-t border-[#2f221c] bg-[#160f0c] text-[#faf6f0]">
+    <footer className="border-t border-[#2d1f19] bg-[#140d0a] text-[#faf6f0]">
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.55fr_1fr_1fr_1.15fr]">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.6fr_0.95fr_1fr_1.25fr]">
           <div className="space-y-4">
             <Link
               href="/"
@@ -14,10 +19,13 @@ export function Footer() {
             >
               <PizzaHubBrandMark tone="light" />
             </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-[#cfc4b8]">
-              Connecting neighborhood pizza lovers with independent brick-oven
-              kitchens for simple ordering and transparent delivery tracking.
+            <p className="max-w-sm text-sm leading-relaxed text-[#cfc4b8]">
+              {t.footer.description}
             </p>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#faf6f0]/14 bg-[#faf6f0]/6 px-3 py-1 text-xs font-medium text-[#f0d5b8]">
+              <MapPin className="size-3.5 text-[#f26d4f]" aria-hidden="true" />
+              <span>{t.brand.cities}</span>
+            </div>
             <div className="flex items-center gap-2.5 pt-1">
               <a
                 href="https://x.com"
@@ -84,7 +92,7 @@ export function Footer() {
 
           <div className="space-y-3.5">
             <h3 className="font-heading text-sm font-semibold tracking-tight text-[#faf6f0]">
-              Explore
+              {t.footer.exploreHeading}
             </h3>
             <ul className="space-y-2.5 text-sm text-[#cfc4b8]">
               <li>
@@ -92,7 +100,7 @@ export function Footer() {
                   href="/"
                   className="transition-colors hover:text-[#faf6f0]"
                 >
-                  Home
+                  {t.nav.home}
                 </Link>
               </li>
               <li>
@@ -100,7 +108,7 @@ export function Footer() {
                   href="/menu"
                   className="transition-colors hover:text-[#faf6f0]"
                 >
-                  Browse Menu
+                  {t.nav.browseMenu}
                 </Link>
               </li>
               <li>
@@ -108,7 +116,7 @@ export function Footer() {
                   href="/sign-in"
                   className="transition-colors hover:text-[#faf6f0]"
                 >
-                  Sign In
+                  {t.nav.signIn}
                 </Link>
               </li>
               <li>
@@ -116,7 +124,7 @@ export function Footer() {
                   href="/sign-up"
                   className="transition-colors hover:text-[#faf6f0]"
                 >
-                  Create Account
+                  {t.home.createAccount}
                 </Link>
               </li>
             </ul>
@@ -124,7 +132,7 @@ export function Footer() {
 
           <div className="space-y-3.5">
             <h3 className="font-heading text-sm font-semibold tracking-tight text-[#faf6f0]">
-              Partner & Account
+              {t.footer.partnerHeading}
             </h3>
             <ul className="space-y-2.5 text-sm text-[#cfc4b8]">
               <li>
@@ -132,7 +140,7 @@ export function Footer() {
                   href="/pricing"
                   className="transition-colors hover:text-[#faf6f0]"
                 >
-                  Vendor Pricing & Plans
+                  {t.footer.vendorPricingPlans}
                 </Link>
               </li>
               <li>
@@ -140,7 +148,7 @@ export function Footer() {
                   href="/sign-up?role=vendor"
                   className="transition-colors hover:text-[#faf6f0]"
                 >
-                  Become a Vendor
+                  {t.footer.becomeVendor}
                 </Link>
               </li>
               <li>
@@ -149,7 +157,7 @@ export function Footer() {
                   prefetch={false}
                   className="transition-colors hover:text-[#faf6f0]"
                 >
-                  My Dashboard
+                  {t.footer.myDashboard}
                 </Link>
               </li>
               <li>
@@ -158,7 +166,7 @@ export function Footer() {
                   prefetch={false}
                   className="transition-colors hover:text-[#faf6f0]"
                 >
-                  Profile Settings
+                  {t.nav.profileSettings}
                 </Link>
               </li>
             </ul>
@@ -166,7 +174,7 @@ export function Footer() {
 
           <div className="space-y-3.5">
             <h3 className="font-heading text-sm font-semibold tracking-tight text-[#faf6f0]">
-              Contact
+              {t.footer.contactHeading}
             </h3>
             <ul className="space-y-3 text-sm text-[#cfc4b8]">
               <li className="flex items-start gap-2.5">
@@ -186,15 +194,22 @@ export function Footer() {
                   className="mt-0.5 size-4 shrink-0 text-[#f26d4f]"
                   aria-hidden="true"
                 />
-                <span>Serving neighborhood pizzerias & local kitchens</span>
+                <span>{t.footer.addressLine}</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Clock
+                  className="mt-0.5 size-4 shrink-0 text-[#f26d4f]"
+                  aria-hidden="true"
+                />
+                <span>{t.footer.hoursLine}</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-[#faf6f0]/12 pt-6 text-xs text-[#b5a99c] sm:flex-row sm:items-center">
-          <p>© 2026 PizzaHub. All rights reserved.</p>
-          <p>Hot & fresh pizza ordering and delivery platform.</p>
+          <p>{t.footer.rights}</p>
+          <p>{t.footer.platformNote}</p>
         </div>
       </div>
     </footer>

@@ -46,6 +46,7 @@ Customers can discover wood-fired pizzas from local approved kitchens, place Cas
 - **Platform Transactions (`/dashboard/admin/transactions`):** Strictly read-only subscription payment ledger (`GET /api/admin/transactions`) with search suggestions, status/plan/sort filters, responsive table + mobile cards, revenue summary, and server-side pagination.
 
 ### Cross-Cutting & Optional Features
+- **Multilingual Bangla & English Support (`EN | বাংলা`) + Bangladeshi Context:** Reactive `LanguageProvider` and `LanguageSwitcher` across the public storefront, authentication pages, and all three role dashboards — backed by `Hind Siliguri` Bengali typography, `[lang="bn"]` matra-safe line heights, and authentic Dhaka / Chattogram / Sylhet neighborhood context while preserving canonical API payloads.
 - **Live Notification Center (`/notifications` & Navbar Bell):** Role-aware notification popover and full inbox backed by `/api/notifications`, unread badge polling, individual mark-as-read, and mark-all-read mutations.
 - **Optional Feature #2 — Dark / Light Mode Toggle:** Accessible theme switcher in the public navbar and all three dashboard shells (persisted in `localStorage`, respects `prefers-color-scheme`, uses custom warm charcoal `.dark` theme tokens).
 - **Optional Feature #3 — Order Status Timeline:** Visual step-by-step order progress tracker displaying timestamps and kitchen notes for every status transition.

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { MotionReveal } from "@/components/home/motion-reveal";
 import { MenuGridSkeleton } from "@/components/menu/menu-skeletons";
 import { PizzaCard } from "@/components/menu/pizza-card";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { fetchPublicMenu, type MenuListResult } from "@/lib/menu-api";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 const FEATURED_ITEMS_LIMIT = 6;
 
 export function FeaturedPizzasSection() {
+  const { t } = useLanguage();
   const [result, setResult] = useState<MenuListResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -59,19 +61,18 @@ export function FeaturedPizzasSection() {
   return (
     <section
       aria-labelledby="featured-pizzas-heading"
-      className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+      className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-22"
     >
-      <MotionReveal className="mb-9 flex flex-col items-start justify-between gap-4 border-b border-border/70 pb-5 sm:mb-10 sm:flex-row sm:items-end">
-        <div className="space-y-1.5">
+      <MotionReveal className="mb-10 flex flex-col items-start justify-between gap-4 border-b border-border/80 pb-6 sm:flex-row sm:items-end">
+        <div className="space-y-2">
           <h2
             id="featured-pizzas-heading"
-            className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground text-balance sm:text-3xl"
+            className="font-heading text-2xl font-bold tracking-[-0.025em] text-foreground text-balance sm:text-3xl lg:text-[2.15rem]"
           >
-            Featured from local ovens
+            {t.home.featuredHeading}
           </h2>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Signature wood-fired pies and customer favorites freshly prepared by
-            approved PizzaHub kitchens.
+            {t.home.featuredSubheading}
           </p>
         </div>
 
@@ -79,10 +80,10 @@ export function FeaturedPizzasSection() {
           href="/menu"
           className={cn(
             buttonVariants({ variant: "outline", size: "default" }),
-            "h-10 shrink-0 rounded-xl bg-card px-4 text-sm font-semibold",
+            "h-10 shrink-0 rounded-full bg-card px-5 text-sm font-semibold shadow-2xs",
           )}
         >
-          <span>View Full Menu</span>
+          <span>{t.home.viewFullMenu}</span>
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
       </MotionReveal>
@@ -93,7 +94,7 @@ export function FeaturedPizzasSection() {
         <Alert variant="destructive" className="rounded-2xl p-6">
           <AlertCircle className="size-5" aria-hidden="true" />
           <AlertTitle className="text-base font-semibold">
-            Featured Menu Unavailable
+            {t.home.featuredErrorTitle}
           </AlertTitle>
           <AlertDescription className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm leading-relaxed">{errorMessage}</span>
@@ -106,7 +107,7 @@ export function FeaturedPizzasSection() {
                 className="rounded-xl bg-background text-foreground"
               >
                 <RotateCcw className="size-3.5" aria-hidden="true" />
-                Retry
+                {t.home.retry}
               </Button>
               <Link
                 href="/menu"
@@ -115,7 +116,7 @@ export function FeaturedPizzasSection() {
                   "rounded-xl",
                 )}
               >
-                Browse Menu
+                {t.nav.browseMenu}
               </Link>
             </div>
           </AlertDescription>
@@ -123,20 +124,19 @@ export function FeaturedPizzasSection() {
       ) : !result || result.catalogEmpty || result.items.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card px-6 py-14 text-center">
           <h3 className="font-heading text-xl font-semibold text-foreground">
-            No approved pizzas published yet
+            {t.home.noFeaturedHeading}
           </h3>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            Local kitchens have not published approved menu items yet. Check
-            back soon or browse the menu catalog.
+            {t.home.noFeaturedDesc}
           </p>
           <Link
             href="/menu"
             className={cn(
               buttonVariants({ variant: "outline", size: "default" }),
-              "mt-5 h-10 rounded-xl px-5 font-semibold",
+              "mt-5 h-10 rounded-full px-5 font-semibold",
             )}
           >
-            Browse Menu
+            {t.nav.browseMenu}
           </Link>
         </div>
       ) : (

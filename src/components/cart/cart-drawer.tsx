@@ -12,12 +12,12 @@ import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/providers/cart-provider";
+import { useLanguage } from "@/components/providers/language-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PizzaImage } from "@/components/ui/pizza-image";
-import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 
 export function CartDrawer() {
   const router = useRouter();
+  const { t } = useLanguage();
   const {
     items,
     summary,
@@ -65,11 +66,11 @@ export function CartDrawer() {
                 className="size-4.5 text-primary"
                 aria-hidden="true"
               />
-              <span>Your Cart</span>
+              <span>{t.cart.title}</span>
               {summary.itemCount > 0 ? (
                 <Badge
                   variant="secondary"
-                  className="rounded-full px-2 py-0.5 text-xs tabular-nums"
+                  className="rounded-full px-2 py-0.5 font-mono text-xs tabular-nums"
                 >
                   {summary.itemCount}
                 </Badge>
@@ -84,38 +85,36 @@ export function CartDrawer() {
                 onClick={handleClear}
                 className="h-8 rounded-lg px-2 text-xs text-muted-foreground hover:text-destructive"
               >
-                Clear cart
+                {t.cart.clearCart}
               </Button>
             ) : null}
           </div>
           <SheetDescription className="text-xs">
-            Review items and adjust quantities before server checkout
-            validation.
+            {t.cart.drawerDesc}
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {items.length === 0 ? (
-            <div className="flex h-full min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-10 text-center">
+            <div className="flex h-full min-h-72 flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-muted/20 px-6 py-10 text-center">
               <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <ShoppingBag className="size-5" aria-hidden="true" />
               </div>
               <p className="font-heading text-lg font-semibold text-foreground">
-                Your cart is empty
+                {t.cart.emptyHeading}
               </p>
               <p className="mt-1.5 max-w-xs text-sm text-muted-foreground">
-                Explore wood-fired pizzas and sides from local PizzaHub kitchens
-                to start an order.
+                {t.cart.emptyDesc}
               </p>
               <Link
                 href="/menu"
                 onClick={closeDrawer}
                 className={cn(
                   buttonVariants({ variant: "default", size: "default" }),
-                  "mt-5 h-10 rounded-xl px-5 font-semibold",
+                  "mt-5 h-10 rounded-full px-5 font-semibold",
                 )}
               >
-                Browse Menu
+                {t.nav.browseMenu}
               </Link>
             </div>
           ) : (
@@ -190,7 +189,7 @@ export function CartDrawer() {
                             </Button>
                             <span
                               aria-live="polite"
-                              className="min-w-6 text-center text-xs font-semibold text-foreground tabular-nums"
+                              className="min-w-6 text-center font-mono text-xs font-semibold text-foreground tabular-nums"
                             >
                               {item.quantity}
                             </span>
@@ -212,7 +211,7 @@ export function CartDrawer() {
                             </Button>
                           </div>
 
-                          <span className="font-heading text-sm font-bold text-foreground tabular-nums">
+                          <span className="font-mono text-sm font-bold text-foreground tabular-nums">
                             ${lineTotal.toFixed(2)}
                           </span>
                         </div>
@@ -227,29 +226,31 @@ export function CartDrawer() {
 
         {items.length > 0 ? (
           <div className="space-y-4 border-t border-border bg-muted/25 px-5 py-4">
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2.5 text-sm">
               <div className="flex items-center justify-between text-muted-foreground">
-                <span>Estimated subtotal ({summary.itemCount} items)</span>
-                <span className="font-medium text-foreground tabular-nums">
+                <span>
+                  {t.cart.subtotalLabel} ({summary.itemCount}{" "}
+                  {summary.itemCount === 1 ? t.cart.itemWord : t.cart.itemsWord}
+                  )
+                </span>
+                <span className="font-mono font-medium text-foreground tabular-nums">
                   ${summary.subtotal.toFixed(2)}
                 </span>
               </div>
-              <Separator />
-              <div className="flex items-center justify-between font-heading text-base font-bold text-foreground">
-                <span>Estimated total</span>
-                <span className="tabular-nums">
+              <div className="ticket-divider flex items-center justify-between pt-2.5 font-heading text-base font-bold text-foreground">
+                <span>{t.cart.totalLabel}</span>
+                <span className="font-mono tabular-nums">
                   ${summary.subtotal.toFixed(2)}
                 </span>
               </div>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Pay with Cash on Delivery upon arrival. Menu availability and
-                totals are confirmed at checkout.
+                {t.cart.codNote}
               </p>
             </div>
 
             {isLoading ? (
               <Button disabled className="h-11 w-full rounded-xl">
-                Checking account...
+                {t.cart.checkingAccount}
               </Button>
             ) : !isAuthenticated ? (
               <Button
@@ -261,7 +262,7 @@ export function CartDrawer() {
                 }}
                 className="h-11 w-full rounded-xl font-semibold"
               >
-                <span>Sign in to Checkout</span>
+                <span>{t.cart.signInCheckout}</span>
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Button>
             ) : role === "customer" ? (
@@ -274,14 +275,14 @@ export function CartDrawer() {
                 }}
                 className="h-11 w-full rounded-xl font-semibold"
               >
-                <span>Proceed to Checkout</span>
+                <span>{t.cart.proceedCheckout}</span>
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Button>
             ) : (
               <Alert className="rounded-xl bg-card p-3">
                 <Info className="size-4 text-primary" aria-hidden="true" />
                 <AlertDescription className="text-xs">
-                  Only signed-in Customer accounts can submit pizza orders.
+                  {t.cart.customerOnlyNotice}
                 </AlertDescription>
               </Alert>
             )}

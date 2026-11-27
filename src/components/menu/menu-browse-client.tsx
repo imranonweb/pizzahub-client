@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { translateCategory } from "@/lib/i18n/translations";
 import {
   fetchPublicMenu,
   getCachedPublicCatalogItems,
@@ -43,13 +45,6 @@ import { MenuGridSkeleton } from "./menu-skeletons";
 import { PizzaCard } from "./pizza-card";
 
 const ITEMS_PER_PAGE = 12;
-
-const SORT_LABELS: Record<MenuSortOption, string> = {
-  featured: "Featured first",
-  "price-asc": "Price: Low to High",
-  "price-desc": "Price: High to Low",
-  newest: "Newest items",
-};
 
 function parseSortOption(raw: string | null): MenuSortOption {
   if (
@@ -68,16 +63,49 @@ function parsePageNumber(raw: string | null): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
+export function MenuPageHeader() {
+  const { t } = useLanguage();
+
+  return (
+    <div className="border-b border-border/75 bg-secondary/45 bg-culinary-grid">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+        <header className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+          <div className="max-w-2xl space-y-2">
+            <h1 className="font-heading text-3xl font-extrabold tracking-[-0.03em] text-foreground text-balance sm:text-4xl">
+              {t.menu.pageHeading}
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {t.menu.pageSubheading}
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground shadow-2xs">
+            <MapPin className="size-3.5 text-primary" aria-hidden="true" />
+            <span>{t.brand.cities}</span>
+          </div>
+        </header>
+      </div>
+    </div>
+  );
+}
+
 export function MenuBrowseClient() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { locale, t } = useLanguage();
 
   const urlSearch = searchParams.get("search") ?? "";
   const urlCategory = searchParams.get("category") ?? "";
   const urlLocation = searchParams.get("location") ?? "";
   const urlSort = parseSortOption(searchParams.get("sort"));
   const urlPage = parsePageNumber(searchParams.get("page"));
+
+  const sortLabels: Record<MenuSortOption, string> = {
+    featured: t.menu.sortFeatured,
+    "price-asc": t.menu.sortPriceAsc,
+    "price-desc": t.menu.sortPriceDesc,
+    newest: t.menu.sortNewest,
+  };
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [searchInput, setSearchInput] = useState(urlSearch);
@@ -253,16 +281,16 @@ export function MenuBrowseClient() {
       label: item.itemName,
       value: item.itemName,
       subtitle: `${item.vendor.businessName} · ${item.location}`,
-      badge: item.category,
+      badge: translateCategory(item.category, locale),
       rightText: `$${item.price.toFixed(2)}`,
       imageUrl: item.images[0] || "/images/auth-pizza-hero.jpg",
     }));
-  }, [catalogForSuggestions, result?.items, searchInput]);
+  }, [catalogForSuggestions, locale, result?.items, searchInput]);
 
   return (
     <div className="space-y-8">
-      <div className="surface-card space-y-4 rounded-2xl border border-border/90 bg-card p-4 sm:p-5">
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="surface-card space-y-4 rounded-3xl border border-border/90 bg-card p-4 sm:p-5">
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <SearchSuggestionsInput
             inputRef={searchInputRef}
             value={searchInput}
@@ -283,10 +311,10 @@ export function MenuBrowseClient() {
               setSearchInput(option.value);
               updateUrlParams({ search: option.value, page: 1 });
             }}
-            suggestionHeader="Matching Menu Items"
-            ariaLabel="Search pizza menu items by name"
-            clearAriaLabel="Clear search"
-            placeholder="Search pizzas, toppings, or kitchens (press /)..."
+            suggestionHeader={t.menu.suggestionHeader}
+            ariaLabel={t.menu.searchAria}
+            clearAriaLabel={t.menu.clearSearchAria}
+            placeholder={t.menu.searchPlaceholder}
             onKeyDown={(event) => {
               if (event.key === "Escape") {
                 setSearchInput("");
@@ -308,7 +336,7 @@ export function MenuBrowseClient() {
             }
           >
             <SelectTrigger
-              aria-label="Filter by location"
+              aria-label={t.menu.filterLocationAria}
               className="h-10 w-full rounded-xl bg-background px-3"
             >
               <div className="flex items-center gap-2 truncate">
@@ -316,13 +344,13 @@ export function MenuBrowseClient() {
                   className="size-3.5 shrink-0 text-primary"
                   aria-hidden="true"
                 />
-                <SelectValue placeholder="All locations">
-                  {urlLocation ? urlLocation : "All locations"}
+                <SelectValue placeholder={t.menu.allLocations}>
+                  {urlLocation ? urlLocation : t.menu.allLocations}
                 </SelectValue>
               </div>
             </SelectTrigger>
             <SelectContent align="start">
-              <SelectItem value="all">All locations</SelectItem>
+              <SelectItem value="all">{t.menu.allLocations}</SelectItem>
               {locations.map((loc) => (
                 <SelectItem key={loc} value={loc}>
                   {loc}
@@ -341,7 +369,7 @@ export function MenuBrowseClient() {
             }
           >
             <SelectTrigger
-              aria-label="Sort menu items"
+              aria-label={t.menu.sortAria}
               className="h-10 w-full rounded-xl bg-background px-3"
             >
               <div className="flex items-center gap-2 truncate">
@@ -349,34 +377,34 @@ export function MenuBrowseClient() {
                   className="size-3.5 shrink-0 text-muted-foreground"
                   aria-hidden="true"
                 />
-                <SelectValue placeholder="Sort items">
-                  {SORT_LABELS[urlSort]}
+                <SelectValue placeholder={t.menu.sortAria}>
+                  {sortLabels[urlSort]}
                 </SelectValue>
               </div>
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="featured">Featured first</SelectItem>
-              <SelectItem value="price-asc">Price: Low to High</SelectItem>
-              <SelectItem value="price-desc">Price: High to Low</SelectItem>
-              <SelectItem value="newest">Newest items</SelectItem>
+              <SelectItem value="featured">{t.menu.sortFeatured}</SelectItem>
+              <SelectItem value="price-asc">{t.menu.sortPriceAsc}</SelectItem>
+              <SelectItem value="price-desc">{t.menu.sortPriceDesc}</SelectItem>
+              <SelectItem value="newest">{t.menu.sortNewest}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <fieldset className="flex items-center gap-2 overflow-x-auto border-0 border-t border-border/70 p-0 pt-3.5 no-scrollbar flex-nowrap sm:flex-wrap">
+        <fieldset className="flex flex-nowrap items-center gap-2 overflow-x-auto border-0 border-t border-border/70 p-0 pt-3.5 no-scrollbar sm:flex-wrap">
           <legend className="sr-only">Filter by pizza category</legend>
           <button
             type="button"
             aria-pressed={!urlCategory}
             onClick={() => updateUrlParams({ category: "", page: 1 })}
             className={cn(
-              "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               !urlCategory
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-primary bg-primary text-primary-foreground shadow-2xs"
                 : "border-border bg-background text-muted-foreground hover:border-foreground/25 hover:text-foreground",
             )}
           >
-            All categories
+            {t.menu.allCategories}
           </button>
 
           {MENU_CATEGORIES.map((category) => {
@@ -395,11 +423,11 @@ export function MenuBrowseClient() {
                 className={cn(
                   "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active
-                    ? "border-primary bg-primary text-primary-foreground"
+                    ? "border-primary bg-primary font-semibold text-primary-foreground shadow-2xs"
                     : "border-border bg-background text-muted-foreground hover:border-foreground/25 hover:text-foreground",
                 )}
               >
-                {category}
+                {translateCategory(category, locale)}
               </button>
             );
           })}
@@ -412,8 +440,8 @@ export function MenuBrowseClient() {
                 <SlidersHorizontal className="size-3.5" aria-hidden="true" />
                 <span className="tabular-nums">
                   {isLoading
-                    ? "Updating menu..."
-                    : `${totalCount} ${totalCount === 1 ? "item" : "items"} shown`}
+                    ? t.menu.updatingMenu
+                    : `${totalCount} ${totalCount === 1 ? t.menu.itemShown : t.menu.itemsShown}`}
                 </span>
               </span>
 
@@ -422,7 +450,7 @@ export function MenuBrowseClient() {
                   variant="secondary"
                   className="gap-1 rounded-full pr-1.5"
                 >
-                  Search: {urlSearch.trim()}
+                  {t.menu.searchFilterPrefix}: {urlSearch.trim()}
                   <button
                     type="button"
                     aria-label="Remove search filter"
@@ -442,7 +470,7 @@ export function MenuBrowseClient() {
                   variant="secondary"
                   className="gap-1 rounded-full pr-1.5"
                 >
-                  {urlCategory}
+                  {translateCategory(urlCategory, locale)}
                   <button
                     type="button"
                     aria-label="Remove category filter"
@@ -476,7 +504,7 @@ export function MenuBrowseClient() {
                   variant="secondary"
                   className="gap-1 rounded-full pr-1.5"
                 >
-                  {SORT_LABELS[urlSort]}
+                  {sortLabels[urlSort]}
                   <button
                     type="button"
                     aria-label="Reset sort order"
@@ -500,7 +528,7 @@ export function MenuBrowseClient() {
                 className="h-7 rounded-lg px-2.5 text-xs font-medium text-primary hover:text-primary"
               >
                 <RotateCcw className="size-3" aria-hidden="true" />
-                Reset filters
+                {t.menu.resetFilters}
               </Button>
             ) : null}
           </div>
@@ -513,7 +541,7 @@ export function MenuBrowseClient() {
         <Alert variant="destructive" className="rounded-2xl p-6">
           <AlertCircle className="size-5" aria-hidden="true" />
           <AlertTitle className="text-base font-semibold">
-            Menu Service Unavailable
+            {t.menu.serviceUnavailable}
           </AlertTitle>
           <AlertDescription className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm leading-relaxed">{errorMessage}</span>
@@ -525,18 +553,17 @@ export function MenuBrowseClient() {
               className="shrink-0 rounded-xl bg-background text-foreground"
             >
               <RotateCcw className="size-3.5" aria-hidden="true" />
-              Retry connection
+              {t.menu.retryConnection}
             </Button>
           </AlertDescription>
         </Alert>
       ) : result?.catalogEmpty ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card px-6 py-16 text-center">
           <h2 className="font-heading text-xl font-semibold text-foreground">
-            No approved pizzas published yet
+            {t.menu.emptyCatalogHeading}
           </h2>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            Check back soon as local kitchens publish and receive admin approval
-            for new menu items.
+            {t.menu.emptyCatalogDesc}
           </p>
         </div>
       ) : result && result.items.length === 0 ? (
@@ -547,12 +574,10 @@ export function MenuBrowseClient() {
           {urlSearch.trim() ? (
             <>
               <h2 className="font-heading text-xl font-semibold text-foreground">
-                No pizzas matching &ldquo;{urlSearch}&rdquo;
+                {t.menu.noMatchSearchPrefix} &ldquo;{urlSearch}&rdquo;
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                We couldn&apos;t find any pizzas matching your search query. Try
-                checking for typos, clearing your keywords, or exploring these
-                popular categories:
+                {t.menu.noMatchSearchDesc}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {MENU_CATEGORIES.slice(0, 4).map((cat) => (
@@ -571,7 +596,7 @@ export function MenuBrowseClient() {
                       className="mr-1 size-3 text-primary"
                       aria-hidden="true"
                     />
-                    {cat}
+                    {translateCategory(cat, locale)}
                   </Button>
                 ))}
               </div>
@@ -583,18 +608,18 @@ export function MenuBrowseClient() {
                     setSearchInput("");
                     updateUrlParams({ search: "", page: 1 });
                   }}
-                  className="h-10 rounded-xl px-5 font-semibold"
+                  className="h-10 rounded-full px-5 font-semibold"
                 >
-                  Clear search
+                  {t.menu.clearSearch}
                 </Button>
                 {hasActiveFilters ? (
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleResetFilters}
-                    className="h-10 rounded-xl px-5"
+                    className="h-10 rounded-full px-5"
                   >
-                    Reset all filters
+                    {t.menu.resetAllFilters}
                   </Button>
                 ) : null}
               </div>
@@ -602,21 +627,18 @@ export function MenuBrowseClient() {
           ) : (
             <>
               <h2 className="font-heading text-xl font-semibold text-foreground">
-                No matching menu items
+                {t.menu.noMatchFilterHeading}
               </h2>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                No approved items matched your current filter criteria
-                {urlCategory ? ` for category "${urlCategory}"` : ""}
-                {urlLocation ? ` in ${urlLocation}` : ""}. Clear your filters to
-                see everything available.
+                {t.menu.noMatchFilterDesc}
               </p>
               <Button
                 type="button"
                 variant="default"
                 onClick={handleResetFilters}
-                className="mt-5 h-10 rounded-xl px-5 font-semibold"
+                className="mt-5 h-10 rounded-full px-5 font-semibold"
               >
-                Reset all filters
+                {t.menu.resetAllFilters}
               </Button>
             </>
           )}
@@ -635,11 +657,11 @@ export function MenuBrowseClient() {
               className="flex flex-wrap items-center justify-between gap-4 border-t border-border/70 pt-6"
             >
               <p className="text-sm text-muted-foreground tabular-nums">
-                Page{" "}
+                {t.menu.page}{" "}
                 <span className="font-semibold text-foreground">
                   {currentPage}
                 </span>{" "}
-                of{" "}
+                {t.menu.of}{" "}
                 <span className="font-semibold text-foreground">
                   {totalPages}
                 </span>
@@ -651,19 +673,19 @@ export function MenuBrowseClient() {
                   variant="outline"
                   disabled={!hasPrevPage}
                   onClick={() => updateUrlParams({ page: currentPage - 1 })}
-                  className="h-9 rounded-xl bg-card px-3.5"
+                  className="h-9 rounded-full bg-card px-4"
                 >
                   <ChevronLeft className="size-4" aria-hidden="true" />
-                  Previous
+                  {t.menu.previous}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   disabled={!hasNextPage}
                   onClick={() => updateUrlParams({ page: currentPage + 1 })}
-                  className="h-9 rounded-xl bg-card px-3.5"
+                  className="h-9 rounded-full bg-card px-4"
                 >
-                  Next
+                  {t.menu.next}
                   <ChevronRight className="size-4" aria-hidden="true" />
                 </Button>
               </div>

@@ -15,13 +15,13 @@ import {
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PizzaImage } from "@/components/ui/pizza-image";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
@@ -49,6 +49,7 @@ export function CheckoutClient({
 }) {
   const formId = useId();
   const submittingRef = useRef(false);
+  const { t } = useLanguage();
 
   const {
     items,
@@ -128,8 +129,8 @@ export function CheckoutClient({
       <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
         <Skeleton className="h-9 w-56 rounded-xl" />
         <div className="grid gap-6 lg:grid-cols-12">
-          <Skeleton className="h-96 rounded-2xl lg:col-span-7" />
-          <Skeleton className="h-80 rounded-2xl lg:col-span-5" />
+          <Skeleton className="h-96 rounded-3xl lg:col-span-7" />
+          <Skeleton className="h-80 rounded-3xl lg:col-span-5" />
         </div>
       </div>
     );
@@ -142,20 +143,19 @@ export function CheckoutClient({
           <ShoppingBag className="size-6" aria-hidden="true" />
         </div>
         <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Your cart is empty
+          {t.cart.emptyHeading}
         </h1>
         <p className="mt-2.5 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
-          Add freshly baked pizzas or sides from approved kitchens before
-          checking out.
+          {t.cart.emptyDesc}
         </p>
         <Link
           href="/menu"
           className={cn(
             buttonVariants({ variant: "default", size: "lg" }),
-            "mt-6 h-11 rounded-xl px-6 font-semibold",
+            "mt-6 h-11 rounded-full px-6 font-semibold",
           )}
         >
-          Browse Menu
+          {t.nav.browseMenu}
         </Link>
       </div>
     );
@@ -294,7 +294,7 @@ export function CheckoutClient({
       clearCart();
       setConfirmedOrders(placedOrders);
       toast.add({
-        title: "Order placed",
+        title: t.checkout.confirmedHeading,
         description: result.message,
         type: "success",
       });
@@ -326,24 +326,23 @@ export function CheckoutClient({
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
-      <div className="flex flex-col gap-3 border-b border-border/70 pb-6">
+      <div className="flex flex-col gap-3 border-b border-border/75 pb-6">
         <Link
           href="/menu"
           className={cn(
             buttonVariants({ variant: "ghost", size: "sm" }),
-            "-ml-2.5 w-fit rounded-xl px-2.5 text-muted-foreground hover:text-foreground",
+            "-ml-2.5 w-fit rounded-full px-3 text-muted-foreground hover:text-foreground",
           )}
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
-          Back to Menu
+          {t.menu.backToMenu}
         </Link>
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-bold tracking-[-0.02em] text-foreground sm:text-3xl">
-            Checkout
+          <h1 className="font-heading text-2xl font-extrabold tracking-[-0.025em] text-foreground sm:text-3xl">
+            {t.checkout.heading}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Provide your delivery destination and review items before submitting
-            your order.
+            {t.checkout.subheading}
           </p>
         </div>
       </div>
@@ -352,23 +351,27 @@ export function CheckoutClient({
         <div className="space-y-6 lg:col-span-7">
           <section
             aria-labelledby="checkout-customer-heading"
-            className="rounded-2xl border border-border bg-card p-5 sm:p-6"
+            className="surface-card rounded-3xl border border-border/90 bg-card p-5 sm:p-6"
           >
             <h2
               id="checkout-customer-heading"
-              className="font-heading text-base font-semibold text-foreground"
+              className="font-heading text-base font-bold text-foreground"
             >
-              Customer Information
+              {t.checkout.customerInfoHeading}
             </h2>
-            <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-              <div className="rounded-xl border border-border/80 bg-background px-3.5 py-2.5">
-                <p className="text-xs text-muted-foreground">Name</p>
+            <div className="mt-3.5 grid gap-3 text-sm sm:grid-cols-2">
+              <div className="rounded-2xl border border-border/80 bg-background px-4 py-3">
+                <p className="text-xs text-muted-foreground">
+                  {t.checkout.nameLabel}
+                </p>
                 <p className="mt-0.5 font-medium text-foreground">
                   {customer.name}
                 </p>
               </div>
-              <div className="rounded-xl border border-border/80 bg-background px-3.5 py-2.5">
-                <p className="text-xs text-muted-foreground">Email</p>
+              <div className="rounded-2xl border border-border/80 bg-background px-4 py-3">
+                <p className="text-xs text-muted-foreground">
+                  {t.checkout.emailLabel}
+                </p>
                 <p className="mt-0.5 truncate font-medium text-foreground">
                   {customer.email}
                 </p>
@@ -379,51 +382,87 @@ export function CheckoutClient({
           <form
             onSubmit={handleSubmit}
             noValidate
-            className="space-y-5 rounded-2xl border border-border bg-card p-5 sm:p-6"
+            className="surface-card space-y-5 rounded-3xl border border-border/90 bg-card p-5 sm:p-6"
           >
-            <h2 className="font-heading text-base font-semibold text-foreground">
-              Delivery & Contact Details
+            <h2 className="font-heading text-base font-bold text-foreground">
+              {t.checkout.deliveryDetailsHeading}
             </h2>
 
-            <div className="space-y-2">
-              <Label htmlFor={`${formId}-date`} className="font-medium">
-                Delivery date
-              </Label>
-              <Input
-                id={`${formId}-date`}
-                name="deliveryDate"
-                type="date"
-                min={getTodayIsoDate()}
-                value={values.deliveryDate}
-                disabled={isSubmitting}
-                aria-invalid={Boolean(errors.deliveryDate)}
-                aria-describedby={errors.deliveryDate ? dateErrorId : undefined}
-                onChange={(event) =>
-                  updateField("deliveryDate", event.target.value)
-                }
-                className="h-10 rounded-xl bg-background px-3.5"
-              />
-              {errors.deliveryDate ? (
-                <p
-                  id={dateErrorId}
-                  role="alert"
-                  className="text-xs font-medium text-destructive"
-                >
-                  {errors.deliveryDate}
-                </p>
-              ) : null}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor={`${formId}-date`} className="font-medium">
+                  {t.checkout.deliveryDateLabel}
+                </Label>
+                <Input
+                  id={`${formId}-date`}
+                  name="deliveryDate"
+                  type="date"
+                  min={getTodayIsoDate()}
+                  value={values.deliveryDate}
+                  disabled={isSubmitting}
+                  aria-invalid={Boolean(errors.deliveryDate)}
+                  aria-describedby={
+                    errors.deliveryDate ? dateErrorId : undefined
+                  }
+                  onChange={(event) =>
+                    updateField("deliveryDate", event.target.value)
+                  }
+                  className="h-10 rounded-xl bg-background px-3.5"
+                />
+                {errors.deliveryDate ? (
+                  <p
+                    id={dateErrorId}
+                    role="alert"
+                    className="text-xs font-medium text-destructive"
+                  >
+                    {errors.deliveryDate}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor={`${formId}-phone`} className="font-medium">
+                  {t.checkout.contactPhoneLabel}
+                </Label>
+                <Input
+                  id={`${formId}-phone`}
+                  name="contactPhone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder={t.checkout.phonePlaceholder}
+                  value={values.contactPhone}
+                  disabled={isSubmitting}
+                  aria-invalid={Boolean(errors.contactPhone)}
+                  aria-describedby={
+                    errors.contactPhone ? phoneErrorId : undefined
+                  }
+                  onChange={(event) =>
+                    updateField("contactPhone", event.target.value)
+                  }
+                  className="h-10 rounded-xl bg-background px-3.5"
+                />
+                {errors.contactPhone ? (
+                  <p
+                    id={phoneErrorId}
+                    role="alert"
+                    className="text-xs font-medium text-destructive"
+                  >
+                    {errors.contactPhone}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor={`${formId}-address`} className="font-medium">
-                Delivery address
+                {t.checkout.deliveryAddressLabel}
               </Label>
               <Textarea
                 id={`${formId}-address`}
                 name="deliveryAddress"
                 rows={2}
                 maxLength={240}
-                placeholder="Street address, apartment/suite, and neighborhood"
+                placeholder={t.checkout.addressPlaceholder}
                 value={values.deliveryAddress}
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.deliveryAddress)}
@@ -447,43 +486,11 @@ export function CheckoutClient({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${formId}-phone`} className="font-medium">
-                Contact phone
-              </Label>
-              <Input
-                id={`${formId}-phone`}
-                name="contactPhone"
-                type="tel"
-                autoComplete="tel"
-                placeholder="e.g. +1 555-234-5678"
-                value={values.contactPhone}
-                disabled={isSubmitting}
-                aria-invalid={Boolean(errors.contactPhone)}
-                aria-describedby={
-                  errors.contactPhone ? phoneErrorId : undefined
-                }
-                onChange={(event) =>
-                  updateField("contactPhone", event.target.value)
-                }
-                className="h-10 rounded-xl bg-background px-3.5"
-              />
-              {errors.contactPhone ? (
-                <p
-                  id={phoneErrorId}
-                  role="alert"
-                  className="text-xs font-medium text-destructive"
-                >
-                  {errors.contactPhone}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <Label htmlFor={`${formId}-notes`} className="font-medium">
-                  Order notes (optional)
+                  {t.checkout.orderNotesLabel}
                 </Label>
-                <span className="text-xs text-muted-foreground tabular-nums">
+                <span className="font-mono text-xs text-muted-foreground tabular-nums">
                   {values.orderNotes.trim().length} / 300
                 </span>
               </div>
@@ -492,7 +499,7 @@ export function CheckoutClient({
                 name="orderNotes"
                 rows={3}
                 maxLength={300}
-                placeholder="Gate code, drop-off instructions, or extra napkins"
+                placeholder={t.checkout.notesPlaceholder}
                 value={values.orderNotes}
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.orderNotes)}
@@ -514,10 +521,12 @@ export function CheckoutClient({
             </div>
 
             <div className="space-y-2.5">
-              <Label className="font-medium">Payment method</Label>
+              <Label className="font-medium">
+                {t.checkout.paymentMethodLabel}
+              </Label>
               <div
                 role="radiogroup"
-                aria-label="Payment method"
+                aria-label={t.checkout.paymentMethodLabel}
                 className="rounded-2xl border-2 border-primary bg-primary/5 p-4"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -528,16 +537,15 @@ export function CheckoutClient({
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm font-semibold text-foreground">
-                          Cash on Delivery (COD)
+                          {t.checkout.codTitle}
                         </p>
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                           <CheckCircle2 className="size-3" aria-hidden="true" />
-                          Selected
+                          {t.checkout.selectedBadge}
                         </span>
                       </div>
                       <p className="text-xs leading-relaxed text-muted-foreground">
-                        Pay directly in cash when your order arrives at your
-                        doorstep. No upfront online card payment required.
+                        {t.checkout.codDesc}
                       </p>
                     </div>
                   </div>
@@ -581,15 +589,15 @@ export function CheckoutClient({
               type="submit"
               size="lg"
               disabled={isSubmitting}
-              className="h-11 w-full rounded-xl font-semibold"
+              className="h-12 w-full rounded-xl font-semibold"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                  Verifying & Placing Order...
+                  {t.checkout.verifyingBtn}
                 </>
               ) : (
-                `Place Order (Cash on Delivery · $${summary.subtotal.toFixed(2)})`
+                `${t.checkout.placeOrderPrefix} · $${summary.subtotal.toFixed(2)})`
               )}
             </Button>
           </form>
@@ -597,17 +605,18 @@ export function CheckoutClient({
 
         <aside
           aria-labelledby="checkout-summary-heading"
-          className="surface-card space-y-4 rounded-2xl border border-border/90 bg-card p-5 sm:p-6 lg:sticky lg:top-24 lg:col-span-5"
+          className="surface-card space-y-4 rounded-3xl border border-border/90 bg-card p-5 sm:p-6 lg:sticky lg:top-24 lg:col-span-5"
         >
-          <div className="flex items-center justify-between gap-2 border-b border-border/70 pb-3.5">
+          <div className="flex items-center justify-between gap-2 border-b border-border/75 pb-3.5">
             <h2
               id="checkout-summary-heading"
-              className="font-heading text-lg font-semibold text-foreground"
+              className="font-heading text-lg font-bold text-foreground"
             >
-              Order Summary
+              {t.checkout.summaryHeading}
             </h2>
-            <span className="text-xs font-medium text-muted-foreground tabular-nums">
-              {summary.itemCount} {summary.itemCount === 1 ? "item" : "items"}
+            <span className="font-mono text-xs font-medium text-muted-foreground tabular-nums">
+              {summary.itemCount}{" "}
+              {summary.itemCount === 1 ? t.cart.itemWord : t.cart.itemsWord}
             </span>
           </div>
 
@@ -622,13 +631,13 @@ export function CheckoutClient({
                 <div
                   key={item.menuItemId}
                   className={cn(
-                    "flex gap-3 rounded-xl border bg-background p-3",
+                    "flex gap-3 rounded-2xl border bg-background p-3",
                     isItemUnavailable
                       ? "border-destructive/60 bg-destructive/5"
                       : "border-border/80",
                   )}
                 >
-                  <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                  <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
                     <PizzaImage
                       src={item.image}
                       alt={item.itemName}
@@ -649,7 +658,7 @@ export function CheckoutClient({
                               variant="destructive"
                               className="rounded-full px-2 py-0 text-[10px]"
                             >
-                              Unavailable
+                              {t.menu.unavailable}
                             </Badge>
                           ) : null}
                         </div>
@@ -690,7 +699,7 @@ export function CheckoutClient({
                         >
                           <Minus className="size-3" aria-hidden="true" />
                         </Button>
-                        <span className="min-w-5 text-center text-xs font-semibold tabular-nums">
+                        <span className="min-w-5 text-center font-mono text-xs font-semibold tabular-nums">
                           {item.quantity}
                         </span>
                         <Button
@@ -711,7 +720,7 @@ export function CheckoutClient({
                         </Button>
                       </div>
 
-                      <span className="text-sm font-bold text-foreground tabular-nums">
+                      <span className="font-mono text-sm font-bold text-foreground tabular-nums">
                         ${lineTotal.toFixed(2)}
                       </span>
                     </div>
@@ -721,30 +730,27 @@ export function CheckoutClient({
             })}
           </div>
 
-          <Separator />
-
-          <div className="space-y-2 text-sm">
+          <div className="ticket-divider space-y-2.5 pt-3.5 text-sm">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span>Payment method</span>
+              <span>{t.checkout.paymentMethodLabel}</span>
               <span className="font-medium text-foreground">
-                Cash on Delivery
+                {t.menu.codLabel}
               </span>
             </div>
             <div className="flex items-center justify-between text-muted-foreground">
-              <span>Estimated subtotal</span>
-              <span className="font-medium text-foreground tabular-nums">
+              <span>{t.checkout.subtotal}</span>
+              <span className="font-mono font-medium text-foreground tabular-nums">
                 ${summary.subtotal.toFixed(2)}
               </span>
             </div>
-            <div className="flex items-center justify-between font-heading text-base font-bold text-foreground">
-              <span>Estimated total</span>
-              <span className="tabular-nums">
+            <div className="ticket-divider flex items-center justify-between pt-2.5 font-heading text-base font-bold text-foreground">
+              <span>{t.checkout.total}</span>
+              <span className="font-mono tabular-nums">
                 ${summary.subtotal.toFixed(2)}
               </span>
             </div>
             <p className="text-[11px] leading-relaxed text-muted-foreground">
-              Prices reflect current kitchen menu rates. Payment is collected in
-              cash upon delivery.
+              {t.checkout.ratesNote}
             </p>
           </div>
         </aside>

@@ -18,12 +18,14 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PizzaImage } from "@/components/ui/pizza-image";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { translateCategory } from "@/lib/i18n/translations";
 import {
   createEmptyVendorMenuStats,
   FREE_PLAN_ACTIVE_ITEM_LIMIT,
@@ -53,6 +55,7 @@ function formatShortDate(iso: string): string {
 
 export function VendorOverview() {
   const user = useVendorProfile();
+  const { locale, t } = useLanguage();
   const [data, setData] = useState<VendorMenuListResponse | null>(null);
   const [ordersData, setOrdersData] = useState<VendorOrdersListResponse | null>(
     null,
@@ -190,7 +193,7 @@ export function VendorOverview() {
       <div className="flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
           <h1 className="font-heading text-2xl font-bold tracking-[-0.02em] text-foreground sm:text-3xl">
-            Welcome back, {user.name}
+            {t.dashboard.welcomeBack}, {user.name}
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
             {user.businessName
@@ -203,16 +206,16 @@ export function VendorOverview() {
           <Button
             render={<Link href="/dashboard/vendor/menu" />}
             variant="outline"
-            className="h-10 rounded-xl bg-card px-4 font-medium"
+            className="h-10 rounded-full bg-card px-4 font-medium"
           >
-            Manage Listings
+            {t.dashboard.myMenuItems}
           </Button>
           <Button
             render={<Link href="/dashboard/vendor/add" />}
-            className="h-10 rounded-xl px-4 font-semibold"
+            className="h-10 rounded-full px-4 font-semibold"
           >
             <PlusCircle className="size-4" aria-hidden="true" />
-            Add Pizza
+            {t.dashboard.addPizza}
           </Button>
         </div>
       </div>
@@ -662,7 +665,8 @@ export function VendorOverview() {
                       {item.itemName}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {item.category} · ${item.price.toFixed(2)} ·{" "}
+                      {translateCategory(item.category, locale)} · $
+                      {item.price.toFixed(2)} {"·"}{" "}
                       {formatShortDate(item.createdAt)}
                     </p>
                   </div>

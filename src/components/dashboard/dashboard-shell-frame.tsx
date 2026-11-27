@@ -7,10 +7,12 @@ import { usePathname } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import { PizzaHubBrandMark } from "@/components/brand/pizzahub-logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useLanguage } from "@/components/providers/language-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -66,6 +68,8 @@ function DashboardSidebarContent({
   onSignOut,
   onNavigate,
 }: SidebarContentProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="flex h-full flex-col justify-between overflow-hidden">
       <div className="flex-1 space-y-5 overflow-y-auto p-4">
@@ -97,7 +101,7 @@ function DashboardSidebarContent({
                 className={cn(
                   "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                   active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_1px_2px_rgba(22,15,12,0.12)]"
+                    ? "bg-sidebar-primary font-semibold text-sidebar-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_1px_2px_rgba(22,15,12,0.12)]"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
@@ -108,7 +112,7 @@ function DashboardSidebarContent({
                 {item.badgeCount && item.badgeCount > 0 ? (
                   <Badge
                     variant="secondary"
-                    className="rounded-full px-2 py-0 text-[11px] tabular-nums"
+                    className="rounded-full px-2 py-0 font-mono text-[11px] tabular-nums"
                   >
                     {item.badgeCount}
                   </Badge>
@@ -122,7 +126,7 @@ function DashboardSidebarContent({
 
         <div className="space-y-1">
           <p className="px-3 pb-1 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
-            Storefront
+            {t.dashboard.storefrontSection}
           </p>
           {storefrontLinks.map((item) => {
             const Icon = item.icon;
@@ -142,7 +146,7 @@ function DashboardSidebarContent({
       </div>
 
       <div className="shrink-0 space-y-2.5 border-t border-sidebar-border p-3.5">
-        <div className="rounded-xl bg-sidebar-accent/55 p-3">
+        <div className="rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/55 p-3">
           <div className="flex items-center gap-3">
             <Avatar size="default">
               {image ? <AvatarImage src={image} alt={displayName} /> : null}
@@ -176,7 +180,7 @@ function DashboardSidebarContent({
           className="h-9 w-full justify-start gap-2 rounded-xl bg-card text-muted-foreground hover:text-foreground"
         >
           <LogOut className="size-4" aria-hidden="true" />
-          <span>{isSigningOut ? "Signing out..." : "Sign Out"}</span>
+          <span>{isSigningOut ? t.nav.signingOut : t.nav.signOut}</span>
         </Button>
       </div>
     </div>
@@ -200,10 +204,6 @@ export interface DashboardShellFrameProps {
   children: ReactNode;
 }
 
-/**
- * Shared responsive sidebar + sticky top bar frame for all role dashboards.
- * Animates sub-page entrances cleanly without blocking Next.js App Router transitions.
- */
 export function DashboardShellFrame({
   workspaceLabel,
   drawerTitle,
@@ -221,6 +221,7 @@ export function DashboardShellFrame({
   children,
 }: DashboardShellFrameProps) {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const { signOut } = useAuthSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -257,7 +258,7 @@ export function DashboardShellFrame({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border/80 bg-background/94 px-4 shadow-[0_1px_0_rgba(22,15,12,0.03)] backdrop-blur-md sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border/80 bg-background/92 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="lg:hidden">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -296,12 +297,13 @@ export function DashboardShellFrame({
                 </SheetContent>
               </Sheet>
             </div>
-            <span className="truncate font-heading text-base font-semibold tracking-tight text-foreground">
+            <span className="truncate font-heading text-base font-bold tracking-tight text-foreground">
               {headerTitle}
             </span>
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <LanguageSwitcher compact />
             <ThemeToggle />
             <NotificationBell />
             {headerActions}
@@ -310,13 +312,13 @@ export function DashboardShellFrame({
               variant="outline"
               size="sm"
               disabled={isSigningOut}
-              aria-label={isSigningOut ? "Signing out" : "Sign Out"}
+              aria-label={isSigningOut ? t.nav.signingOut : t.nav.signOut}
               onClick={handleSignOut}
-              className="h-9 gap-1.5 rounded-xl bg-card px-2.5 font-medium text-muted-foreground hover:text-foreground sm:px-3"
+              className="h-9 gap-1.5 rounded-full bg-card px-2.5 font-medium text-muted-foreground hover:text-foreground sm:px-3.5"
             >
               <LogOut className="size-4" aria-hidden="true" />
               <span className="hidden sm:inline">
-                {isSigningOut ? "Signing out..." : "Sign Out"}
+                {isSigningOut ? t.nav.signingOut : t.nav.signOut}
               </span>
             </Button>
           </div>

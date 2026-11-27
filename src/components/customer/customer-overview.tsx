@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { useCart } from "@/components/providers/cart-provider";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +41,7 @@ function formatShortDate(iso: string): string {
 
 export function CustomerOverview() {
   const user = useCustomerProfile();
+  const { t } = useLanguage();
   const { summary, isHydrated, openDrawer } = useCart();
 
   const [data, setData] = useState<CustomerOrdersListResponse | null>(null);
@@ -127,7 +129,7 @@ export function CustomerOverview() {
       <div className="flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
           <h1 className="font-heading text-2xl font-bold tracking-[-0.02em] text-foreground sm:text-3xl">
-            Welcome back, {user.name}
+            {t.dashboard.welcomeBack}, {user.name}
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
             Track active deliveries, review past orders, and manage your pizza
@@ -139,17 +141,17 @@ export function CustomerOverview() {
           <Button
             render={<Link href="/dashboard/customer/orders" />}
             variant="outline"
-            className="h-10 rounded-xl bg-card px-4 font-medium"
+            className="h-10 rounded-full bg-card px-4 font-medium"
           >
             <ReceiptText className="size-4" aria-hidden="true" />
-            Order History
+            {t.dashboard.myOrders}
           </Button>
           <Button
             render={<Link href="/menu" />}
-            className="h-10 rounded-xl px-4 font-semibold"
+            className="h-10 rounded-full px-4 font-semibold"
           >
             <Store className="size-4" aria-hidden="true" />
-            Browse Menu
+            {t.nav.browseMenu}
           </Button>
         </div>
       </div>

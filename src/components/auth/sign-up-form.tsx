@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
+import { useLanguage } from "@/components/providers/language-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -45,29 +46,10 @@ interface SignUpFieldErrors {
   confirmPassword?: string;
 }
 
-const ROLE_OPTIONS: ReadonlyArray<{
-  value: PublicRegistrationRole;
-  title: string;
-  subtitle: string;
-  icon: typeof UtensilsCrossed;
-}> = [
-  {
-    value: "customer",
-    title: "Customer",
-    subtitle: "Browse menus & order pizza",
-    icon: UtensilsCrossed,
-  },
-  {
-    value: "vendor",
-    title: "Vendor",
-    subtitle: "List your kitchen & orders",
-    icon: Store,
-  },
-];
-
 export function SignUpForm({ googleEnabled }: SignUpFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const { refreshSession } = useAuthSession();
 
   const requestedRole = searchParams.get("role");
@@ -85,6 +67,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
       setRole(requestedRole);
     }
   }, [requestedRole]);
+
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
@@ -102,6 +85,26 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
   const passwordStatus = validatePasswordPolicy(password);
   const passwordsMatch =
     confirmPassword.length > 0 && password === confirmPassword;
+
+  const roleOptions: ReadonlyArray<{
+    value: PublicRegistrationRole;
+    title: string;
+    subtitle: string;
+    icon: typeof UtensilsCrossed;
+  }> = [
+    {
+      value: "customer",
+      title: t.auth.customerRoleTitle,
+      subtitle: t.auth.customerRoleSub,
+      icon: UtensilsCrossed,
+    },
+    {
+      value: "vendor",
+      title: t.auth.vendorRoleTitle,
+      subtitle: t.auth.vendorRoleSub,
+      icon: Store,
+    },
+  ];
 
   const validateFields = (): boolean => {
     const errors: SignUpFieldErrors = {};
@@ -245,10 +248,10 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
       <form noValidate onSubmit={handleSubmit} className="space-y-4">
         <fieldset className="space-y-2 border-0 p-0">
           <legend className="text-sm font-medium text-foreground">
-            Account type
+            {t.auth.accountType}
           </legend>
           <div className="grid grid-cols-2 gap-2.5 pt-1">
-            {ROLE_OPTIONS.map((option) => {
+            {roleOptions.map((option) => {
               const Icon = option.icon;
               const isSelected = role === option.value;
               const inputId = `sign-up-role-${option.value}`;
@@ -257,7 +260,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
                 <label
                   key={option.value}
                   htmlFor={inputId}
-                  className={`relative flex cursor-pointer flex-col items-start gap-1 rounded-xl border p-3 text-left transition-all has-focus-visible:ring-2 has-focus-visible:ring-ring ${
+                  className={`relative flex cursor-pointer flex-col items-start gap-1 rounded-2xl border p-3.5 text-left transition-all has-focus-visible:ring-2 has-focus-visible:ring-ring ${
                     isBusy ? "pointer-events-none opacity-60" : ""
                   } ${
                     isSelected
@@ -304,14 +307,14 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
         </fieldset>
 
         <div className="space-y-1.5">
-          <Label htmlFor="sign-up-name">Full name</Label>
+          <Label htmlFor="sign-up-name">{t.auth.fullNameLabel}</Label>
           <Input
             id="sign-up-name"
             name="name"
             type="text"
             autoComplete="name"
             enterKeyHint="next"
-            placeholder="Marco Rossi"
+            placeholder={t.auth.fullNamePlaceholder}
             value={name}
             onChange={(event) => {
               setName(event.target.value);
@@ -341,7 +344,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
         {role === "vendor" ? (
           <div className="space-y-1.5">
             <Label htmlFor="sign-up-business-name">
-              Restaurant / business name
+              {t.auth.businessNameLabel}
             </Label>
             <Input
               id="sign-up-business-name"
@@ -349,7 +352,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
               type="text"
               autoComplete="organization"
               enterKeyHint="next"
-              placeholder="Napoli Brick Oven Pizzeria"
+              placeholder={t.auth.businessNamePlaceholder}
               value={businessName}
               onChange={(event) => {
                 setBusinessName(event.target.value);
@@ -383,7 +386,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
         ) : null}
 
         <div className="space-y-1.5">
-          <Label htmlFor="sign-up-email">Email address</Label>
+          <Label htmlFor="sign-up-email">{t.auth.emailLabel}</Label>
           <Input
             id="sign-up-email"
             name="email"
@@ -391,7 +394,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
             autoComplete="username"
             spellCheck={false}
             enterKeyHint="next"
-            placeholder="you@example.com"
+            placeholder={t.auth.emailPlaceholder}
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
@@ -420,8 +423,12 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="sign-up-profile-image">Profile image URL</Label>
-            <span className="text-xs text-muted-foreground">Optional</span>
+            <Label htmlFor="sign-up-profile-image">
+              {t.auth.profileImageLabel}
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              {t.menu.optional}
+            </span>
           </div>
           <Input
             id="sign-up-profile-image"
@@ -430,7 +437,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
             autoComplete="photo"
             spellCheck={false}
             enterKeyHint="next"
-            placeholder="https://example.com/avatar.jpg (leave blank to skip)"
+            placeholder={t.auth.profileImagePlaceholder}
             value={profileImage}
             onChange={(event) => {
               setProfileImage(event.target.value);
@@ -462,7 +469,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="sign-up-password">Password</Label>
+          <Label htmlFor="sign-up-password">{t.auth.passwordLabel}</Label>
           <div className="relative">
             <Input
               id="sign-up-password"
@@ -470,7 +477,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               enterKeyHint="next"
-              placeholder="Create a strong password"
+              placeholder={t.auth.createPasswordPlaceholder}
               value={password}
               onChange={(event) => {
                 setPassword(event.target.value);
@@ -519,7 +526,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
                 }`}
                 aria-hidden="true"
               />
-              6+ characters
+              {t.auth.ruleMinChars}
             </li>
             <li
               className={`inline-flex items-center gap-1 ${
@@ -536,7 +543,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
                 }`}
                 aria-hidden="true"
               />
-              1 uppercase
+              {t.auth.ruleUpper}
             </li>
             <li
               className={`inline-flex items-center gap-1 ${
@@ -553,7 +560,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
                 }`}
                 aria-hidden="true"
               />
-              1 lowercase
+              {t.auth.ruleLower}
             </li>
           </ul>
 
@@ -565,7 +572,9 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="sign-up-confirm-password">Confirm password</Label>
+          <Label htmlFor="sign-up-confirm-password">
+            {t.auth.confirmPasswordLabel}
+          </Label>
           <div className="relative">
             <Input
               id="sign-up-confirm-password"
@@ -573,7 +582,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
               type={showConfirmPassword ? "text" : "password"}
               autoComplete="new-password"
               enterKeyHint="done"
-              placeholder="Re-enter your password"
+              placeholder={t.auth.confirmPasswordPlaceholder}
               value={confirmPassword}
               onChange={(event) => {
                 setConfirmPassword(event.target.value);
@@ -624,7 +633,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
           ) : passwordsMatch ? (
             <p className="inline-flex items-center gap-1 text-xs font-medium text-foreground">
               <Check className="size-3.5 text-primary" aria-hidden="true" />
-              Passwords match
+              {t.auth.passwordsMatch}
             </p>
           ) : null}
         </div>
@@ -637,13 +646,13 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
           {isSubmitting ? (
             <>
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-              <span>Creating account…</span>
+              <span>{t.auth.creatingAccount}</span>
             </>
           ) : (
             <span>
               {role === "vendor"
-                ? "Create Vendor Account"
-                : "Create Customer Account"}
+                ? t.auth.createVendorAccount
+                : t.auth.createCustomerAccount}
             </span>
           )}
         </Button>
@@ -652,7 +661,7 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
       <div className="relative flex items-center gap-3">
         <Separator className="flex-1" />
         <span className="text-xs font-medium text-muted-foreground">
-          or continue with
+          {t.auth.orContinueWith}
         </span>
         <Separator className="flex-1" />
       </div>
@@ -667,12 +676,16 @@ export function SignUpForm({ googleEnabled }: SignUpFormProps) {
       />
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t.auth.alreadyHaveAccount}{" "}
         <Link
-          href="/sign-in"
-          className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+          href={
+            explicitCallback
+              ? `/sign-in?callbackUrl=${encodeURIComponent(explicitCallback)}`
+              : "/sign-in"
+          }
+          className="rounded-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          Sign in
+          {t.auth.signInLink}
         </Link>
       </p>
     </div>

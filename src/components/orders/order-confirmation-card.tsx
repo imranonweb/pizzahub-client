@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowRight,
   Banknote,
@@ -7,9 +9,9 @@ import {
   Phone,
 } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/components/providers/language-provider";
 import { buttonVariants } from "@/components/ui/button";
 import { PizzaImage } from "@/components/ui/pizza-image";
-import { Separator } from "@/components/ui/separator";
 import type { CustomerOrder } from "@/lib/order-rules";
 import { cn } from "@/lib/utils";
 import { CopyOrderButton } from "./copy-order-button";
@@ -22,12 +24,14 @@ export function OrderConfirmationCard({
   order: CustomerOrder;
   additionalOrders?: readonly CustomerOrder[];
 }) {
+  const { t } = useLanguage();
+
   return (
     <section
       aria-labelledby="order-confirmed-heading"
-      className="mx-auto w-full max-w-3xl space-y-6 rounded-3xl border border-border bg-card p-6 shadow-xs sm:p-8"
+      className="surface-card mx-auto w-full max-w-3xl space-y-6 rounded-3xl border border-border bg-card p-6 sm:p-8"
     >
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border/70 pb-6">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border/75 pb-6">
         <div className="flex items-start gap-4">
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
             <CheckCircle2 className="size-6" aria-hidden="true" />
@@ -37,10 +41,10 @@ export function OrderConfirmationCard({
               id="order-confirmed-heading"
               className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
             >
-              Order confirmed
+              {t.checkout.confirmedHeading}
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <span>Order reference</span>
+              <span>{t.checkout.orderRef}</span>
               <span className="font-mono font-semibold text-foreground">
                 #{order.id}
               </span>
@@ -57,7 +61,7 @@ export function OrderConfirmationCard({
           <div className="space-y-1">
             <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Calendar className="size-3.5 text-primary" aria-hidden="true" />
-              Delivery Date
+              {t.menu.deliveryDateLabel}
             </p>
             <p className="font-medium text-foreground">{order.deliveryDate}</p>
           </div>
@@ -65,21 +69,21 @@ export function OrderConfirmationCard({
         <div className="space-y-1">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <Banknote className="size-3.5 text-primary" aria-hidden="true" />
-            Payment Method
+            {t.checkout.paymentMethodLabel}
           </p>
-          <p className="font-medium text-foreground">Cash on Delivery (COD)</p>
+          <p className="font-medium text-foreground">{t.checkout.codTitle}</p>
         </div>
         <div className="space-y-1">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <MapPin className="size-3.5 text-primary" aria-hidden="true" />
-            Delivery Address
+            {t.menu.deliveryAddressLabel}
           </p>
           <p className="font-medium text-foreground">{order.deliveryAddress}</p>
         </div>
         <div className="space-y-1">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <Phone className="size-3.5 text-primary" aria-hidden="true" />
-            Contact Phone
+            {t.menu.contactPhoneLabel}
           </p>
           <p className="font-medium text-foreground">{order.contactPhone}</p>
         </div>
@@ -87,7 +91,7 @@ export function OrderConfirmationCard({
 
       <div className="space-y-3">
         <h2 className="font-heading text-base font-semibold text-foreground">
-          Ordered Items ({order.vendorName})
+          {t.checkout.orderedItems} ({order.vendorName})
         </h2>
         <ul className="divide-y divide-border/70 rounded-2xl border border-border bg-background px-4">
           {order.items.map((item) => (
@@ -109,12 +113,12 @@ export function OrderConfirmationCard({
                   <p className="truncate text-sm font-semibold text-foreground">
                     {item.itemName}
                   </p>
-                  <p className="text-xs text-muted-foreground tabular-nums">
+                  <p className="font-mono text-xs text-muted-foreground tabular-nums">
                     {item.quantity} × ${item.unitPrice.toFixed(2)}
                   </p>
                 </div>
               </div>
-              <span className="font-heading text-sm font-bold text-foreground tabular-nums">
+              <span className="font-mono text-sm font-bold text-foreground tabular-nums">
                 ${item.lineTotal.toFixed(2)}
               </span>
             </li>
@@ -122,24 +126,25 @@ export function OrderConfirmationCard({
         </ul>
       </div>
 
-      <div className="space-y-2 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+      <div className="space-y-2.5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
         <div className="flex items-center justify-between text-muted-foreground">
-          <span>Subtotal</span>
-          <span className="font-medium text-foreground tabular-nums">
+          <span>{t.checkout.subtotal}</span>
+          <span className="font-mono font-medium text-foreground tabular-nums">
             ${order.subtotal.toFixed(2)}
           </span>
         </div>
-        <Separator />
-        <div className="flex items-center justify-between font-heading text-lg font-bold text-foreground">
-          <span>Total</span>
-          <span className="tabular-nums">${order.total.toFixed(2)}</span>
+        <div className="ticket-divider flex items-center justify-between pt-2.5 font-heading text-lg font-bold text-foreground">
+          <span>{t.checkout.total}</span>
+          <span className="font-mono tabular-nums">
+            ${order.total.toFixed(2)}
+          </span>
         </div>
       </div>
 
       {additionalOrders.length > 0 ? (
         <div className="space-y-2.5 rounded-2xl border border-border bg-background p-4">
           <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Additional Kitchen Orders Placed
+            {t.checkout.additionalOrders}
           </p>
           <ul className="divide-y divide-border/70">
             {additionalOrders.map((extraOrder) => (
@@ -152,10 +157,12 @@ export function OrderConfirmationCard({
                     {extraOrder.vendorName} ·{" "}
                     <span className="font-mono text-xs">#{extraOrder.id}</span>
                   </p>
-                  <p className="text-xs text-muted-foreground tabular-nums">
+                  <p className="font-mono text-xs text-muted-foreground tabular-nums">
                     {extraOrder.items.length}{" "}
-                    {extraOrder.items.length === 1 ? "item" : "items"} · $
-                    {extraOrder.total.toFixed(2)}
+                    {extraOrder.items.length === 1
+                      ? t.cart.itemWord
+                      : t.cart.itemsWord}{" "}
+                    · ${extraOrder.total.toFixed(2)}
                   </p>
                 </div>
                 <Link
@@ -165,7 +172,7 @@ export function OrderConfirmationCard({
                     "h-8 rounded-lg px-3 text-xs",
                   )}
                 >
-                  Track
+                  {t.dashboard.orderDetails}
                 </Link>
               </li>
             ))}
@@ -178,20 +185,20 @@ export function OrderConfirmationCard({
           href="/menu"
           className={cn(
             buttonVariants({ variant: "outline", size: "default" }),
-            "h-10 rounded-xl bg-background px-4",
+            "h-10 rounded-full bg-background px-5",
           )}
         >
-          Continue Browsing
+          {t.checkout.continueBrowsing}
         </Link>
 
         <Link
           href={`/dashboard/customer/orders/${encodeURIComponent(order.id)}`}
           className={cn(
             buttonVariants({ variant: "default", size: "lg" }),
-            "h-11 rounded-xl px-5 font-semibold",
+            "h-11 rounded-full px-6 font-semibold",
           )}
         >
-          <span>View Order Tracking</span>
+          <span>{t.checkout.viewOrderTracking}</span>
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
       </div>

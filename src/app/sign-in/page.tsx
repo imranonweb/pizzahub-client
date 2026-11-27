@@ -27,15 +27,7 @@ export default function SignInPage() {
   );
 
   return (
-    <AuthShell
-      title="Welcome back"
-      description="Sign in with your email or Google account to keep ordering or managing your menu."
-      heroHeadline="Hot from the deck oven to your front door."
-      heroSubheadline="Sign in to track active pizza deliveries, reorder neighborhood favorites, or manage your kitchen."
-      switchPrompt="Need an account?"
-      switchLabel="Sign up"
-      switchHref="/sign-up"
-    >
+    <AuthShell mode="sign-in" switchHref="/sign-up">
       <Suspense fallback={<SignInFormFallback />}>
         <SignInForm googleEnabled={googleEnabled} />
       </Suspense>

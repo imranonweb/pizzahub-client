@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -44,6 +45,7 @@ function formatUtcTimestamp(iso: string): string {
 
 export function AdminOverview() {
   const user = useAdminProfile();
+  const { t } = useLanguage();
   const [data, setData] = useState<AdminOverviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -126,7 +128,7 @@ export function AdminOverview() {
       <div className="flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
           <h1 className="font-heading text-2xl font-bold tracking-[-0.02em] text-foreground sm:text-3xl">
-            Welcome back, {user.name}
+            {t.dashboard.welcomeBack}, {user.name}
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
             Oversee PizzaHub menu moderation, account status controls, and
@@ -138,17 +140,17 @@ export function AdminOverview() {
           <Button
             render={<Link href="/dashboard/admin/users" />}
             variant="outline"
-            className="h-10 rounded-xl bg-card px-4 font-medium"
+            className="h-10 rounded-full bg-card px-4 font-medium"
           >
             <Users className="size-4" aria-hidden="true" />
-            User Management
+            {t.dashboard.userManagement}
           </Button>
           <Button
             render={<Link href="/dashboard/admin/menu" />}
-            className="h-10 rounded-xl px-4 font-semibold"
+            className="h-10 rounded-full px-4 font-semibold"
           >
             <ClipboardCheck className="size-4" aria-hidden="true" />
-            Review Menu Queue
+            {t.dashboard.menuModeration}
           </Button>
         </div>
       </div>

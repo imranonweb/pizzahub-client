@@ -4,6 +4,7 @@ import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { useLanguage } from "@/components/providers/language-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ interface SignInFieldErrors {
 export function SignInForm({ googleEnabled }: SignInFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const { refreshSession } = useAuthSession();
 
   const rawCallbackUrl = searchParams.get("callbackUrl");
@@ -115,7 +117,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
         explicitCallback || getDashboardPathForRole(signedInRole);
 
       toast.add({
-        title: "Welcome back",
+        title: t.auth.signInTitle,
         description: "Signed in to your PizzaHub account.",
         type: "success",
       });
@@ -149,7 +151,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
 
       <form noValidate onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="sign-in-email">Email address</Label>
+          <Label htmlFor="sign-in-email">{t.auth.emailLabel}</Label>
           <Input
             id="sign-in-email"
             name="email"
@@ -157,7 +159,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
             autoComplete="username"
             spellCheck={false}
             enterKeyHint="next"
-            placeholder="you@example.com"
+            placeholder={t.auth.emailPlaceholder}
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
@@ -185,7 +187,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="sign-in-password">Password</Label>
+          <Label htmlFor="sign-in-password">{t.auth.passwordLabel}</Label>
           <div className="relative">
             <Input
               id="sign-in-password"
@@ -193,7 +195,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               enterKeyHint="done"
-              placeholder="Enter your password"
+              placeholder={t.auth.passwordPlaceholder}
               value={password}
               onChange={(event) => {
                 setPassword(event.target.value);
@@ -246,7 +248,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
               onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
               disabled={isBusy}
             />
-            <span>Remember me on this device</span>
+            <span>{t.auth.rememberMe}</span>
           </Label>
         </div>
 
@@ -258,10 +260,10 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
           {isSubmitting ? (
             <>
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-              <span>Signing in…</span>
+              <span>{t.auth.signingIn}</span>
             </>
           ) : (
-            <span>Sign In</span>
+            <span>{t.nav.signIn}</span>
           )}
         </Button>
       </form>
@@ -269,7 +271,7 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
       <div className="relative flex items-center gap-3">
         <Separator className="flex-1" />
         <span className="text-xs font-medium text-muted-foreground">
-          or continue with
+          {t.auth.orContinueWith}
         </span>
         <Separator className="flex-1" />
       </div>
@@ -284,16 +286,16 @@ export function SignInForm({ googleEnabled }: SignInFormProps) {
       />
 
       <p className="text-center text-sm text-muted-foreground">
-        New to PizzaHub?{" "}
+        {t.auth.newToPizzaHub}{" "}
         <Link
           href={
             explicitCallback
               ? `/sign-up?callbackUrl=${encodeURIComponent(explicitCallback)}`
               : "/sign-up"
           }
-          className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+          className="rounded-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          Create an account
+          {t.auth.createAnAccount}
         </Link>
       </p>
     </div>

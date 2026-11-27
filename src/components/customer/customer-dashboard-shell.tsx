@@ -18,6 +18,7 @@ import {
   type DashboardStorefrontLink,
 } from "@/components/dashboard/dashboard-shell-frame";
 import { useCart } from "@/components/providers/cart-provider";
+import { useLanguage } from "@/components/providers/language-provider";
 import { useAuthSession } from "@/components/providers/session-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,58 +38,6 @@ export function useCustomerProfile(): CustomerSessionProfile {
   return ctx;
 }
 
-const CUSTOMER_NAV_BASE: readonly DashboardNavItem[] = [
-  {
-    href: "/dashboard/customer",
-    label: "Overview",
-    icon: LayoutDashboard,
-    exact: true,
-  },
-  {
-    href: "/dashboard/customer/orders",
-    label: "My Orders",
-    icon: ReceiptText,
-    exact: false,
-  },
-  {
-    href: "/checkout",
-    label: "Checkout",
-    icon: CreditCard,
-    exact: false,
-  },
-  {
-    href: "/notifications",
-    label: "Notifications",
-    icon: Bell,
-    exact: false,
-  },
-  {
-    href: "/dashboard/customer/settings",
-    label: "Account Settings",
-    icon: Settings,
-    exact: false,
-  },
-  {
-    href: "/profile",
-    label: "Profile",
-    icon: UserCircle,
-    exact: true,
-  },
-];
-
-const STOREFRONT_LINKS: readonly DashboardStorefrontLink[] = [
-  {
-    href: "/menu",
-    label: "Browse Menu",
-    icon: Store,
-  },
-  {
-    href: "/",
-    label: "Back to Home",
-    icon: ArrowLeft,
-  },
-];
-
 export function CustomerDashboardShell({
   user,
   children,
@@ -96,6 +45,7 @@ export function CustomerDashboardShell({
   user: CustomerSessionProfile;
   children: ReactNode;
 }) {
+  const { t } = useLanguage();
   const { user: sessionUser } = useAuthSession();
   const { summary, isHydrated, openDrawer } = useCart();
 
@@ -115,11 +65,62 @@ export function CustomerDashboardShell({
 
   const cartCount = isHydrated ? summary.itemCount : 0;
   const navItems = useMemo<readonly DashboardNavItem[]>(
-    () =>
-      CUSTOMER_NAV_BASE.map((item) =>
-        item.href === "/checkout" ? { ...item, badgeCount: cartCount } : item,
-      ),
-    [cartCount],
+    () => [
+      {
+        href: "/dashboard/customer",
+        label: t.dashboard.overview,
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      {
+        href: "/dashboard/customer/orders",
+        label: t.dashboard.myOrders,
+        icon: ReceiptText,
+        exact: false,
+      },
+      {
+        href: "/checkout",
+        label: t.dashboard.checkout,
+        icon: CreditCard,
+        exact: false,
+        badgeCount: cartCount,
+      },
+      {
+        href: "/notifications",
+        label: t.nav.notifications,
+        icon: Bell,
+        exact: false,
+      },
+      {
+        href: "/dashboard/customer/settings",
+        label: t.dashboard.accountSettings,
+        icon: Settings,
+        exact: false,
+      },
+      {
+        href: "/profile",
+        label: t.dashboard.profile,
+        icon: UserCircle,
+        exact: true,
+      },
+    ],
+    [cartCount, t],
+  );
+
+  const storefrontLinks = useMemo<readonly DashboardStorefrontLink[]>(
+    () => [
+      {
+        href: "/menu",
+        label: t.nav.browseMenu,
+        icon: Store,
+      },
+      {
+        href: "/",
+        label: t.dashboard.backToHome,
+        icon: ArrowLeft,
+      },
+    ],
+    [t],
   );
 
   return (
@@ -129,9 +130,9 @@ export function CustomerDashboardShell({
         drawerTitle="Customer Navigation"
         drawerDescription="Navigate your customer overview, order history, and cart checkout."
         openMenuAriaLabel="Open customer navigation menu"
-        headerTitle="Customer Portal"
+        headerTitle={t.dashboard.customerPortal}
         navItems={navItems}
-        storefrontLinks={STOREFRONT_LINKS}
+        storefrontLinks={storefrontLinks}
         displayName={syncedUser.name}
         email={syncedUser.email}
         image={syncedUser.image}
@@ -140,7 +141,7 @@ export function CustomerDashboardShell({
             variant="secondary"
             className="rounded-full px-2.5 py-0.5 text-xs font-medium"
           >
-            Customer Account
+            {t.dashboard.customerAccount}
           </Badge>
         }
         headerActions={
@@ -149,12 +150,12 @@ export function CustomerDashboardShell({
             variant="outline"
             size="sm"
             onClick={openDrawer}
-            className="h-9 gap-1.5 rounded-xl bg-card px-3 font-medium"
+            className="h-9 gap-1.5 rounded-full bg-card px-3 font-medium"
           >
             <ShoppingBag className="size-4 text-primary" aria-hidden="true" />
-            <span>Cart</span>
+            <span className="hidden md:inline">{t.nav.cart}</span>
             {cartCount > 0 ? (
-              <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums">
+              <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 font-mono text-[11px] font-semibold text-primary-foreground tabular-nums">
                 {cartCount}
               </Badge>
             ) : null}

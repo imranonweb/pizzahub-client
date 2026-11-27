@@ -3,11 +3,13 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Button } from "@/components/ui/button";
 import {
   type SearchSuggestionOption,
   SearchSuggestionsInput,
 } from "@/components/ui/search-suggestions-input";
+import { translateCategory } from "@/lib/i18n/translations";
 import {
   getCachedPublicCatalogItems,
   MENU_CATEGORIES,
@@ -18,11 +20,11 @@ import {
 import { cn } from "@/lib/utils";
 
 const QUICK_DISCOVERY_TAGS = [
-  { label: "Margherita", query: "Margherita" },
-  { label: "Diavola", query: "Diavola" },
-  { label: "Truffle Mushroom", query: "Truffle" },
-  { label: "Vegetarian", query: "Vegetarian" },
-  { label: "Garlic Knots", query: "Garlic" },
+  { labelEn: "Margherita", labelBn: "মার্গেরিটা", query: "Margherita" },
+  { labelEn: "Diavola", labelBn: "দিয়াভোলা", query: "Diavola" },
+  { labelEn: "Truffle Mushroom", labelBn: "ট্রাফল মাশরুম", query: "Truffle" },
+  { labelEn: "Vegetarian", labelBn: "ভেজিটেরিয়ান", query: "Vegetarian" },
+  { labelEn: "Garlic Knots", labelBn: "গার্লিক নটস", query: "Garlic" },
 ] as const;
 
 interface HeroSearchProps {
@@ -31,6 +33,7 @@ interface HeroSearchProps {
 
 export function HeroSearch({ tone = "light" }: HeroSearchProps) {
   const router = useRouter();
+  const { locale, isBangla, t } = useLanguage();
   const [query, setQuery] = useState("");
   const [catalogItems, setCatalogItems] = useState<PublicMenuItem[]>(() =>
     getCachedPublicCatalogItems(),
@@ -62,17 +65,17 @@ export function HeroSearch({ tone = "light" }: HeroSearchProps) {
           id: `item-${item.id}`,
           label: item.itemName,
           value: item.itemName,
-          subtitle: `${item.vendor.businessName} · ${item.category}`,
+          subtitle: `${item.vendor.businessName} · ${translateCategory(item.category, locale)}`,
           rightText: `$${item.price.toFixed(2)}`,
           imageUrl: item.images[0] || "/images/auth-pizza-hero.jpg",
         }));
       }
 
       return QUICK_DISCOVERY_TAGS.map((tag) => ({
-        id: `tag-${tag.label}`,
-        label: tag.label,
+        id: `tag-${tag.query}`,
+        label: isBangla ? tag.labelBn : tag.labelEn,
         value: tag.query,
-        badge: "Popular",
+        badge: t.hero.popularBadge,
       }));
     }
 
@@ -83,7 +86,7 @@ export function HeroSearch({ tone = "light" }: HeroSearchProps) {
         label: item.itemName,
         value: item.itemName,
         subtitle: `${item.vendor.businessName} · ${item.location}`,
-        badge: item.category,
+        badge: translateCategory(item.category, locale),
         rightText: `$${item.price.toFixed(2)}`,
         imageUrl: item.images[0] || "/images/auth-pizza-hero.jpg",
       }));
@@ -93,29 +96,34 @@ export function HeroSearch({ tone = "light" }: HeroSearchProps) {
     }
 
     const lowered = trimmed.toLowerCase();
-    const categoryMatches = MENU_CATEGORIES.filter((cat) =>
-      cat.toLowerCase().includes(lowered),
-    ).map((cat) => ({
+    const categoryMatches = MENU_CATEGORIES.filter((cat) => {
+      const translated = translateCategory(cat, locale).toLowerCase();
+      return (
+        cat.toLowerCase().includes(lowered) || translated.includes(lowered)
+      );
+    }).map((cat) => ({
       id: `cat-${cat}`,
-      label: cat,
+      label: translateCategory(cat, locale),
       value: cat,
-      badge: "Category",
-      subtitle: `Browse all ${cat.toLowerCase()}`,
+      badge: t.hero.categoryBadge,
+      subtitle: cat,
     }));
 
     if (categoryMatches.length > 0) {
       return categoryMatches;
     }
 
-    return QUICK_DISCOVERY_TAGS.filter((t) =>
-      t.label.toLowerCase().includes(lowered),
+    return QUICK_DISCOVERY_TAGS.filter(
+      (tag) =>
+        tag.labelEn.toLowerCase().includes(lowered) ||
+        tag.labelBn.includes(trimmed),
     ).map((tag) => ({
-      id: `tag-${tag.label}`,
-      label: tag.label,
+      id: `tag-${tag.query}`,
+      label: isBangla ? tag.labelBn : tag.labelEn,
       value: tag.query,
-      badge: "Popular",
+      badge: t.hero.popularBadge,
     }));
-  }, [catalogItems, query]);
+  }, [catalogItems, isBangla, locale, query, t.hero]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -149,7 +157,12 @@ export function HeroSearch({ tone = "light" }: HeroSearchProps) {
     <div className="space-y-3 pt-1">
       <form
         onSubmit={handleSubmit}
-        className="relative flex flex-col gap-2.5 sm:flex-row sm:items-center"
+        className={cn(
+          "relative flex flex-col gap-2 rounded-2xl border p-1.5 sm:flex-row sm:items-center",
+          isDark
+            ? "border-[#faf6f0]/18 bg-[#faf6f0]/[0.07] backdrop-blur-md"
+            : "border-border/80 bg-card p-2",
+        )}
       >
         <SearchSuggestionsInput
           value={query}
@@ -166,26 +179,26 @@ export function HeroSearch({ tone = "light" }: HeroSearchProps) {
           showWhenEmpty={true}
           isLoadingSuggestions={isLoadingCatalog}
           suggestionHeader={
-            query.trim() ? "Matching Pizzas & Kitchens" : "Popular Searches"
+            query.trim() ? t.hero.suggestionMatching : t.hero.suggestionPopular
           }
-          ariaLabel="Search pizza by name"
-          clearAriaLabel="Clear search input"
-          placeholder="Search pizza, topping, or kitchen (e.g. Margherita, Diavola)..."
+          ariaLabel={t.hero.searchAria}
+          clearAriaLabel={t.hero.clearSearchAria}
+          placeholder={t.hero.searchPlaceholder}
           className="flex-1"
           inputClassName={cn(
-            "h-12 text-sm shadow-2xs focus-visible:ring-primary",
+            "h-11 rounded-xl text-sm shadow-none focus-visible:ring-primary",
             isDark
-              ? "border-[#faf6f0]/20 bg-[#faf6f0] text-[#1c130f] placeholder:text-[#6f6259] dark:bg-[#231915] dark:text-[#faf6f0] dark:placeholder:text-[#b5a79b]"
-              : "border-border/80 bg-card",
+              ? "border-transparent bg-[#faf6f0] text-[#1c130f] placeholder:text-[#6b5d53] dark:bg-[#231915] dark:text-[#faf6f0] dark:placeholder:text-[#b5a79b]"
+              : "border-border/80 bg-background",
           )}
         />
 
         <Button
           type="submit"
           size="lg"
-          className="h-12 shrink-0 rounded-xl px-6 font-semibold shadow-sm"
+          className="h-11 shrink-0 rounded-xl px-5 font-semibold shadow-xs"
         >
-          <span>Find Pizza</span>
+          <span>{t.hero.findPizzaBtn}</span>
           <ArrowRight className="size-4" aria-hidden="true" />
         </Button>
       </form>
@@ -206,11 +219,11 @@ export function HeroSearch({ tone = "light" }: HeroSearchProps) {
             className={cn("size-3", isDark ? "text-[#f26d4f]" : "text-primary")}
             aria-hidden="true"
           />
-          Popular:
+          {t.hero.popularLabel}
         </span>
         {QUICK_DISCOVERY_TAGS.map((tag) => (
           <button
-            key={tag.label}
+            key={tag.query}
             type="button"
             onClick={() => handleTagClick(tag.query)}
             className={cn(
@@ -220,7 +233,7 @@ export function HeroSearch({ tone = "light" }: HeroSearchProps) {
                 : "border-border/70 bg-card/60 text-muted-foreground hover:border-primary/40 hover:bg-accent/50 hover:text-foreground",
             )}
           >
-            {tag.label}
+            {isBangla ? tag.labelBn : tag.labelEn}
           </button>
         ))}
       </div>

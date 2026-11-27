@@ -2,6 +2,7 @@
 
 import { AlertCircle, CheckCircle2, Info, Loader2 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { useLanguage } from "@/components/providers/language-provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
+import { translateCategory } from "@/lib/i18n/translations";
 import { MENU_CATEGORIES } from "@/lib/menu-api";
 import {
   createVendorMenuItem,
@@ -68,6 +70,7 @@ export function PizzaForm({
 }) {
   const formId = useId();
   const submittingRef = useRef(false);
+  const { locale } = useLanguage();
 
   const [values, setValues] = useState<PizzaFormValues>(() =>
     getInitialValues(initialItem),
@@ -227,13 +230,15 @@ export function PizzaForm({
               className="h-10 w-full rounded-xl bg-background px-3.5"
             >
               <SelectValue placeholder="Choose category">
-                {values.category || "Choose category"}
+                {values.category
+                  ? translateCategory(values.category, locale)
+                  : "Choose category"}
               </SelectValue>
             </SelectTrigger>
             <SelectContent align="start" alignItemWithTrigger={false}>
               {MENU_CATEGORIES.map((category) => (
                 <SelectItem key={category} value={category}>
-                  {category}
+                  {translateCategory(category, locale)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -295,7 +300,7 @@ export function PizzaForm({
           <Input
             id={`${formId}-location`}
             name="location"
-            placeholder="e.g. Midtown West"
+            placeholder="e.g. Dhanmondi 27, Dhaka"
             value={values.location}
             disabled={isSubmitting}
             aria-invalid={Boolean(errors.location)}
