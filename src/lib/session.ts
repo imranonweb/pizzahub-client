@@ -13,7 +13,11 @@ import {
   getDashboardPathForRole,
   isValidPizzaHubRole,
 } from "./auth-routes";
-import { getMongoClientPromise, resetMongoCache } from "./mongodb";
+import {
+  getMongoClientPromise,
+  isMongoTopologyClosed,
+  resetMongoCache,
+} from "./mongodb";
 
 export interface ServerAuthUser {
   id: string;
@@ -56,7 +60,12 @@ function toValidDate(raw: unknown): Date | null {
 async function fetchSessionWithRetry(requestHeaders: Headers) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await getMongoClientPromise();
+      const client = await getMongoClientPromise();
+      if (isMongoTopologyClosed(client)) {
+        resetMongoCache();
+        resetAuthInstance();
+        await getMongoClientPromise();
+      }
       return await getAuth().api.getSession({
         headers: requestHeaders,
       });

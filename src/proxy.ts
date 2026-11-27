@@ -7,7 +7,11 @@ import {
   getRequiredRoleForPath,
   isValidPizzaHubRole,
 } from "@/lib/auth-routes";
-import { getMongoClientPromise, resetMongoCache } from "@/lib/mongodb";
+import {
+  getMongoClientPromise,
+  isMongoTopologyClosed,
+  resetMongoCache,
+} from "@/lib/mongodb";
 
 export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
@@ -24,7 +28,12 @@ export async function proxy(request: NextRequest) {
   > = null;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await getMongoClientPromise();
+      const client = await getMongoClientPromise();
+      if (isMongoTopologyClosed(client)) {
+        resetMongoCache();
+        resetAuthInstance();
+        await getMongoClientPromise();
+      }
       sessionResult = await getAuth().api.getSession({
         headers: request.headers,
       });

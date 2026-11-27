@@ -8,6 +8,7 @@ const SERVERLESS_MONGO_OPTIONS: MongoClientOptions = {
   maxIdleTimeMS: 60_000,
   serverSelectionTimeoutMS: 8_000,
   connectTimeoutMS: 8_000,
+  socketTimeoutMS: 25_000,
 };
 
 interface MongoGlobalCache {
@@ -18,6 +19,7 @@ interface MongoGlobalCache {
 
 const globalForMongo = globalThis as typeof globalThis & {
   __pizzaHubMongo?: MongoGlobalCache;
+  __pizzaHubClosedClients?: WeakSet<MongoClient>;
 };
 
 function stripSurroundingQuotes(raw?: string): string {
@@ -39,6 +41,57 @@ function getCache(): MongoGlobalCache {
   return globalForMongo.__pizzaHubMongo;
 }
 
+function getClosedClients(): WeakSet<MongoClient> {
+  if (!globalForMongo.__pizzaHubClosedClients) {
+    globalForMongo.__pizzaHubClosedClients = new WeakSet<MongoClient>();
+  }
+  return globalForMongo.__pizzaHubClosedClients;
+}
+
+export function isMongoTopologyClosed(client?: MongoClient): boolean {
+  if (!client) {
+    return true;
+  }
+  if (getClosedClients().has(client)) {
+    return true;
+  }
+
+  const internalTopology = (
+    client as unknown as {
+      topology?: {
+        isDestroyed?: () => boolean;
+        s?: { state?: string };
+      };
+    }
+  ).topology;
+
+  if (internalTopology?.isDestroyed?.() === true) {
+    return true;
+  }
+  if (internalTopology?.s?.state === "closed") {
+    return true;
+  }
+
+  return false;
+}
+
+export function isRecoverableMongoError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  const summary = `${error.name} ${error.message}`.toLowerCase();
+  return (
+    summary.includes("topology is closed") ||
+    summary.includes("mongotopologyclosederror") ||
+    summary.includes("mongonotconnectederror") ||
+    summary.includes("client must be connected") ||
+    summary.includes("mongonetworkerror") ||
+    summary.includes("mongoserverselectionerror") ||
+    summary.includes("connection closed") ||
+    summary.includes("econnreset")
+  );
+}
+
 export function getMongoUri(): string {
   const uri =
     stripSurroundingQuotes(process.env.DB_URI) ||
@@ -57,6 +110,9 @@ export function getDbName(): string {
 
 export function resetMongoCache(): void {
   const cache = getCache();
+  if (cache.client) {
+    getClosedClients().add(cache.client);
+  }
   cache.client = undefined;
   cache.clientPromise = undefined;
   cache.uri = undefined;
@@ -66,11 +122,28 @@ export function getMongoClient(): MongoClient {
   const cache = getCache();
   const uri = getMongoUri();
 
-  if (cache.client && cache.uri === uri) {
+  if (
+    cache.client &&
+    cache.uri === uri &&
+    !isMongoTopologyClosed(cache.client)
+  ) {
     return cache.client;
   }
 
   const client = new MongoClient(uri, SERVERLESS_MONGO_OPTIONS);
+  const markClosed = () => {
+    getClosedClients().add(client);
+    const activeCache = getCache();
+    if (activeCache.client === client) {
+      activeCache.client = undefined;
+      activeCache.clientPromise = undefined;
+      activeCache.uri = undefined;
+    }
+  };
+
+  client.on("topologyClosed", markClosed);
+  client.on("close", markClosed);
+
   cache.client = client;
   cache.uri = uri;
   cache.clientPromise = undefined;
@@ -83,9 +156,12 @@ export function getMongoClientPromise(): Promise<MongoClient> {
 
   if (!cache.clientPromise) {
     cache.clientPromise = client.connect().catch((error: unknown) => {
-      cache.client = undefined;
-      cache.clientPromise = undefined;
-      cache.uri = undefined;
+      getClosedClients().add(client);
+      if (cache.client === client) {
+        cache.client = undefined;
+        cache.clientPromise = undefined;
+        cache.uri = undefined;
+      }
       throw error;
     });
   }
@@ -99,5 +175,10 @@ export function getDB(dbName?: string): Db {
 
 export async function connectDB(dbName?: string): Promise<Db> {
   const client = await getMongoClientPromise();
+  if (isMongoTopologyClosed(client)) {
+    resetMongoCache();
+    const freshClient = await getMongoClientPromise();
+    return freshClient.db(dbName?.trim() || getDbName());
+  }
   return client.db(dbName?.trim() || getDbName());
 }

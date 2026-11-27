@@ -1,17 +1,36 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
+import { getAuth, resetAuthInstance } from "@/lib/auth";
+import {
+  getMongoClientPromise,
+  isMongoTopologyClosed,
+  resetMongoCache,
+} from "@/lib/mongodb";
 import { reconcileVendorStripeCheckout } from "@/lib/stripe-reconcile";
 
 export async function POST(request: NextRequest) {
   let sessionResult: Awaited<
     ReturnType<ReturnType<typeof getAuth>["api"]["getSession"]>
   > = null;
-  try {
-    sessionResult = await getAuth().api.getSession({
-      headers: request.headers,
-    });
-  } catch {
-    sessionResult = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const client = await getMongoClientPromise();
+      if (isMongoTopologyClosed(client)) {
+        resetMongoCache();
+        resetAuthInstance();
+        await getMongoClientPromise();
+      }
+      sessionResult = await getAuth().api.getSession({
+        headers: request.headers,
+      });
+      break;
+    } catch {
+      if (attempt === 0) {
+        resetMongoCache();
+        resetAuthInstance();
+        continue;
+      }
+      sessionResult = null;
+    }
   }
 
   if (!sessionResult?.session || !sessionResult?.user) {
